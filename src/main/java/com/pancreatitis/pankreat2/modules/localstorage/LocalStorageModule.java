@@ -1,16 +1,12 @@
 package com.pancreatitis.pankreat2.modules.localstorage;
 
 import android.content.Context;
-import android.os.Environment;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.pancreatitis.models.Doctor;
-import com.pancreatitis.models.Questionnaire;
-import com.pancreatitis.models.RegistrationForm;
-import com.pancreatitis.models.Update;
-import com.pancreatitis.models.User;
+import com.pancreatitis.pankreat2.models.Doctor;
+import com.pancreatitis.pankreat2.models.User;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;

@@ -7,7 +7,7 @@ import android.database.sqlite.SQLiteDatabase;
 import android.util.Log;
 import android.widget.Toast;
 
-import com.pancreatitis.models.*;
+import com.pancreatitis.pankreat2.models.*;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;

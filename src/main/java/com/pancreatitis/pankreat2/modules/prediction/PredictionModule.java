@@ -1,12 +1,11 @@
 package com.pancreatitis.pankreat2.modules.prediction;
 
 import android.content.Context;
-import android.widget.Toast;
 
-import com.pancreatitis.models.Characteristic;
-import com.pancreatitis.models.CharasteristicDTO;
-import com.pancreatitis.modules.cloudstorage.CloudStorageModule;
-import com.pancreatitis.modules.localstorage.LocalStorageModule;
+import com.pancreatitis.pankreat2.models.Characteristic;
+import com.pancreatitis.pankreat2.models.CharasteristicDTO;
+import com.pancreatitis.pankreat2.modules.cloudstorage.CloudStorageModule;
+import com.pancreatitis.pankreat2.modules.localstorage.LocalStorageModule;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;

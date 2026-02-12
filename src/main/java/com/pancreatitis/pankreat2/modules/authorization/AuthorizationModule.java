@@ -2,15 +2,10 @@ package com.pancreatitis.pankreat2.modules.authorization;
 
 import android.content.Context;
 
-import com.pancreatitis.models.User;
-import com.pancreatitis.modules.cloudstorage.CloudStorageModule;
-import com.pancreatitis.modules.localstorage.LocalStorageModule;
-import com.pancreatitis.modules.safety.SafetyModule;
-
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
+import com.pancreatitis.pankreat2.models.User;
+import com.pancreatitis.pankreat2.modules.cloudstorage.CloudStorageModule;
+import com.pancreatitis.pankreat2.modules.localstorage.LocalStorageModule;
+import com.pancreatitis.pankreat2.modules.safety.SafetyModule;
 
 import javax.crypto.SecretKey;
 

@@ -1,8 +1,8 @@
 package com.pancreatitis.pankreat2.modules.safety;
 
-import com.pancreatitis.models.Patient;
-import com.pancreatitis.models.Questionnaire;
-import com.pancreatitis.modules.authorization.AuthorizationModule;
+import com.pancreatitis.pankreat2.models.Patient;
+import com.pancreatitis.pankreat2.models.Questionnaire;
+import com.pancreatitis.pankreat2.modules.authorization.AuthorizationModule;
 
 import javax.crypto.SecretKey;
 

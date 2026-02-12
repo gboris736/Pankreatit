@@ -1,9 +1,9 @@
 package com.pancreatitis.pankreat2.modules.registration;
 
-import com.pancreatitis.models.RegistrationForm;
+import com.pancreatitis.pankreat2.models.RegistrationForm;
 
-import com.pancreatitis.modules.authorization.AuthorizationModule;
-import com.pancreatitis.modules.cloudstorage.CloudStorageModule;
+import com.pancreatitis.pankreat2.modules.authorization.AuthorizationModule;
+import com.pancreatitis.pankreat2.modules.cloudstorage.CloudStorageModule;
 
 public class RegistrationModule {
     private static CloudStorageModule cloudStorageModule;

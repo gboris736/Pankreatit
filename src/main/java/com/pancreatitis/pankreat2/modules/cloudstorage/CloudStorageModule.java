@@ -2,11 +2,10 @@ package com.pancreatitis.pankreat2.modules.cloudstorage;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.pancreatitis.models.Doctor;
-import com.pancreatitis.models.Questionnaire;
-import com.pancreatitis.models.RegistrationForm;
-import com.pancreatitis.models.Update;
-import com.pancreatitis.models.User;
+import com.pancreatitis.pankreat2.models.Doctor;
+import com.pancreatitis.pankreat2.models.RegistrationForm;
+import com.pancreatitis.pankreat2.models.Update;
+import com.pancreatitis.pankreat2.models.User;
 
 import java.io.*;
 import java.net.HttpURLConnection;

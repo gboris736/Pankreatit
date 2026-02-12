@@ -1,7 +1,7 @@
 // SimilarityBasedModel.java
 package com.pancreatitis.pankreat2.modules.prediction;
 
-import com.pancreatitis.models.Characteristic;
+import com.pancreatitis.pankreat2.models.Characteristic;
 import java.util.*;
 
 public class SimilarityBasedModel {

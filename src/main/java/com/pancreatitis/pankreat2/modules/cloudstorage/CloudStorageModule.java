@@ -68,28 +68,23 @@ public class CloudStorageModule {
         }
     }
 
-    // Старые публичные методы с той же сигнатурой
-    public boolean isUserFolderExists(String login) {
+    public boolean createFolderUser(String login) {
         try {
-            Future<Boolean> future = executorService.submit(() -> {
-                String path = "/users/" + login;
-                String encodedPath = URLEncoder.encode(path, StandardCharsets.UTF_8.toString());
-                String url = API_URL + "?path=" + encodedPath;
+            String encodedPath = URLEncoder.encode("/users/" + login, StandardCharsets.UTF_8.toString());
+            String url = API_URL + "?path=" + encodedPath;
 
-                HttpURLConnection connection = (HttpURLConnection) new URL(url).openConnection();
-                connection.setRequestMethod("GET");
-                connection.setRequestProperty("Authorization", "OAuth " + authToken);
-                connection.setConnectTimeout(10000);
-                connection.setReadTimeout(10000);
+            HttpURLConnection connection = (HttpURLConnection) new URL(url).openConnection();
+            connection.setRequestMethod("PUT");
+            connection.setRequestProperty("Authorization", "OAuth " + authToken);
+            connection.setRequestProperty("Content-Type", "application/json");
+            connection.setConnectTimeout(10000);
+            connection.setReadTimeout(10000);
 
-                int responseCode = connection.getResponseCode();
-                connection.disconnect();
+            int responseCode = connection.getResponseCode();
+            connection.disconnect();
 
-                // 200 - exists
-                return responseCode == 200;
-            });
-
-            return future.get(); // Блокируем до получения результата
+            // 201 - created, 409 - already exists (acceptable)
+            return responseCode == 201 || responseCode == 409;
         } catch (Exception e) {
             return false;
         }
@@ -105,6 +100,23 @@ public class CloudStorageModule {
             }
 
             return downloadFileAsBytes(downloadUrl);
+        };
+
+        return executorService.submit(task).get();
+    }
+
+    public boolean uploadUserKey(String login, byte[] keyBytes, String keyName) throws Exception {
+        Callable<Boolean> task = () -> {
+            String fileName = keyName + ".enc";
+            String filePath = "/users/" + login + "/" + fileName;
+
+            String uploadUrl = getUploadUrl(filePath, true);
+            if (uploadUrl == null) {
+                System.err.println("Не удалось получить URL для загрузки ключа пользователя: " + filePath);
+                return false;
+            }
+
+            return uploadFile(uploadUrl, keyBytes);
         };
 
         return executorService.submit(task).get();
@@ -163,6 +175,31 @@ public class CloudStorageModule {
 
             // Парсим JSON в объект User
             return parseUserFromJson(json, login);
+        };
+
+        return executorService.submit(task).get();
+    }
+
+    public boolean uploadUserInfo(RegistrationForm registrationForm) throws Exception {
+        Callable<Boolean> task = () -> {
+            String login = registrationForm.getLogin();
+            if (login == null || login.isEmpty()) {
+                System.err.println("Логин пользователя не указан");
+                return false;
+            }
+
+            String jsonData = registrationForm.toJson();
+
+            String fileName = "user_info.json";
+            String filePath = "/users/" + login + "/" + fileName;
+
+            String uploadUrl = getUploadUrl(filePath, true);
+            if (uploadUrl == null) {
+                System.err.println("Не удалось получить URL для загрузки информации о пользователе: " + filePath);
+                return false;
+            }
+
+            return uploadFile(uploadUrl, jsonData.getBytes(StandardCharsets.UTF_8));
         };
 
         return executorService.submit(task).get();

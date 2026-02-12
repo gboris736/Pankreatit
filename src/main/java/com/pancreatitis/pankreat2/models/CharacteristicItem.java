@@ -1,9 +1,5 @@
 package com.pancreatitis.pankreat2.models;
 
-import android.annotation.SuppressLint;
-
-import java.util.List;
-
 public class CharacteristicItem {
     private int idCharacteristic;
     private int IdType;

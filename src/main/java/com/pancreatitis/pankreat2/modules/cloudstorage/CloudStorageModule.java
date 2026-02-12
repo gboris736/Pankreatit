@@ -6,6 +6,7 @@ import com.pancreatitis.pankreat2.models.Doctor;
 import com.pancreatitis.pankreat2.models.RegistrationForm;
 import com.pancreatitis.pankreat2.models.Update;
 import com.pancreatitis.pankreat2.models.User;
+import javafx.util.Pair;
 
 import java.io.*;
 import java.net.HttpURLConnection;
@@ -14,6 +15,8 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -148,7 +151,7 @@ public class CloudStorageModule {
         return executorService.submit(task).get();
     }
 
-    public boolean uploadQuestionnaire(Update update, String login) throws Exception {
+    public boolean uploadUpdate(Update update, String login) throws Exception {
         Callable<Boolean> task = () -> {
             String jsonData = update.toJson();
             String datetime = LocalDateTime.now().format(formatter);
@@ -165,6 +168,94 @@ public class CloudStorageModule {
         };
 
         return executorService.submit(task).get();
+    }
+
+    public List<Pair<Pair<String, String>, Update>> downloadAllUpdates() throws Exception {
+        Callable<List<Pair<Pair<String, String>, Update>>> task = () -> {
+            List<Pair<Pair<String, String>, Update>> updatesList = new ArrayList<>();
+
+            // Получаем список файлов в папке update
+            String path = "/update/";
+            String encodedPath = URLEncoder.encode(path, StandardCharsets.UTF_8.toString());
+            String url = API_URL + "?path=" + encodedPath;
+
+            HttpURLConnection connection = (HttpURLConnection) new URL(url).openConnection();
+            connection.setRequestMethod("GET");
+            connection.setRequestProperty("Authorization", "OAuth " + authToken);
+            connection.setConnectTimeout(10000);
+            connection.setReadTimeout(10000);
+
+            try {
+                int responseCode = connection.getResponseCode();
+
+                if (responseCode == 200) {
+                    try (BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()))) {
+                        StringBuilder response = new StringBuilder();
+                        String line;
+                        while ((line = reader.readLine()) != null) {
+                            response.append(line);
+                        }
+
+                        String responseStr = response.toString();
+                        int itemsIndex = responseStr.indexOf("\"items\":[");
+
+                        if (itemsIndex != -1) {
+                            String itemsPart = responseStr.substring(itemsIndex);
+                            int nameIndex = 0;
+
+                            while ((nameIndex = itemsPart.indexOf("\"name\":\"", nameIndex)) != -1) {
+                                int start = nameIndex + 8;
+                                int end = itemsPart.indexOf("\"", start);
+                                String fileName = itemsPart.substring(start, end);
+
+                                // Обрабатываем только файлы обновлений
+                                if (fileName.endsWith(".json") && fileName.contains("_update_")) {
+                                    processUpdateFile(fileName, updatesList);
+                                }
+                                nameIndex = end;
+                            }
+                        }
+                    }
+                }
+                return updatesList;
+            } finally {
+                connection.disconnect();
+            }
+        };
+
+        return executorService.submit(task).get();
+    }
+
+    private void processUpdateFile(String fileName, List<Pair<Pair<String, String>, Update>> updatesList) {
+        try {
+            // Извлекаем логин и дату из имени файла
+            String[] parts = fileName.split("_update_");
+            if (parts.length == 2) {
+                String login = parts[0];
+                String datetime = parts[1].replace(".json", "");
+
+                // Скачиваем файл обновления
+                String filePath = "/update/" + fileName;
+                String downloadUrl = getDownloadUrl(filePath);
+
+                if (downloadUrl != null) {
+                    byte[] jsonBytes = downloadFileAsBytes(downloadUrl);
+                    String json = new String(jsonBytes, StandardCharsets.UTF_8);
+
+                    // Парсим JSON в объект Update
+                    ObjectMapper mapper = new ObjectMapper();
+                    Update update = mapper.readValue(json, Update.class);
+
+                    // Создаем структуру данных
+                    Pair<String, String> loginDateTimePair = new Pair<>(login, datetime);
+                    Pair<Pair<String, String>, Update> resultPair = new Pair<>(loginDateTimePair, update);
+
+                    updatesList.add(resultPair);
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("Ошибка при обработке файла: " + fileName + " - " + e.getMessage());
+        }
     }
 
     public boolean uploadRegistrationRequest(RegistrationForm registrationForm) throws Exception {

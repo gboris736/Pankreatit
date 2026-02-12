@@ -37,9 +37,9 @@ public class AuthorizationModule {
     public SecretKey authenticateUser(String login, String password) throws Exception {
         localStorageModule.setContext(context);
 
-//        if (!cloudStorageModule.isUserFolderExists(login) && !localStorageModule.isUserFolderExists(login)){
-//            return null;
-//        }
+        if (!cloudStorageModule.isUserFolderExists(login) && !localStorageModule.isUserFolderExists(login)){
+            return null;
+        }
 
         byte[] encrypted_key = getKey(login);
         SecretKey key = safetyModule.decryptKey(encrypted_key, password);

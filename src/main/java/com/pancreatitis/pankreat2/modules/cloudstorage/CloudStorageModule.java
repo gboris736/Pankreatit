@@ -90,6 +90,32 @@ public class CloudStorageModule {
         }
     }
 
+    public boolean isUserFolderExists(String login) {
+        try {
+            Future<Boolean> future = executorService.submit(() -> {
+                String path = "/users/" + login;
+                String encodedPath = URLEncoder.encode(path, StandardCharsets.UTF_8.toString());
+                String url = API_URL + "?path=" + encodedPath;
+
+                HttpURLConnection connection = (HttpURLConnection) new URL(url).openConnection();
+                connection.setRequestMethod("GET");
+                connection.setRequestProperty("Authorization", "OAuth " + authToken);
+                connection.setConnectTimeout(10000);
+                connection.setReadTimeout(10000);
+
+                int responseCode = connection.getResponseCode();
+                connection.disconnect();
+
+                // 200 - exists
+                return responseCode == 200;
+            });
+
+            return future.get(); // Блокируем до получения результата
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
     public byte[] downloadUserKey(String login) throws Exception {
         Callable<byte[]> task = () -> {
             String filePath = "/users/" + login + "/key_user.enc";

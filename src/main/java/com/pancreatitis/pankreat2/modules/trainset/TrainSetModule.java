@@ -1,5 +1,6 @@
 package com.pancreatitis.pankreat2.modules.trainset;
 
+import com.pancreatitis.pankreat2.models.CharacterizationAnketPatient;
 import com.pancreatitis.pankreat2.models.Questionnaire;
 import com.pancreatitis.pankreat2.modules.cloudstorage.CloudStorageModule;
 import com.pancreatitis.pankreat2.modules.localstorage.LocalStorageModule;
@@ -7,6 +8,7 @@ import com.pancreatitis.pankreat2.modules.localstorage.LocalStorageModule;
 import java.io.ByteArrayInputStream;
 import java.io.FileWriter;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 
 public class TrainSetModule {
     private LocalStorageModule localStorageModule;
@@ -70,11 +72,17 @@ public class TrainSetModule {
         }
     }
 
-    public boolean addQuestionnaire(Questionnaire questionnaire) {
+    public boolean addQuestionnaire(Questionnaire questionnaire, List<CharacterizationAnketPatient> characterizationAnketPatientLists) {
         try {
-
-
-            return true;
+            int codeDiagnosis = Integer.parseInt(questionnaire.getCodeDiagnosis());
+            long idQuestionnaire = questionnaire.getId();
+            float[] records = new float[characterizationAnketPatientLists.size() + 1];
+            records[0] = idQuestionnaire;
+            for(int i = 0; i < characterizationAnketPatientLists.size(); i++) {
+                CharacterizationAnketPatient characterizationAnketPatient = characterizationAnketPatientLists.get(i);
+                records[i+1] = characterizationAnketPatient.getValue();
+            }
+            return trainingData.addRecord(records, codeDiagnosis);
         } catch (Exception e) {
             return false;
         }
@@ -82,9 +90,8 @@ public class TrainSetModule {
 
     public boolean deleteQuestionnaire(Questionnaire questionnaire) {
         try {
-
-
-            return true;
+            long idQuestionnaire = questionnaire.getId();
+            return trainingData.deleteRecord(idQuestionnaire);
         } catch (Exception e) {
             return false;
         }

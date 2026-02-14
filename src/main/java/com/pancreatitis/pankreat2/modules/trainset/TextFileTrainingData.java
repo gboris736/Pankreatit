@@ -5,10 +5,10 @@ import java.util.*;
 
 public class TextFileTrainingData implements TrainingData {
 
-    private final String version;
-    private final int[] characteristicIds;
-    private final List<float[]> trainingRecords;
-    private final int[] diagnoses; // Кэшированные диагнозы для быстрого доступа
+    private String version;
+    private int[] characteristicIds;
+    private List<float[]> trainingRecords;
+    private int[] diagnoses; // Кэшированные диагнозы для быстрого доступа
 
     public TextFileTrainingData(String version, int[] characteristicIds,
                                 List<float[]> trainingRecords) {
@@ -23,6 +23,22 @@ public class TextFileTrainingData implements TrainingData {
             this.diagnoses[i] = (int) record[record.length - 1]; // Последний элемент - диагноз
         }
     }
+
+    private int[] appendCodeDiagnosis(int[] arr, int value) {
+        int[] res = java.util.Arrays.copyOf(arr, arr.length + 1);
+        res[arr.length] = value;
+        return res;
+    }
+
+
+    private int[] removeCodeDiagnosisAt(int[] arr, int index) {
+        if (index < 0 || index >= arr.length) return arr; // или бросить исключение
+        int[] res = new int[arr.length - 1];
+        System.arraycopy(arr, 0, res, 0, index);                          // левая часть
+        System.arraycopy(arr, index + 1, res, index, arr.length - index - 1); // правая часть
+        return res;
+    }
+
 
     @Override
     public String getVersion() {
@@ -47,6 +63,59 @@ public class TextFileTrainingData implements TrainingData {
     @Override
     public int getCharacteristicsCount() {
         return characteristicIds.length;
+    }
+
+    @Override
+    public boolean addRecord(float[] record, int codeDiagnosis) {
+        try {
+            // Проверяем корректность длины записи
+            if (record.length != characteristicIds.length + 2) {
+                throw new IllegalArgumentException(
+                        String.format("Неверная длина записи. Ожидается: %d, получено: %d",
+                                characteristicIds.length + 2, record.length)
+                );
+            }
+
+            // Проверяем уникальность ID анкеты
+            int newQuestionnaireId = (int) record[0];
+            for (float[] existingRecord : trainingRecords) {
+                if ((int) existingRecord[0] == newQuestionnaireId) {
+                    return false;
+                }
+            }
+
+            trainingRecords.add(record.clone());
+            appendCodeDiagnosis(diagnoses, codeDiagnosis);
+
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    @Override
+    public boolean deleteRecord(long questionnaireId) {
+        try {
+            // Ищем индекс записи с указанным ID
+            int indexToRemove = -1;
+            for (int i = 0; i < trainingRecords.size(); i++) {
+                if ((int) trainingRecords.get(i)[0] == (int) questionnaireId) {
+                    indexToRemove = i;
+                    break;
+                }
+            }
+
+            if (indexToRemove == -1) {
+                return false; // Запись не найдена
+            }
+
+            trainingRecords.remove(indexToRemove);
+            removeCodeDiagnosisAt(diagnoses, indexToRemove);
+
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
     }
 
     /**

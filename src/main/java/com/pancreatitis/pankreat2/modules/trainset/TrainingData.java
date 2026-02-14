@@ -12,4 +12,8 @@ public interface TrainingData {
     int getTrainingDataSize();
 
     int getCharacteristicsCount();
+
+    boolean addRecord(float[] record, int codeDiagnosis);
+
+    boolean deleteRecord(long questionnaireId);
 }

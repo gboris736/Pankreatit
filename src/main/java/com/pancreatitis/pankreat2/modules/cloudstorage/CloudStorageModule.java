@@ -71,9 +71,9 @@ public class CloudStorageModule {
         }
     }
 
-    public boolean createFolderUser(String login) {
+    public boolean createFolder(String folder, String login) {
         try {
-            String encodedPath = URLEncoder.encode("/users/" + login, StandardCharsets.UTF_8.toString());
+            String encodedPath = URLEncoder.encode(String.format("/%s/%s", folder, login), StandardCharsets.UTF_8.toString());
             String url = API_URL + "?path=" + encodedPath;
 
             HttpURLConnection connection = (HttpURLConnection) new URL(url).openConnection();

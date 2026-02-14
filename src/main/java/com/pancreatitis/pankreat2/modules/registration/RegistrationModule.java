@@ -35,7 +35,7 @@ public class RegistrationModule {
             byte[] encrypt_user_key = safetyModule.encryptKey(key, user_password);
 
             String login = registrationForm.getLogin();
-            cloudStorageModule.createFolderUser(login);
+            cloudStorageModule.createFolder("users",login);
             cloudStorageModule.uploadUserKey(login, encrypt_user_key, "key_user");
             cloudStorageModule.uploadUserKey(login, encrypt_amdin_key, "key_admin");
             cloudStorageModule.uploadUserInfo(registrationForm);

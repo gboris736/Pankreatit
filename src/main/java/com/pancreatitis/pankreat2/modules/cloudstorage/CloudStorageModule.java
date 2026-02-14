@@ -437,7 +437,45 @@ public class CloudStorageModule {
         return executorService.submit(task).get();
     }
 
-    // Вспомогательные методы (остаются теми же)
+    public boolean deleteRegistrationRequest(String login) {
+        String path = "/registration_requests/" + login + ".json";
+        return deleteFile(path);
+    }
+
+    public boolean deleteUpdateFile(String fileName) {
+        String filePath = "/update/" + fileName;
+        return deleteFile(filePath);
+    }
+
+    // Вспомогательные методы
+    public boolean deleteFile(String path) {
+        try {
+            Callable<Boolean> task = () -> {
+                String encodedPath = URLEncoder.encode(path, StandardCharsets.UTF_8.toString());
+                String url = API_URL + "?path=" + encodedPath + "&permanently=true"; // permanently=false - в корзину, true - навсегда
+
+                HttpURLConnection connection = (HttpURLConnection) new URL(url).openConnection();
+                connection.setRequestMethod("DELETE");
+                connection.setRequestProperty("Authorization", "OAuth " + authToken);
+                connection.setConnectTimeout(10000);
+                connection.setReadTimeout(10000);
+
+                try {
+                    int responseCode = connection.getResponseCode();
+                    // 202 - принято (файл будет удален), 204 - успешно удалено
+                    return responseCode == 202 || responseCode == 204;
+                } finally {
+                    connection.disconnect();
+                }
+            };
+
+            return executorService.submit(task).get();
+        } catch (Exception e) {
+            System.err.println("Ошибка при удалении файла " + path + ": " + e.getMessage());
+            return false;
+        }
+    }
+
     private byte[] downloadFileAsBytes(String downloadUrl) throws Exception {
         HttpURLConnection connection = (HttpURLConnection) new URL(downloadUrl).openConnection();
         connection.setRequestMethod("GET");

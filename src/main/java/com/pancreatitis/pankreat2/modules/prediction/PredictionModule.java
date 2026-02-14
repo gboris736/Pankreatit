@@ -4,14 +4,11 @@ import android.content.Context;
 
 import com.pancreatitis.pankreat2.models.Characteristic;
 import com.pancreatitis.pankreat2.models.CharasteristicDTO;
-import com.pancreatitis.pankreat2.modules.cloudstorage.CloudStorageModule;
 import com.pancreatitis.pankreat2.modules.localstorage.LocalStorageModule;
+import com.pancreatitis.pankreat2.modules.trainset.TrainingData;
+import com.pancreatitis.pankreat2.modules.trainset.TrainingDataParser;
 
 import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.InputStream;
 import java.util.*;
 
 public class PredictionModule {

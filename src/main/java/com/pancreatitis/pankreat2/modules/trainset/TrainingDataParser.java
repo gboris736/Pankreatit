@@ -1,5 +1,7 @@
 // TrainingDataParser.java
-package com.pancreatitis.pankreat2.modules.prediction;
+package com.pancreatitis.pankreat2.modules.trainset;
+
+import com.pancreatitis.pankreat2.modules.prediction.DataFormatException;
 
 import java.io.*;
 import java.util.*;
@@ -13,9 +15,7 @@ public class TrainingDataParser {
      * @param inputStream поток с данными обучающей таблицы
      * @return объект TextFileTrainingData
      */
-    public static TextFileTrainingData parseFromFile(InputStream inputStream)
-            throws IOException, DataFormatException {
-
+    public static TextFileTrainingData parseFromFile(InputStream inputStream) {
         try (BufferedReader reader = new BufferedReader(
                 new InputStreamReader(inputStream, "UTF-8"))) {
 
@@ -56,7 +56,7 @@ public class TrainingDataParser {
 
             return new TextFileTrainingData(version, characteristicIds, trainingRecords);
 
-        } catch (NumberFormatException e) {
+        } catch (Exception e) {
             throw new DataFormatException("Ошибка формата числа в данных: " + e.getMessage(), e);
         }
     }
@@ -206,6 +206,46 @@ public class TrainingDataParser {
         }
 
         return record;
+    }
+
+    public static String serializeToTextFormat(TrainingData trainingData) {
+        StringBuilder sb = new StringBuilder();
+
+        // 1. ID характеристик
+        sb.append("-1");
+        int[] characteristicIds = trainingData.getCharacteristicIds();
+        for (int id : characteristicIds) {
+            sb.append(" ").append(id);
+        }
+        sb.append(" -1\n");
+
+        // 2. Записи
+        List<float[]> records = trainingData.getTrainingRecords();
+        for (float[] record : records) {
+            for (int i = 0; i < record.length; i++) {
+                if (i > 0) {
+                    sb.append(" ");
+                }
+
+                float value = record[i];
+
+                // Удаляем лишние нули в дробной части
+                if (value == (int) value) {
+                    sb.append((int) value);
+                } else {
+                    // Убираем trailing zeros
+                    String floatStr = Float.toString(value);
+                    if (floatStr.endsWith(".0")) {
+                        sb.append(floatStr.substring(0, floatStr.length() - 2));
+                    } else {
+                        sb.append(floatStr);
+                    }
+                }
+            }
+            sb.append("\n");
+        }
+
+        return sb.toString();
     }
 
     /**

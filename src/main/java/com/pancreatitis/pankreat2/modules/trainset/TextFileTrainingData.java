@@ -1,5 +1,5 @@
 // TextFileTrainingData.java
-package com.pancreatitis.pankreat2.modules.prediction;
+package com.pancreatitis.pankreat2.modules.trainset;
 
 import java.util.*;
 
@@ -98,38 +98,6 @@ public class TextFileTrainingData implements TrainingData {
         }
 
         return Collections.unmodifiableList(filtered);
-    }
-
-    /**
-     * Возвращает минимальное и максимальное значения для каждой характеристики
-     */
-    public Map<Integer, float[]> getCharacteristicRanges() {
-        if (trainingRecords.isEmpty()) {
-            return Collections.emptyMap();
-        }
-
-        Map<Integer, float[]> ranges = new HashMap<>();
-        int numCharacteristics = characteristicIds.length;
-
-        // Инициализируем мин/макс значения
-        for (int i = 0; i < numCharacteristics; i++) {
-            ranges.put(characteristicIds[i], new float[]{
-                    Float.MAX_VALUE, Float.MIN_VALUE
-            });
-        }
-
-        // Проходим по всем записям и обновляем мин/макс
-        for (float[] record : trainingRecords) {
-            for (int i = 0; i < numCharacteristics; i++) {
-                float value = record[i];
-                float[] range = ranges.get(characteristicIds[i]);
-
-                if (value < range[0]) range[0] = value;
-                if (value > range[1]) range[1] = value;
-            }
-        }
-
-        return Collections.unmodifiableMap(ranges);
     }
 
     @Override

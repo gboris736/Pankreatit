@@ -263,6 +263,24 @@ public class LocalStorageModule {
         return executorService.submit(task).get();
     }
 
+    public byte[] getTrainingData(String version) {
+        try {
+            Callable<byte[]> task = () -> {
+                File algorithmFile = new File(getStorageBaseDir(), version);
+
+                if (!algorithmFile.exists()) {
+                    throw new FileNotFoundException("File not found: " + algorithmFile.getAbsolutePath());
+                }
+
+                return readFileAsBytes(algorithmFile);
+            };
+
+            return executorService.submit(task).get();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     public boolean isTrainingData() throws Exception {
         Callable<Boolean> task = () -> {
             File keyFile = new File(getStorageBaseDir(), "algorithm.txt");

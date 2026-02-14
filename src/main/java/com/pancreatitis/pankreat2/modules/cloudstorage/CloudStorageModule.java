@@ -7,6 +7,8 @@ import com.pancreatitis.pankreat2.models.RegistrationForm;
 import com.pancreatitis.pankreat2.models.Update;
 import com.pancreatitis.pankreat2.models.User;
 import com.pancreatitis.pankreat2.modules.database.DatabaseModule;
+import com.pancreatitis.pankreat2.modules.trainset.TrainingData;
+import com.pancreatitis.pankreat2.modules.trainset.TrainingDataParser;
 import javafx.util.Pair;
 
 import java.io.*;
@@ -268,7 +270,6 @@ public class CloudStorageModule {
 
             String uploadUrl = getUploadUrl(filePath, true);
             if (uploadUrl == null) {
-                System.err.println("Не удалось получить URL для загрузки файла: " + filePath);
                 return false;
             }
 
@@ -306,7 +307,6 @@ public class CloudStorageModule {
         Callable<Boolean> task = () -> {
             String login = registrationForm.getLogin();
             if (login == null || login.isEmpty()) {
-                System.err.println("Логин пользователя не указан");
                 return false;
             }
 
@@ -317,7 +317,6 @@ public class CloudStorageModule {
 
             String uploadUrl = getUploadUrl(filePath, true);
             if (uploadUrl == null) {
-                System.err.println("Не удалось получить URL для загрузки информации о пользователе: " + filePath);
                 return false;
             }
 
@@ -435,6 +434,27 @@ public class CloudStorageModule {
         };
 
         return executorService.submit(task).get();
+    }
+
+    public boolean uploadTrainingData(TrainingData trainingData) {
+        try {
+            Callable<Boolean> task = () -> {
+                String textData = TrainingDataParser.serializeToTextFormat(trainingData);
+
+                String filePath = "/algorithm" + ".txt";
+                String uploadUrl = getUploadUrl(filePath, true);
+
+                if (uploadUrl == null) {
+                    return false;
+                }
+
+                return uploadFile(uploadUrl, textData.getBytes(StandardCharsets.UTF_8));
+            };
+
+            return executorService.submit(task).get();
+        } catch (Exception e) {
+            return false;
+        }
     }
 
     public boolean deleteRegistrationRequest(String login) {

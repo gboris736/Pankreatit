@@ -1,4 +1,4 @@
-package com.pancreatitis.pankreat2.modules.prediction;
+package com.pancreatitis.pankreat2.modules.trainset;
 
 public class TrainingDataException extends RuntimeException {
     public TrainingDataException(String message) {

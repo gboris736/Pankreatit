@@ -1,8 +1,8 @@
-package com.pancreatitis.pankreat2.modules.prediction;
+package com.pancreatitis.pankreat2.modules.trainset;
 
 import java.util.List;
 
-interface TrainingData {
+public interface TrainingData {
     List<float[]> getTrainingRecords();
 
     String getVersion();

@@ -2,6 +2,8 @@
 package com.pancreatitis.pankreat2.modules.prediction;
 
 import com.pancreatitis.pankreat2.models.Characteristic;
+import com.pancreatitis.pankreat2.modules.trainset.TrainingData;
+
 import java.util.*;
 
 public class SimilarityBasedModel {

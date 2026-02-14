@@ -28,7 +28,7 @@ public class RegistrationModule {
     public boolean submitRegistrationRequest(RegistrationForm registrationForm) throws Exception {
         return cloudStorageModule.uploadRegistrationRequest(registrationForm);
     }
-    public boolean newUserRegistration(RegistrationForm registrationForm) {
+    public boolean acceptRegistrationRequest(RegistrationForm registrationForm) {
         try {
             SecretKey key = safetyModule.generateKey();
 

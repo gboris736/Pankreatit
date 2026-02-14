@@ -48,14 +48,14 @@ public class RegistrationModule {
             doctor.setFio(registrationForm.getFullName());
             databaseModule.insertDoctor(doctor);
 
-            deleteRegistrationRequest(registrationForm);
+            cloudStorageModule.deleteRegistrationRequest(login);
 
             return true;
         } catch (Exception e) {
             return false;
         }
     }
-    public boolean deleteRegistrationRequest(RegistrationForm registrationForm){
+    public boolean rejectRegistrationRequest(RegistrationForm registrationForm){
         String login = registrationForm.getLogin();
         return cloudStorageModule.deleteRegistrationRequest(login);
     }

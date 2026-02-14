@@ -1,19 +1,23 @@
 package com.pancreatitis.pankreat2.modules.registration;
 
+import com.pancreatitis.pankreat2.models.Doctor;
 import com.pancreatitis.pankreat2.models.RegistrationForm;
 
 import com.pancreatitis.pankreat2.modules.cloudstorage.CloudStorageModule;
+import com.pancreatitis.pankreat2.modules.database.DatabaseModule;
 import com.pancreatitis.pankreat2.modules.safety.SafetyModule;
 
 import javax.crypto.SecretKey;
 
 public class RegistrationModule {
     private static CloudStorageModule cloudStorageModule;
+    private static DatabaseModule databaseModule;
     private static SafetyModule safetyModule;
     private static RegistrationModule instance;
     private RegistrationModule(){
         cloudStorageModule = CloudStorageModule.getInstance();
         safetyModule = SafetyModule.getInstance();
+        databaseModule = DatabaseModule.getInstance();
     }
     public static RegistrationModule getInstance(){
         if (instance == null) {
@@ -39,6 +43,10 @@ public class RegistrationModule {
             cloudStorageModule.uploadUserKey(login, encrypt_user_key, "key_user");
             cloudStorageModule.uploadUserKey(login, encrypt_amdin_key, "key_admin");
             cloudStorageModule.uploadUserInfo(registrationForm);
+
+            Doctor doctor = new Doctor();
+            doctor.setFio(registrationForm.getFullName());
+            databaseModule.insertDoctor(doctor);
 
             return true;
         } catch (Exception e) {

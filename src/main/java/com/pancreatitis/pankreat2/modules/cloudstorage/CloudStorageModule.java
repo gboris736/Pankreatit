@@ -6,6 +6,7 @@ import com.pancreatitis.pankreat2.models.Doctor;
 import com.pancreatitis.pankreat2.models.RegistrationForm;
 import com.pancreatitis.pankreat2.models.Update;
 import com.pancreatitis.pankreat2.models.User;
+import com.pancreatitis.pankreat2.modules.database.DatabaseModule;
 import javafx.util.Pair;
 
 import java.io.*;
@@ -277,24 +278,28 @@ public class CloudStorageModule {
         return executorService.submit(task).get();
     }
 
-    public User downloadUserInfo(String login) throws Exception {
-        Callable<User> task = () -> {
-            String filePath = "/users/" + login + "/user_info.json";
-            String downloadUrl = getDownloadUrl(filePath);
+    public User downloadUserInfo(String login) {
+        try {
+            Callable<User> task = () -> {
+                String filePath = "/users/" + login + "/user_info.json";
+                String downloadUrl = getDownloadUrl(filePath);
 
-            if (downloadUrl == null) {
-                throw new FileNotFoundException("User info not found: " + filePath);
-            }
+                if (downloadUrl == null) {
+                    throw new FileNotFoundException("User info not found: " + filePath);
+                }
 
-            // Скачиваем JSON файл
-            byte[] jsonBytes = downloadFileAsBytes(downloadUrl);
-            String json = new String(jsonBytes, StandardCharsets.UTF_8);
+                // Скачиваем JSON файл
+                byte[] jsonBytes = downloadFileAsBytes(downloadUrl);
+                String json = new String(jsonBytes, StandardCharsets.UTF_8);
 
-            // Парсим JSON в объект User
-            return parseUserFromJson(json, login);
-        };
+                // Парсим JSON в объект User
+                return parseUserFromJson(json, login);
+            };
 
-        return executorService.submit(task).get();
+            return executorService.submit(task).get();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public boolean uploadUserInfo(RegistrationForm registrationForm) throws Exception {
@@ -353,6 +358,67 @@ public class CloudStorageModule {
             return user;
         } catch (Exception e) {
             throw new IOException("Failed to parse user JSON: " + e.getMessage(), e);
+        }
+    }
+
+    public List<User> getAllUsers() {
+        List<User> users = new ArrayList<>();
+        List<String> logins = getAllUserLogins();
+        DatabaseModule databaseModule = DatabaseModule.getInstance();
+        for(String login: logins){
+            User user = downloadUserInfo(login);
+            Doctor doctor = databaseModule.getDoctorByFio(user.getFullName());
+            user.setDoctor(doctor);
+            users.add(user);
+        }
+        return users;
+    }
+
+    private List<String> getAllUserLogins() {
+        try {
+            Callable<List<String>> task = () -> {
+                String path = "/users/";
+                String encodedPath = URLEncoder.encode(path, StandardCharsets.UTF_8.toString());
+                String url = API_URL + "?path=" + encodedPath;
+
+                HttpURLConnection connection = (HttpURLConnection) new URL(url).openConnection();
+                connection.setRequestMethod("GET");
+                connection.setRequestProperty("Authorization", "OAuth " + authToken);
+                connection.setConnectTimeout(10000);
+                connection.setReadTimeout(10000);
+
+                try {
+                    int responseCode = connection.getResponseCode();
+                    if (responseCode == 200) {
+                        ObjectMapper mapper = new ObjectMapper();
+                        JsonNode rootNode = mapper.readTree(connection.getInputStream());
+
+                        List<String> userLogins = new ArrayList<>();
+                        JsonNode itemsNode = rootNode.get("_embedded").get("items");
+
+                        if (itemsNode != null && itemsNode.isArray()) {
+                            for (JsonNode item : itemsNode) {
+                                String name = item.get("name").asText();
+                                String type = item.get("type").asText();
+
+                                // Добавляем только папки (на всякий случай проверяем тип)
+                                if ("dir".equals(type)) {
+                                    userLogins.add(name);
+                                }
+                            }
+                        }
+
+                        return userLogins;
+                    }
+                    return new ArrayList<>();
+                } finally {
+                    connection.disconnect();
+                }
+            };
+
+            return executorService.submit(task).get();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
     }
 

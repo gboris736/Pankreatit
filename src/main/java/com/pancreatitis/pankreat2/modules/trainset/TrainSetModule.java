@@ -32,6 +32,7 @@ public class TrainSetModule {
         return instance;
     }
 
+    // это для поддержки старых версий, пока забыли про это
     private boolean load(String version) {
         try {
             byte[] rawTrainingData = localStorageModule.getTrainingData(version);
@@ -66,6 +67,7 @@ public class TrainSetModule {
 
     public boolean submit() {
         try {
+            saveChanges(); //может стоит автоматом сохраняться при этом
             return cloudStorageModule.uploadTrainingData(trainingData);
         } catch (Exception e) {
             return false;

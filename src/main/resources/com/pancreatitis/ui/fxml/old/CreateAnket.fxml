@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.geometry.Insets?>
+
+<BorderPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="400.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/17.0.12" fx:controller="com.pankr.ui.CreateAnketController" xmlns:fx="http://javafx.com/fxml/1">
+    <left>
+        <TableView fx:id="tableViewAnketChar" BorderPane.alignment="CENTER">
+            <columns>
+                <TableColumn fx:id="colCharName" prefWidth="150.0" text="Название параметра" />
+                <TableColumn fx:id="colCharValue" prefWidth="120.0" text="Значение параметра" />
+                <TableColumn fx:id="colCharDiscr" prefWidth="150.0" text="Описание параметра" />
+            </columns>
+            <BorderPane.margin>
+                <Insets right="10.0" />
+            </BorderPane.margin>
+        </TableView>
+    </left>
+    <right>
+        <VBox alignment="TOP_CENTER" spacing="20.0" BorderPane.alignment="CENTER">
+            <Label fx:id="resultLabel" alignment="TOP_LEFT" prefHeight="100.0" prefWidth="150.0" text="Результат предсказания появится здесь" wrapText="true" />
+        </VBox>
+    </right>
+    <bottom>
+        <HBox alignment="CENTER" spacing="20.0" prefHeight="50.0" BorderPane.alignment="CENTER">
+            <Button fx:id="btnSaveAnket" text="Сохранить анкету" onAction="#saveAnket" />
+            <Button fx:id="btnPredict" text="Предсказать" onAction="#predict" />
+        </HBox>
+    </bottom>
+</BorderPane>

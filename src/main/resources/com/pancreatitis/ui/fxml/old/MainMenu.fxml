@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.*?>
+<BorderPane xmlns="http://javafx.com/javafx/8.0.171" xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="com.pankr.ui.MainController">
+
+    <top>
+        <HBox spacing="10" style="-fx-padding:8; -fx-background-color:#f4f4f4; -fx-alignment:center-left;">
+            <Label text="Типо прмЛож" style="-fx-font-size:16; -fx-font-weight:bold;"/>
+            <Region HBox.hgrow="ALWAYS"/>
+            <Label fx:id="userNameLabel" text="Иван"/>
+            <ImageView fx:id="userAvatar" fitWidth="36" fitHeight="36" preserveRatio="true"/>
+        </HBox>
+    </top>
+
+
+
+    <left>
+        <VBox prefWidth="200" style="-fx-padding:8; -fx-background-color:#ffffff; -fx-border-color:#e0e0e0;">
+            <Label text="Вкладки" style="-fx-font-size:14; -fx-padding:0 0 8 0;"/>
+            <ListView fx:id="tabsListView" VBox.vgrow="ALWAYS"/>
+        </VBox>
+    </left>
+
+    <center >
+        <VBox maxWidth="Infinity">
+
+            <!-- Контейнер для динамически меняемого содержимого -->
+            <StackPane fx:id="contentPane"  style="-fx-padding:8;" VBox.vgrow="ALWAYS" maxWidth="Infinity" maxHeight="Infinity"/>
+        </VBox>
+    </center>
+</BorderPane>

@@ -1,8 +1,12 @@
-module com.pancreatitis.pankreat2 {
+module com.pancreatitis {
     requires javafx.controls;
     requires javafx.fxml;
+    requires com.fasterxml.jackson.databind;
 
 
-    opens com.pancreatitis.pankreat2 to javafx.fxml;
-    exports com.pancreatitis.pankreat2;
+    opens com.pancreatitis.ui.fxml to javafx.fxml;
+    exports com.pancreatitis.models;
+    exports com.pancreatitis.ui;
+    opens com.pancreatitis.ui to javafx.fxml;
+
 }

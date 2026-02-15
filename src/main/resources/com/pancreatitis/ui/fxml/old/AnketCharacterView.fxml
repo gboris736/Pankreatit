@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox alignment="CENTER" prefHeight="600.0" prefWidth="550.0" spacing="8.0" xmlns="http://javafx.com/javafx/17.0.12" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.pankr.ui.AnketCharViewController">
+    <padding>
+        <Insets bottom="12" left="12" right="12" top="12" />
+    </padding>
+
+    <TableView fx:id="tableViewAnketChar" prefHeight="1600.0" prefWidth="800.0">
+        <columns>
+            <TableColumn fx:id="colCharName" prefWidth="150.0" text="Название параметра" />
+            <TableColumn fx:id="colCharValue" prefWidth="95.0" text="Значение Параметра" />
+            <TableColumn fx:id="colCharDiscr" prefWidth="333.0" text="Описание Параметра" />
+        </columns>
+    </TableView>
+</VBox>

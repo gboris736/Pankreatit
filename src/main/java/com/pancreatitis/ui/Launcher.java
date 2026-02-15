@@ -1,4 +1,4 @@
-package com.pancreatitis.pankreat2;
+package com.pancreatitis.ui;
 
 import javafx.application.Application;
 

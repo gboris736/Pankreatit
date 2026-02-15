@@ -3,11 +3,6 @@ package com.pancreatitis.pankreat2.modules.questionnairemanager;
 import com.pancreatitis.pankreat2.models.*;
 import com.pancreatitis.pankreat2.modules.cloudstorage.CloudStorageModule;
 import com.pancreatitis.pankreat2.modules.database.DatabaseModule;
-import javafx.util.Pair;
-
-import javax.crypto.SecretKey;
-import java.util.ArrayList;
-import java.util.List;
 
 public class QuestionnaireManagerModule {
     private static QuestionnaireManagerModule instance;
@@ -30,7 +25,8 @@ public class QuestionnaireManagerModule {
         return instance;
     }
 
-    public boolean saveQuestionnaire(Questionnaire questionnaire, Patient patient) {
+    // переделать
+    private boolean saveQuestionnaire(Questionnaire questionnaire, Patient patient) {
         try {
             databaseModule.beginTransaction();
 
@@ -58,7 +54,8 @@ public class QuestionnaireManagerModule {
         }
     }
 
-    public boolean saveValueCharacteristic(CharacterizationAnketPatient characterizationAnketPatient) {
+    // переделать
+    private boolean saveValueCharacteristic(CharacterizationAnketPatient characterizationAnketPatient) {
         try {
             databaseModule.beginTransaction();
 

@@ -1,8 +1,5 @@
 package com.pancreatitis.models;
 
-
-import java.util.List;
-
 public class CharacteristicItem {
     private int idCharacteristic;
     private int IdType;

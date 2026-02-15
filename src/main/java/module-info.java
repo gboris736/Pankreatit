@@ -4,9 +4,6 @@ module com.pancreatitis {
     requires com.fasterxml.jackson.databind;
 
 
-    opens com.pancreatitis.ui.fxml to javafx.fxml;
-    exports com.pancreatitis.models;
-    exports com.pancreatitis.ui;
-    opens com.pancreatitis.ui to javafx.fxml;
-
+    opens com.pancreatitis to javafx.fxml;
+    exports com.pancreatitis;
 }

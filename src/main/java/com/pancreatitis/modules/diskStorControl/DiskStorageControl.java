@@ -1,7 +1,13 @@
 package com.pancreatitis.modules.diskStorControl;
 
+import java.io.IOException;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class DiskStorageControl {
     private final static String appName = "PankreatManager";
@@ -40,7 +46,17 @@ public class DiskStorageControl {
     }
 
 
-    public HashMap<String, Path> getPathLibrary() {
+    public HashMap<String, Path> getListFilesRecursively() {
         return new HashMap<>(pathLibrary);
+    }
+
+    public Path getAppDir() {
+        return pathLibrary.get("aapDBPath");
+    }
+
+    public List<Path> getListFilesInPath(Path path) throws  IOException {
+
+            return CrossPlatformStorage.listFilesRecursively(path);
+
     }
 }

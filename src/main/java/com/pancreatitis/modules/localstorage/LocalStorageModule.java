@@ -1,6 +1,5 @@
 package com.pancreatitis.modules.localstorage;
 
-import android.content.Context;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -18,17 +17,17 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
 public class LocalStorageModule {
-    private Context context;
+    private static DiskStorageControl diskStorageControl;
     private static LocalStorageModule instance;
     private final ExecutorService executorService = Executors.newCachedThreadPool();
     private static final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
     // Базовый путь для хранения данных
     private File storageBaseDir;
-    private static final String APP_DIR_NAME = "PancreatitisApp";
     private static final String USERS_DIR = "users";
 
     private LocalStorageModule() {
+        diskStorageControl = DiskStorageControl.getInstance();
         initializeStorage();
     }
 
@@ -43,14 +42,6 @@ public class LocalStorageModule {
         return instance;
     }
 
-    public Context getContext() {
-        return context;
-    }
-
-    public void setContext(Context context) {
-        this.context = context;
-    }
-
     private void initializeStorage() {
         // Инициализация папок в фоне
         executorService.execute(() -> {
@@ -60,7 +51,7 @@ public class LocalStorageModule {
 
     private File getStorageBaseDir() {
         if (storageBaseDir == null) {
-            storageBaseDir = new File(context.getFilesDir(), APP_DIR_NAME);
+            storageBaseDir = new File(diskStorageControl.getPathLibrary());
         }
         return storageBaseDir;
     }

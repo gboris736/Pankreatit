@@ -1,4 +1,4 @@
-package com.pancreatitis.modules.diskStorControl;
+package com.pancreatitis.modules.localstorage;
 
 import java.nio.file.Path;
 import java.util.HashMap;

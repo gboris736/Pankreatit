@@ -1,7 +1,9 @@
-package com.pancreatitis.modules.diskStorControl;
+package com.pancreatitis.modules.localstorage;
 
 import java.io.IOException;
-import java.nio.file.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.attribute.PosixFilePermission;
 import java.nio.file.attribute.PosixFilePermissions;
 import java.util.*;
@@ -182,78 +184,78 @@ class CrossPlatformStorage {
         return targetDir;
     }
 
-    public static void main(String[] args) {
-        try {
-            String appName = "MySuperApp";
-
-            // Создаем основную директорию приложения
-            Path appDir = getApplicationDataDirectory(appName);
-            System.out.println("Application directory: " + appDir);
-
-            // Создаем поддиректории для разных типов данных
-            Path cacheDir = getApplicationDataDirectory(appName, "cache");
-            Path logsDir = getApplicationDataDirectory(appName, "logs");
-            Path userDataDir = getApplicationDataDirectory(appName, "user_data", "profiles");
-            Path tempDir = getApplicationDataDirectory(appName, "temp");
-
-            System.out.println("Cache directory: " + cacheDir);
-            System.out.println("Logs directory: " + logsDir);
-            System.out.println("User profiles directory: " + userDataDir);
-            System.out.println("Temp directory: " + tempDir);
-
-            // Создаем файлы в разных поддиректориях
-            Path logFile = logsDir.resolve("application.log");
-            Path userProfile = userDataDir.resolve("user123.json");
-            Path cacheFile = cacheDir.resolve("data.cache");
-
-            if (!Files.exists(logFile)) {
-                Files.createFile(logFile);
-                System.out.println("Log file created: " + logFile);
-            }
-
-            if (!Files.exists(userProfile)) {
-                Files.createFile(userProfile);
-                System.out.println("User profile file created: " + userProfile);
-            }
-
-            if (!Files.exists(cacheFile)) {
-                Files.createFile(cacheFile);
-                System.out.println("Cache file created: " + cacheFile);
-            }
-
-            // Пример получения пути без создания
-            Path configDir = getSubdirectoryPath(appName, "config");
-            System.out.println("Config directory (not created yet): " + configDir);
-
-            // Создаем только если нужно
-            if (!Files.exists(configDir)) {
-                System.out.println("Config directory doesn't exist, creating...");
-                Files.createDirectories(configDir);
-                setPlatformSpecificPermissions(configDir);
-            }
-
-            // Просматриваем содержимое директории приложения
-            System.out.println("\nContents of application directory:");
-            List<Path> allFiles = listFilesRecursively(appDir);
-            for (Path file : allFiles) {
-                System.out.println("  - " + appDir.relativize(file));
-            }
-
-        } catch (IOException e) {
-            System.err.println("Error creating data directory: " + e.getMessage());
-            e.printStackTrace();
-
-            // Резервный вариант - использовать текущую директорию
-            Path fallback = Paths.get(System.getProperty("user.dir"), "app_data");
-            System.out.println("Using fallback directory: " + fallback);
-
-            try {
-                if (!Files.exists(fallback)) {
-                    Files.createDirectories(fallback);
-                }
-            } catch (IOException fallbackEx) {
-                System.err.println("Error creating fallback directory: " + fallbackEx.getMessage());
-            }
-        }
-    }
+//    public static void main(String[] args) {
+//        try {
+//            String appName = "MySuperApp";
+//
+//            // Создаем основную директорию приложения
+//            Path appDir = getApplicationDataDirectory(appName);
+//            System.out.println("Application directory: " + appDir);
+//
+//            // Создаем поддиректории для разных типов данных
+//            Path cacheDir = getApplicationDataDirectory(appName, "cache");
+//            Path logsDir = getApplicationDataDirectory(appName, "logs");
+//            Path userDataDir = getApplicationDataDirectory(appName, "user_data", "profiles");
+//            Path tempDir = getApplicationDataDirectory(appName, "temp");
+//
+//            System.out.println("Cache directory: " + cacheDir);
+//            System.out.println("Logs directory: " + logsDir);
+//            System.out.println("User profiles directory: " + userDataDir);
+//            System.out.println("Temp directory: " + tempDir);
+//
+//            // Создаем файлы в разных поддиректориях
+//            Path logFile = logsDir.resolve("application.log");
+//            Path userProfile = userDataDir.resolve("user123.json");
+//            Path cacheFile = cacheDir.resolve("data.cache");
+//
+//            if (!Files.exists(logFile)) {
+//                Files.createFile(logFile);
+//                System.out.println("Log file created: " + logFile);
+//            }
+//
+//            if (!Files.exists(userProfile)) {
+//                Files.createFile(userProfile);
+//                System.out.println("User profile file created: " + userProfile);
+//            }
+//
+//            if (!Files.exists(cacheFile)) {
+//                Files.createFile(cacheFile);
+//                System.out.println("Cache file created: " + cacheFile);
+//            }
+//
+//            // Пример получения пути без создания
+//            Path configDir = getSubdirectoryPath(appName, "config");
+//            System.out.println("Config directory (not created yet): " + configDir);
+//
+//            // Создаем только если нужно
+//            if (!Files.exists(configDir)) {
+//                System.out.println("Config directory doesn't exist, creating...");
+//                Files.createDirectories(configDir);
+//                setPlatformSpecificPermissions(configDir);
+//            }
+//
+//            // Просматриваем содержимое директории приложения
+//            System.out.println("\nContents of application directory:");
+//            List<Path> allFiles = listFilesRecursively(appDir);
+//            for (Path file : allFiles) {
+//                System.out.println("  - " + appDir.relativize(file));
+//            }
+//
+//        } catch (IOException e) {
+//            System.err.println("Error creating data directory: " + e.getMessage());
+//            e.printStackTrace();
+//
+//            // Резервный вариант - использовать текущую директорию
+//            Path fallback = Paths.get(System.getProperty("user.dir"), "app_data");
+//            System.out.println("Using fallback directory: " + fallback);
+//
+//            try {
+//                if (!Files.exists(fallback)) {
+//                    Files.createDirectories(fallback);
+//                }
+//            } catch (IOException fallbackEx) {
+//                System.err.println("Error creating fallback directory: " + fallbackEx.getMessage());
+//            }
+//        }
+//    }
 }

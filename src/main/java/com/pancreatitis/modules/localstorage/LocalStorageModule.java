@@ -51,7 +51,7 @@ public class LocalStorageModule {
 
     private File getStorageBaseDir() {
         if (storageBaseDir == null) {
-            storageBaseDir = new File(diskStorageControl.getPathLibrary());
+            storageBaseDir = new File(diskStorageControl.getAppDir().toUri());
         }
         return storageBaseDir;
     }

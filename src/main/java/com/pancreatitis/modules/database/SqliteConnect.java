@@ -1,11 +1,7 @@
 package com.pancreatitis.modules.database;
 
-import com.pancreatitis.models.Anket;
-import com.pancreatitis.models.AnketCharacter;
-import com.pancreatitis.models.Doctor;
-import com.pancreatitis.models.Patient;
-import com.pancreatitis.modules.diskStorControl.DiskStorageControl;
-import com.pancreatitis.modules.modelControl.ModelDataControl;
+import com.pancreatitis.models.*;
+import com.pancreatitis.modules.localstorage.DiskStorageControl;
 
 import java.nio.file.Files;
 import java.nio.file.Path;

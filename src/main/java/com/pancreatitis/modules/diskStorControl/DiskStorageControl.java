@@ -29,17 +29,17 @@ public class DiskStorageControl {
         pathLibrary = new HashMap<>();
         try {
             Path appDir = CrossPlatformStorage.getApplicationDataDirectory(appName);
-            pathLibrary.put("aapDir", appDir);
+            pathLibrary.put("appDir", appDir);
 
             Path appDBDir = CrossPlatformStorage.getApplicationDataDirectory(appName, appDB);
-            pathLibrary.put("aapDBDir", appDBDir);
+            pathLibrary.put("appDBDir", appDBDir);
             Path appDBPath = appDBDir.resolve(dbFileName);
-            pathLibrary.put("aapDBPath", appDBPath);
+            pathLibrary.put("appDBPath", appDBPath);
 
             Path appAlgDir = CrossPlatformStorage.getApplicationDataDirectory(appName, appAlg);
-            pathLibrary.put("aapAldDir", appAlgDir);
+            pathLibrary.put("appAlgDir", appAlgDir);
             Path appAlgPath = appAlgDir.resolve(algFileName);
-            pathLibrary.put("aapAlgPath", appAlgPath);
+            pathLibrary.put("appAlgPath", appAlgPath);
         } catch (Exception e) {
             System.out.println(e.getMessage());
         }
@@ -51,8 +51,11 @@ public class DiskStorageControl {
     }
 
     public Path getAppDir() {
-        return pathLibrary.get("aapDir");
+        return pathLibrary.get("appDir");
     }
+
+    public Path getDBPath() { return pathLibrary.get("appDBPath"); }
+    public Path getAlgPath() { return pathLibrary.get("appAlgPath"); }
 
     public List<Path> getListFilesInPath(Path path) throws  IOException {
 

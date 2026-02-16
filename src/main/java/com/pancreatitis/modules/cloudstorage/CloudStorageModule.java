@@ -279,6 +279,30 @@ public class CloudStorageModule {
         return executorService.submit(task).get();
     }
 
+    public RegistrationForm downloadRegistrationForm(String login) {
+        try {
+            Callable<RegistrationForm> task = () -> {
+                String filePath = "/registration_requests/" + login + ".json";
+                String downloadUrl = getDownloadUrl(filePath);
+
+                if (downloadUrl == null) {
+                    throw new FileNotFoundException("User info not found: " + filePath);
+                }
+
+                // Скачиваем JSON файл
+                byte[] jsonBytes = downloadFileAsBytes(downloadUrl);
+                String json = new String(jsonBytes, StandardCharsets.UTF_8);
+
+                // Парсим JSON в объект User
+                return RegistrationForm.fromJson(json);
+            };
+
+            return executorService.submit(task).get();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     public User downloadUserInfo(String login) {
         try {
             Callable<User> task = () -> {
@@ -357,6 +381,64 @@ public class CloudStorageModule {
             return user;
         } catch (Exception e) {
             throw new IOException("Failed to parse user JSON: " + e.getMessage(), e);
+        }
+    }
+
+    public List<RegistrationForm> getAllRegistrationForms() {
+        List<RegistrationForm> registrationForms = new ArrayList<>();
+        List<String> logins = getAllRegistrationFormLogins();
+        for(String login : logins) {
+            RegistrationForm registrationForm = downloadRegistrationForm(login);
+            registrationForms.add(registrationForm);
+        }
+        return registrationForms;
+    }
+
+    private List<String> getAllRegistrationFormLogins() {
+        try {
+            Callable<List<String>> task = () -> {
+                String path = "/registration_requests/";
+                String encodedPath = URLEncoder.encode(path, StandardCharsets.UTF_8.toString());
+                String url = API_URL + "?path=" + encodedPath;
+
+                HttpURLConnection connection = (HttpURLConnection) new URL(url).openConnection();
+                connection.setRequestMethod("GET");
+                connection.setRequestProperty("Authorization", "OAuth " + authToken);
+                connection.setConnectTimeout(10000);
+                connection.setReadTimeout(10000);
+
+                try {
+                    int responseCode = connection.getResponseCode();
+                    if (responseCode == 200) {
+                        ObjectMapper mapper = new ObjectMapper();
+                        JsonNode rootNode = mapper.readTree(connection.getInputStream());
+
+                        List<String> registrationFormLogins = new ArrayList<>();
+                        JsonNode itemsNode = rootNode.get("_embedded").get("items");
+
+                        if (itemsNode != null && itemsNode.isArray()) {
+                            for (JsonNode item : itemsNode) {
+                                String name = item.get("name").asText();
+                                String type = item.get("type").asText();
+
+                                // Добавляем только папки (на всякий случай проверяем тип)
+                                if ("dir".equals(type)) {
+                                    registrationFormLogins.add(name);
+                                }
+                            }
+                        }
+
+                        return registrationFormLogins;
+                    }
+                    return new ArrayList<>();
+                } finally {
+                    connection.disconnect();
+                }
+            };
+
+            return executorService.submit(task).get();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
     }
 

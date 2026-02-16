@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.*?>
+
+<VBox alignment="TOP_CENTER" spacing="15" xmlns="http://javafx.com/javafx/17.0.12"
+      xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.pancreatitis.ui.RegistrationRequestsController">
+    <padding>
+        <Insets bottom="15" left="20" right="20" top="15" />
+    </padding>
+
+    <Label text="Заявки на регистрацию" textAlignment="CENTER">
+        <font>
+            <Font name="System Bold" size="20" />
+        </font>
+    </Label>
+
+    <Separator />
+
+    <TableView fx:id="tableView" prefHeight="450" prefWidth="750" VBox.vgrow="ALWAYS">
+        <columns>
+            <TableColumn fx:id="colLogin" text="Логин" prefWidth="120" />
+            <TableColumn fx:id="colFullName" text="ФИО" prefWidth="180" />
+            <TableColumn fx:id="colEmail" text="Email" prefWidth="170" />
+            <TableColumn fx:id="colNumber" text="Телефон" prefWidth="130" />
+            <TableColumn fx:id="colStatus" text="Статус" prefWidth="100" />
+            <TableColumn fx:id="colActions" text="Действия" prefWidth="150" sortable="false" />
+        </columns>
+        <placeholder>
+            <Label text="Нет заявок на регистрацию" textAlignment="CENTER" />
+        </placeholder>
+    </TableView>
+
+    <HBox alignment="CENTER_RIGHT" spacing="15" VBox.vgrow="NEVER">
+        <Button text="Обновить" onAction="#onRefresh" styleClass="button-refresh" />
+    </HBox>
+
+    <Label fx:id="statusLabel" text="" textFill="GRAY" alignment="CENTER" />
+</VBox>

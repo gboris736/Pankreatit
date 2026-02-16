@@ -1,33 +1,244 @@
-.root {
-    -fx-background-color: linear-gradient(from 0% 0% to 100% 100%, #1a2a6c, #b21f1f, #1a2a6c);
+/* Main Application Styling */
+.main {
+    -fx-background-color: #f5f7fa;
 }
 
-.button {
-    -fx-background-color: #4CAF50;
+.mainLabel {
     -fx-text-fill: white;
-    -fx-font-size: 16px;
-    -fx-padding: 10px 20px;
-    -fx-background-radius: 5px;
 }
 
-.button:hover {
-    -fx-background-color: #45a049;
+/* Top Navigation Bar */
+.top {
+    -fx-background-color: #004080;
+    -fx-padding: 8;
+    -fx-alignment: center-left;
+}
+
+.top .label {
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-font-size: 16px;
+    -fx-font-family: "Segoe UI", system;
+}
+
+.top #userNameLabel {
+    -fx-text-fill: white;
+    -fx-font-size: 14px;
+    -fx-font-weight: normal;
+    -fx-padding: 0 12 0 12;
+}
+
+.top #userAvatar {
+    -fx-background-radius: 50%;
+    -fx-border-radius: 50%;
+    -fx-border-color: white;
+    -fx-border-width: 2px;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.3), 5, 0, 0, 0);
+}
+
+/* Left Navigation Panel */
+.left {
+    -fx-background-color: #004080;
+    -fx-padding: 8;
+    -fx-border-color: #003366;
+    -fx-border-width: 1;
+}
+
+.left .list-view {
+    -fx-background-color: #004080;
+    -fx-border-color: transparent;
+    -fx-padding: 0;
+}
+
+.left .list-cell {
+    -fx-background-color: #004080;
+    -fx-text-fill: white;
+    -fx-font-size: 14px;
+    -fx-padding: 10 15;
     -fx-cursor: hand;
 }
 
-.label {
-    -fx-font-size: 18px;
-    -fx-text-fill: #ffffff;
+.left .list-cell:filled:selected {
+    -fx-background-color: #0056b3;
+    -fx-background-radius: 4;
+}
+
+.left .list-cell:filled:hover {
+    -fx-background-color: #004a99;
+}
+
+.left .list-cell .text {
+    -fx-font-family: "Segoe UI", system;
+}
+
+/* Content Area Styling */
+.center {
+    -fx-background-color: white;
+}
+
+.content-pane {
+    -fx-background-color: white;
+    -fx-padding: 15;
+}
+
+/* Common UI Elements */
+.button {
+    -fx-background-color: #004080;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-padding: 8 15;
+    -fx-font-size: 14px;
+    -fx-border-radius: 4;
+    -fx-background-radius: 4;
+    -fx-cursor: hand;
+}
+
+.button:hover {
+    -fx-background-color: #0056b3;
+}
+
+.button:disabled {
+    -fx-background-color: #a0a0a0;
+    -fx-cursor: default;
+}
+
+.text-field, .combo-box-base {
+    -fx-background-color: #f8f9fa;
+    -fx-border-color: #ced4da;
+    -fx-border-width: 1;
+    -fx-border-radius: 4;
+    -fx-background-radius: 4;
+    -fx-padding: 8;
+    -fx-font-size: 14px;
+}
+
+.text-field:focus, .combo-box-base:focused {
+    -fx-border-color: #004080;
+    -fx-background-color: #ffffff;
+}
+
+/* Table Styling */
+.table-view {
+    -fx-background-color: white;
+    -fx-border-color: #e0e0e0;
+    -fx-border-width: 1;
+    -fx-border-radius: 4;
+    -fx-background-radius: 4;
+}
+
+.table-view .table-row-cell {
+    -fx-background-color: white;
+    -fx-border-color: #f0f0f0;
+    -fx-border-width: 0 0 1 0;
+}
+
+.table-view .table-row-cell:even {
+    -fx-background-color: #f8f9fa;
+}
+
+.table-view .table-row-cell:selected {
+    -fx-background-color: #e6f0ff;
+}
+
+.table-view .table-header-row {
+    -fx-background-color: #004080;
+    -fx-padding: 10;
+}
+
+.table-view .table-cell {
+    -fx-padding: 12 10;
+    -fx-border-color: transparent;
+    -fx-font-size: 14px;
+    -fx-font-family: "Segoe UI", system;
+}
+
+.table-view .table-header-cell {
+    -fx-background-color: #004080;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-font-size: 14px;
+    -fx-border-color: #003366;
+    -fx-border-width: 0 0 1 0;
+}
+
+.table-view .table-column-header {
+    -fx-background-color: #004080;
+    -fx-padding: 0;
+}
+
+.table-view .table-column-header .label {
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-alignment: center-left;
+}
+
+/* Section Headers */
+.section-header {
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #333333;
+    -fx-padding: 15 0 10 0;
+    -fx-font-family: "Segoe UI", system;
+}
+
+/* Status Indicators */
+.status-active {
+    -fx-text-fill: #28a745;
     -fx-font-weight: bold;
 }
 
-.text-field {
-    -fx-padding: 8px;
-    -fx-font-size: 14px;
-    -fx-background-radius: 4px;
+.status-pending {
+    -fx-text-fill: #ffc107;
+    -fx-font-weight: bold;
 }
 
-.main {
+.status-completed {
+    -fx-text-fill: #6c757d;
+    -fx-font-weight: bold;
+}
 
-    -fx-background-color: blue;
+/* Search Bar */
+.search-bar {
+    -fx-padding: 8;
+    -fx-background-color: #f8f9fa;
+    -fx-border-radius: 4;
+    -fx-background-radius: 4;
+    -fx-border-color: #ced4da;
+    -fx-border-width: 1;
+    -fx-max-width: 400;
+}
+
+.search-bar .text-field {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+    -fx-padding: 0;
+    -fx-font-size: 14px;
+}
+
+.search-bar .text-field:focused {
+    -fx-background-color: transparent;
+}
+
+/* Footer Elements */
+.footer-button {
+    -fx-background-color: #004080;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-padding: 10 20;
+    -fx-font-size: 14px;
+    -fx-border-radius: 4;
+    -fx-background-radius: 4;
+    -fx-cursor: hand;
+    -fx-max-width: 400;
+}
+
+/* Responsive Layout */
+@media (min-width: 1200px) {
+    .left {
+        -fx-pref-width: 240;
+    }
+
+    .content-pane {
+        -fx-padding: 20;
+    }
 }

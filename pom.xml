@@ -38,7 +38,32 @@
             <version>${junit.version}</version>
             <scope>test</scope>
         </dependency>
+
+        <!-- Jackson Databind (основная библиотека) -->
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+            <version>2.17.2</version> <!-- Актуальная версия на 2026 г. -->
+        </dependency>
+
+        <!-- Jackson Core (обязательная зависимость) -->
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-core</artifactId>
+            <version>2.17.2</version>
+        </dependency>
+
+        <!-- Jackson Annotations (обязательная зависимость) -->
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-annotations</artifactId>
+            <version>2.17.2</version>
+        </dependency>
     </dependencies>
+
+
+
+
 
     <build>
         <plugins>
@@ -49,6 +74,7 @@
                 <configuration>
                     <source>25</source>
                     <target>25</target>
+
                 </configuration>
             </plugin>
             <plugin>
@@ -62,6 +88,14 @@
                         <configuration>
                             <mainClass>com.pancreatitis.pankreat2/com.pancreatitis.pankreat2.HelloApplication
                             </mainClass>
+
+
+                            <options>
+                                <option>--add-reads</option>
+                                <option>com.pancreatitis=ALL-UNNAMED</option>
+                                <option>--add-opens</option>
+                                <option>com.pancreatitis/com.pancreatitis.ui=ALL-UNNAMED</option>
+                            </options>
                             <launcher>app</launcher>
                             <jlinkZipName>app</jlinkZipName>
                             <jlinkImageName>app</jlinkImageName>

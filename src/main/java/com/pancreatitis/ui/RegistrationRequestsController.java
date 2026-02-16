@@ -2,6 +2,7 @@ package com.pancreatitis.ui;
 
 import com.pancreatitis.models.RegistrationForm;
 import com.pancreatitis.modules.cloudstorage.CloudStorageModule;
+import com.pancreatitis.modules.registration.RegistrationModule;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -104,6 +105,7 @@ public class RegistrationRequestsController {
         // Реальная реализация:
          try {
              CloudStorageModule cloudStorageModule = CloudStorageModule.getInstance();
+             System.out.println(cloudStorageModule.getAllRegistrationForms().size());
              registrationList.setAll(cloudStorageModule.getAllRegistrationForms());
          } catch (Exception e) {
              showError("Ошибка загрузки заявок: " + e.getMessage());
@@ -126,7 +128,8 @@ public class RegistrationRequestsController {
         alert.setContentText("Логин: " + form.getLogin() + "\nФИО: " + form.getFullName());
         alert.showAndWait();
 
-        // registrationService.approveRequest(form.getLogin());
+        RegistrationModule registrationModule = RegistrationModule.getInstance();
+        registrationModule.acceptRegistrationRequest(form);
         registrationList.remove(form);
         showStatus("Заявка одобрена и удалена из списка: " + form.getLogin());
     }
@@ -135,23 +138,10 @@ public class RegistrationRequestsController {
         Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
         confirm.setTitle("Отклонение заявки");
         confirm.setHeaderText("Отклонить заявку пользователя " + form.getLogin() + "?");
-        confirm.setContentText("Укажите причину (опционально):");
-
-        // Добавляем поле ввода причины
-        TextArea reasonArea = new TextArea();
-        reasonArea.setPromptText("Причина отклонения...");
-        reasonArea.setPrefRowCount(3);
-        confirm.getDialogPane().setContent(reasonArea);
 
         if (confirm.showAndWait().orElse(ButtonType.CANCEL) == ButtonType.OK) {
-            String reason = reasonArea.getText().trim();
-            // registrationService.rejectRequest(form);
-
-            Alert info = new Alert(Alert.AlertType.INFORMATION);
-            info.setTitle("Заявка отклонена");
-            info.setHeaderText("Заявка пользователя '" + form.getLogin() + "' отклонена");
-            if (!reason.isEmpty()) info.setContentText("Причина: " + reason);
-            info.showAndWait();
+            RegistrationModule registrationModule = RegistrationModule.getInstance();
+            registrationModule.rejectRegistrationRequest(form);
 
             registrationList.remove(form);
             showStatus("Заявка отклонена: " + form.getLogin());

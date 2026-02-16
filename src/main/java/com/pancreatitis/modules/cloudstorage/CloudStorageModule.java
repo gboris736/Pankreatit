@@ -282,7 +282,7 @@ public class CloudStorageModule {
     public RegistrationForm downloadRegistrationForm(String login) {
         try {
             Callable<RegistrationForm> task = () -> {
-                String filePath = "/registration_requests/" + login + ".json";
+                String filePath = "/registration_requests/" + login;
                 String downloadUrl = getDownloadUrl(filePath);
 
                 if (downloadUrl == null) {
@@ -387,6 +387,7 @@ public class CloudStorageModule {
     public List<RegistrationForm> getAllRegistrationForms() {
         List<RegistrationForm> registrationForms = new ArrayList<>();
         List<String> logins = getAllRegistrationFormLogins();
+        System.out.println(logins);
         for(String login : logins) {
             RegistrationForm registrationForm = downloadRegistrationForm(login);
             registrationForms.add(registrationForm);
@@ -422,9 +423,7 @@ public class CloudStorageModule {
                                 String type = item.get("type").asText();
 
                                 // Добавляем только папки (на всякий случай проверяем тип)
-                                if ("dir".equals(type)) {
-                                    registrationFormLogins.add(name);
-                                }
+                                registrationFormLogins.add(name);
                             }
                         }
 
@@ -445,6 +444,7 @@ public class CloudStorageModule {
     public List<User> getAllUsers() {
         List<User> users = new ArrayList<>();
         List<String> logins = getAllUserLogins();
+        System.out.println(logins);
         DatabaseModule databaseModule = DatabaseModule.getInstance();
         for(String login: logins){
             User user = downloadUserInfo(login);

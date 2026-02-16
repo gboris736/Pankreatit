@@ -5,11 +5,13 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class RegistrationForm {
     private String login;
-    @JsonIgnore
     private String password;
     private String fullName;
     private String email;
     private String number;
+
+    public RegistrationForm() {
+    }
 
     public RegistrationForm(String login, String password, String fullName, String email, String number) {
         this.login = login;

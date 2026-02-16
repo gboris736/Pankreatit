@@ -1,7 +1,5 @@
 package com.pancreatitis.modules.prediction;
 
-import android.content.Context;
-
 import com.pancreatitis.models.Characteristic;
 import com.pancreatitis.models.CharasteristicDTO;
 import com.pancreatitis.modules.localstorage.LocalStorageModule;
@@ -15,7 +13,6 @@ public class PredictionModule {
     private SimilarityBasedModel currentModel;
     private List<Characteristic> lastLoadedCharacteristics;
     private static PredictionModule instance;
-    private Context context;
     private byte[] cachedTrainingData;
 
     private PredictionModule() {
@@ -31,20 +28,8 @@ public class PredictionModule {
         return instance;
     }
 
-    public Context getContext() {
-        return context;
-    }
-
-    public void setContext(Context context) {
-        this.context = context;
-    }
-
     public PredictionResult predict(List<CharasteristicDTO> characteristicDTOs) throws Exception {
-        if (context == null) {
-            throw new IllegalStateException("Context not set. Call setContext() first.");
-        }
         LocalStorageModule localStorageModule = LocalStorageModule.getInstance();
-        localStorageModule.setContext(getContext());
 
         // 1. Получаем тренировочные данные из assets
         byte[] rawTrainingData = localStorageModule.getTrainingData();

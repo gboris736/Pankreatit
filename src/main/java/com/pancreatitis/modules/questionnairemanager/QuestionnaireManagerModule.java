@@ -3,18 +3,14 @@ package com.pancreatitis.modules.questionnairemanager;
 import com.pancreatitis.models.CharacterizationAnketPatient;
 import com.pancreatitis.models.Patient;
 import com.pancreatitis.models.Questionnaire;
-import com.pancreatitis.pankreat2.models.*;
-import com.pancreatitis.modules.cloudstorage.CloudStorageModule;
 import com.pancreatitis.modules.database.DatabaseModule;
 
 public class QuestionnaireManagerModule {
     private static QuestionnaireManagerModule instance;
-    private DatabaseModule databaseModule;
-    private CloudStorageModule cloudStorageModule;
+    private static DatabaseModule databaseModule;
 
     private void QuestionnaireManagerModule() {
         databaseModule = DatabaseModule.getInstance();
-        cloudStorageModule = CloudStorageModule.getInstance();
     }
 
     public static QuestionnaireManagerModule getInstance() {

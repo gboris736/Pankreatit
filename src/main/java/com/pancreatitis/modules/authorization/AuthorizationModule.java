@@ -1,7 +1,5 @@
 package com.pancreatitis.modules.authorization;
 
-import android.content.Context;
-
 import com.pancreatitis.models.User;
 import com.pancreatitis.modules.cloudstorage.CloudStorageModule;
 import com.pancreatitis.modules.localstorage.LocalStorageModule;
@@ -14,12 +12,13 @@ public class AuthorizationModule {
     private static LocalStorageModule localStorageModule;
     private static SafetyModule safetyModule;
     private static AuthorizationModule instance;
-    private Context context;
+
     private AuthorizationModule(){
         cloudStorageModule = CloudStorageModule.getInstance();
         localStorageModule = LocalStorageModule.getInstance();
         safetyModule = SafetyModule.getInstance();
     }
+
     public static AuthorizationModule getInstance(){
         if (instance == null) {
             instance = new AuthorizationModule();
@@ -27,15 +26,7 @@ public class AuthorizationModule {
         return instance;
     }
 
-    public Context getContext() {
-        return context;
-    }
-
-    public void setContext(Context context) {
-        this.context = context;
-    }
     public SecretKey authenticateUser(String login, String password) throws Exception {
-        localStorageModule.setContext(context);
 
         if (!cloudStorageModule.isUserFolderExists(login) && !localStorageModule.isUserFolderExists(login)){
             return null;

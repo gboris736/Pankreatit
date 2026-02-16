@@ -11,8 +11,8 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 public class TrainSetModule {
-    private LocalStorageModule localStorageModule;
-    private CloudStorageModule cloudStorageModule;
+    private static LocalStorageModule localStorageModule;
+    private static CloudStorageModule cloudStorageModule;
     private static TrainSetModule instance;
     private TrainingData trainingData;
 

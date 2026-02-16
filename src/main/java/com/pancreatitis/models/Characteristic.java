@@ -3,8 +3,6 @@ package com.pancreatitis.models;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import java.util.*;
-
 public class Characteristic {
     private int id;
     private String name;

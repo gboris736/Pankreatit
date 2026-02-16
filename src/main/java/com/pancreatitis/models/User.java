@@ -2,7 +2,6 @@ package com.pancreatitis.models;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-//import com.pancreatitis.modules.database.DatabaseModule;
 
 import javax.crypto.SecretKey;
 

@@ -3,7 +3,6 @@ package com.pancreatitis.models;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.pancreatitis.models.Characteristic;
 
 public class CharasteristicDTO extends Characteristic {
     private float value;

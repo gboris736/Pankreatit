@@ -242,3 +242,9 @@
         -fx-padding: 20;
     }
 }
+
+.table-button { -fx-padding: 2 8 2 8; -fx-font-size: 11px; }
+.table-button-approve { -fx-background-color: #4CAF50; -fx-text-fill: white; }
+.table-button-reject { -fx-background-color: #F44336; -fx-text-fill: white; }
+.button-refresh { -fx-background-color: #2196F3; -fx-text-fill: white; }
+.button-export { -fx-background-color: #9C27B0; -fx-text-fill: white; }

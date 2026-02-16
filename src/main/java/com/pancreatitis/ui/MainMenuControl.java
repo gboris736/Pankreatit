@@ -82,7 +82,7 @@ public class MainMenuControl {
                 return;
             }
         }*/
-        tabsListView.setItems(FXCollections.observableArrayList("Вкладка 1", "Вкладка 2", "Вкладка 3"));
+        tabsListView.setItems(FXCollections.observableArrayList("Вкладка 1", "Список пользователей", "Заявки на регистрацию"));
         tabsListView.getSelectionModel().selectedItemProperty().addListener((obs, oldV, newV) -> {
             if (newV != null) showViewForTab(newV);
         });
@@ -100,15 +100,14 @@ public class MainMenuControl {
             if (view == null) {
                 String fxml = switch (tab) {
                     case "Вкладка 1" -> "fxml/AnketsView.fxml";
-                    case "Вкладка 2" -> "fxml/usersView.fxml";
+                    case "Список пользователей" -> "fxml/usersView.fxml";
+                    case "Заявки на регистрацию" -> "fxml/RegistrationRequestsView.fxml";
                     default -> "DefaultTab.fxml";
                 };
 
                 FXMLLoader loader = new FXMLLoader(getClass().getResource(fxml));
                 view = loader.load();
 
-                if ("Вкладка 1".equals(tab)) {
-                }
 
                 viewCache.put(tab, view);
             }

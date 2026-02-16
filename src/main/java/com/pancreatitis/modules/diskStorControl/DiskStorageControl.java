@@ -51,7 +51,7 @@ public class DiskStorageControl {
     }
 
     public Path getAppDir() {
-        return pathLibrary.get("aapDBPath");
+        return pathLibrary.get("aapDir");
     }
 
     public List<Path> getListFilesInPath(Path path) throws  IOException {

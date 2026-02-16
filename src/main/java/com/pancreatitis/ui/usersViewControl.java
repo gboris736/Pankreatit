@@ -74,23 +74,13 @@ public class usersViewControl implements Initializable {
         usersTable.setItems(usersData);
 
         // Load placeholder data
-        loadPlaceholderData2();
+        loadPlaceholderData();
     }
 
     /**
      * Placeholder data - replace with real data loading logic later
      */
     private void loadPlaceholderData() {
-        usersData.addAll(
-                new UserUI("Иванов Иван Иванович", LocalDate.of(2025, 1, 15), "ivanov@example.com", "+7 (900) 123-45-67", true),
-                new UserUI("Петрова Анна Сергеевна", LocalDate.of(2025, 2, 20), "petrova@example.com", "+7 (900) 234-56-78", false),
-                new UserUI("Сидоров Дмитрий Владимирович", LocalDate.of(2025, 3, 5), "sidorov@example.com", "+7 (900) 345-67-89", true),
-                new UserUI("Козлова Екатерина Андреевна", LocalDate.of(2025, 4, 12), "kozlova@example.com", "+7 (900) 456-78-90", false),
-                new UserUI("Морозов Алексей Петрович", LocalDate.of(2025, 5, 30), "morozov@example.com", "+7 (900) 567-89-01", true)
-
-        );
-    }
-    private void loadPlaceholderData2() {
         CloudStorageModule cloudStorageModule = CloudStorageModule.getInstance();
         List<User> allUsers = cloudStorageModule.getAllUsers();
         ArrayList<UserUI> users = new ArrayList<>();

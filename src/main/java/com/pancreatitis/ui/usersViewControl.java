@@ -9,6 +9,7 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
+import javafx.scene.control.Label;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.cell.PropertyValueFactory;
@@ -16,6 +17,7 @@ import javafx.scene.control.cell.TextFieldTableCell;
 
 import java.net.URL;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
@@ -29,8 +31,10 @@ public class usersViewControl implements Initializable {
     @FXML private TableColumn<UserUI, String> colEmail;
     @FXML private TableColumn<UserUI, String> colPhoneNumber;
     @FXML private TableColumn<UserUI, Boolean> colRole;
+    @FXML private Label statusLabel;
 
     private final ObservableList<UserUI> usersData = FXCollections.observableArrayList();
+    private final DateTimeFormatter dtf = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm");
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
@@ -90,6 +94,24 @@ public class usersViewControl implements Initializable {
             users.add(new UserUI(user));
         }
         usersData.setAll(users);
+
+        showStatus("Загружено пользователей: " + usersData.size());
+    }
+
+    @FXML
+    private void onRefresh() {
+        loadPlaceholderData();
+        showStatus("Данные обновлены: " + dtf.format(LocalDateTime.now()));
+    }
+
+    private void showStatus(String message) {
+        statusLabel.setText(message);
+        statusLabel.setTextFill(javafx.scene.paint.Color.GREEN);
+        statusLabel.setOpacity(1.0);
+        javafx.animation.FadeTransition ft = new javafx.animation.FadeTransition(
+                javafx.util.Duration.seconds(5), statusLabel);
+        ft.setToValue(0.3);
+        ft.play();
     }
 
     /**

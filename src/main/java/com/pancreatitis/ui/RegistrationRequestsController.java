@@ -144,8 +144,6 @@ public class RegistrationRequestsController {
         }
     }
 
-
-
     private void showStatus(String message) {
         statusLabel.setText(message);
         statusLabel.setTextFill(javafx.scene.paint.Color.GREEN);

@@ -40,5 +40,11 @@
                 <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />
             </columnResizePolicy>
         </TableView>
+
+        <HBox alignment="CENTER_RIGHT" spacing="15" VBox.vgrow="NEVER">
+            <Button text="Обновить" onAction="#onRefresh" styleClass="button-refresh" />
+        </HBox>
+
+        <Label fx:id="statusLabel" text="" textFill="GRAY" alignment="CENTER" />
     </children>
 </VBox>

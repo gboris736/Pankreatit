@@ -95,17 +95,9 @@ public class RegistrationRequestsController {
     private void loadRegistrationRequests() {
         registrationList.clear();
 
-        // Пример тестовых данных
-//        registrationList.addAll(List.of(
-//                new RegistrationForm("ivanov", "******", "Иванов Иван Иванович", "ivanov@mail.ru", "+7 (999) 123-45-67"),
-//                new RegistrationForm("petrova", "******", "Петрова Мария Сергеевна", "petrova@example.com", "+7 (987) 654-32-10"),
-//                new RegistrationForm("smirnov", "******", "Смирнов Алексей Дмитриевич", "smirnov@domain.com", "+7 (912) 345-67-89")
-//        ));
-
         // Реальная реализация:
          try {
              CloudStorageModule cloudStorageModule = CloudStorageModule.getInstance();
-             System.out.println(cloudStorageModule.getAllRegistrationForms().size());
              registrationList.setAll(cloudStorageModule.getAllRegistrationForms());
          } catch (Exception e) {
              showError("Ошибка загрузки заявок: " + e.getMessage());

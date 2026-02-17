@@ -350,7 +350,7 @@ public class CloudStorageModule {
 
     private User parseUserFromJson(String json, String login) throws Exception {
         JsonNode rootNode = objectMapper.readTree(json);
-        User user = User.getInstance();
+        User user = new User();
 
         if (rootNode.has("email")) {
             user.setEmail(rootNode.get("email").asText());
@@ -371,7 +371,6 @@ public class CloudStorageModule {
     public List<RegistrationForm> getAllRegistrationForms() {
         List<RegistrationForm> forms = new ArrayList<>();
         List<String> logins = getRegistrationFormLogins();
-        System.out.println(logins);
         for (String login : logins) {
             forms.add(downloadRegistrationForm(login));
         }
@@ -386,7 +385,6 @@ public class CloudStorageModule {
         List<User> users = new ArrayList<>();
         List<String> logins = getUserLogins();
         DatabaseModule databaseModule = DatabaseModule.getInstance();
-
         for (String login : logins) {
             User user = downloadUserInfo(login);
             Doctor doctor = databaseModule.getDoctorByFio(user.getFullName());

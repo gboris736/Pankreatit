@@ -89,9 +89,7 @@ public class usersViewControl implements Initializable {
         for(User user : allUsers){
             users.add(new UserUI(user));
         }
-        usersData.addAll(
-            users
-        );
+        usersData.setAll(users);
     }
 
     /**
@@ -113,13 +111,11 @@ public class usersViewControl implements Initializable {
         }
 
         public UserUI(User user) {
-            DatabaseModule databaseModule = DatabaseModule.getInstance();
-            Doctor doctor = databaseModule.getDoctorByFio(user.getFullName());
-            this.name = new SimpleStringProperty(doctor.getFio());
+            this.name = new SimpleStringProperty(user.getFullName());
             this.registrationDate = new SimpleObjectProperty<>(LocalDate.of(2025, 1, 15));
             this.email = new SimpleStringProperty(user.getEmail());
             this.phone = new SimpleStringProperty(user.getPhone());
-            this.expert = new SimpleBooleanProperty(doctor.getStatus());
+            this.expert = new SimpleBooleanProperty(user.getDoctor().getStatus());
         }
 
         // Getters for JavaFX binding

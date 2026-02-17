@@ -1,5 +1,4 @@
 package com.pancreatitis.models;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -8,17 +7,17 @@ public class RegistrationForm {
     private String password;
     private String fullName;
     private String email;
-    private String number;
+    private String phone;
 
     public RegistrationForm() {
     }
 
-    public RegistrationForm(String login, String password, String fullName, String email, String number) {
+    public RegistrationForm(String login, String password, String fullName, String email, String phone) {
         this.login = login;
         this.password = password;
         this.fullName = fullName;
         this.email = email;
-        this.number = number;
+        this.phone = phone;
     }
 
     public String getLogin() {
@@ -53,12 +52,12 @@ public class RegistrationForm {
         this.fullName = fullName;
     }
 
-    public String getNumber() {
-        return number;
+    public String getPhone() {
+        return phone;
     }
 
-    public void setNumber(String number) {
-        this.number = number;
+    public void setPhone(String phone) {
+        this.phone = phone;
     }
 
     public String toJson() throws JsonProcessingException {

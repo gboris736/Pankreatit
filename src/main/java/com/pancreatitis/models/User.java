@@ -101,4 +101,14 @@ public class User {
         ObjectMapper mapper = new ObjectMapper();
         return mapper.readValue(json, Doctor.class);
     }
+
+    @Override
+    public String toString() {
+        return "User{" +
+                "email='" + email + '\'' +
+                ", phone='" + phone + '\'' +
+                ", login='" + login + '\'' +
+                ", password='" + password + '\'' +
+                '}';
+    }
 }

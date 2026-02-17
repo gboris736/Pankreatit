@@ -12,7 +12,6 @@ import javafx.scene.layout.HBox;
 import javafx.geometry.Insets;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.List;
 
 
 public class RegistrationRequestsController {
@@ -43,7 +42,7 @@ public class RegistrationRequestsController {
         colLogin.setCellValueFactory(cell -> new SimpleStringProperty(cell.getValue().getLogin()));
         colFullName.setCellValueFactory(cell -> new SimpleStringProperty(cell.getValue().getFullName()));
         colEmail.setCellValueFactory(cell -> new SimpleStringProperty(cell.getValue().getEmail()));
-        colNumber.setCellValueFactory(cell -> new SimpleStringProperty(cell.getValue().getNumber()));
+        colNumber.setCellValueFactory(cell -> new SimpleStringProperty(cell.getValue().getPhone()));
         colStatus.setCellValueFactory(cell -> new SimpleStringProperty("Ожидает"));
 
         // Динамические кнопки в строке таблицы

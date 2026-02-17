@@ -114,16 +114,19 @@ public class RegistrationRequestsController {
     }
 
     private void handleApprove(RegistrationForm form) {
-        Alert alert = new Alert(Alert.AlertType.INFORMATION);
-        alert.setTitle("Заявка одобрена");
-        alert.setHeaderText("Пользователь '" + form.getLogin() + "' успешно зарегистрирован");
-        alert.setContentText("Логин: " + form.getLogin() + "\nФИО: " + form.getFullName());
-        alert.showAndWait();
+        Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
+        confirm.setTitle("Подтвердить одобрение");
+        confirm.setHeaderText("Одобрить заявку пользователя " + form.getLogin() + "?");
 
-        RegistrationModule registrationModule = RegistrationModule.getInstance();
-        registrationModule.acceptRegistrationRequest(form);
-        registrationList.remove(form);
-        showStatus("Заявка одобрена и удалена из списка: " + form.getLogin());
+        if (confirm.showAndWait().orElse(ButtonType.CANCEL) == ButtonType.OK) {
+            RegistrationModule registrationModule = RegistrationModule.getInstance();
+            registrationModule.acceptRegistrationRequest(form);
+
+            registrationList.remove(form);
+            showStatus("Заявка одобрена и удалена из списка: " + form.getLogin());
+        } else {
+            showStatus("Одобрение отменено: " + form.getLogin());
+        }
     }
 
     private void handleReject(RegistrationForm form) {
@@ -137,8 +140,11 @@ public class RegistrationRequestsController {
 
             registrationList.remove(form);
             showStatus("Заявка отклонена: " + form.getLogin());
+        } else {
+            showStatus("Отклонение отменено: " + form.getLogin());
         }
     }
+
 
 
     private void showStatus(String message) {

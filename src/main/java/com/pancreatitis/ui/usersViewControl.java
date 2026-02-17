@@ -1,7 +1,9 @@
 package com.pancreatitis.ui;
 
+import com.pancreatitis.models.Doctor;
 import com.pancreatitis.models.User;
 import com.pancreatitis.modules.cloudstorage.CloudStorageModule;
+import com.pancreatitis.modules.database.DatabaseModule;
 import javafx.beans.property.*;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -111,11 +113,13 @@ public class usersViewControl implements Initializable {
         }
 
         public UserUI(User user) {
-            this.name = new SimpleStringProperty("test");
+            DatabaseModule databaseModule = DatabaseModule.getInstance();
+            Doctor doctor = databaseModule.getDoctorByFio(user.getFullName());
+            this.name = new SimpleStringProperty(doctor.getFio());
             this.registrationDate = new SimpleObjectProperty<>(LocalDate.of(2025, 1, 15));
             this.email = new SimpleStringProperty(user.getEmail());
             this.phone = new SimpleStringProperty(user.getPhone());
-            this.expert = new SimpleBooleanProperty(false);
+            this.expert = new SimpleBooleanProperty(doctor.getStatus());
         }
 
         // Getters for JavaFX binding

@@ -16,5 +16,8 @@
             <TableColumn fx:id="colDoctor" prefWidth="273.0" text="ФИО ответственного врача" />
             <TableColumn fx:id="colAdmitFrom" prefWidth="273.0" text="Откуда поступил пациент" />
         </columns>
+        <columnResizePolicy>
+            <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />
+        </columnResizePolicy>
     </TableView>
 </VBox>

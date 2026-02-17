@@ -322,7 +322,7 @@ public class CloudStorageModule {
 
     public RegistrationForm downloadRegistrationForm(String login) {
         try {
-            return downloadAndParseJson(REGISTRATION_PATH + login + ".json", RegistrationForm.class);
+            return downloadAndParseJson(REGISTRATION_PATH + login, RegistrationForm.class);
         } catch (Exception e) {
             throw new RuntimeException("Failed to download registration form for login: " + login, e);
         }
@@ -371,6 +371,7 @@ public class CloudStorageModule {
     public List<RegistrationForm> getAllRegistrationForms() {
         List<RegistrationForm> forms = new ArrayList<>();
         List<String> logins = getRegistrationFormLogins();
+        System.out.println(logins);
         for (String login : logins) {
             forms.add(downloadRegistrationForm(login));
         }

@@ -1,5 +1,7 @@
 package com.pancreatitis.models;
 
+import java.text.SimpleDateFormat;
+import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -8,8 +10,7 @@ public class QuestionnaireItem {
     private int idPatient;
     private String fioPatient;
     private String diagnosis = "-";
-    private boolean selected = false;
-
+    private LocalDate data;
     public QuestionnaireItem() {}
 
     private String codeToDiagnosis(String code){
@@ -18,14 +19,6 @@ public class QuestionnaireItem {
         diagnosisMap.put("5", "Панкреонекроз среднетяжелое течение");
         diagnosisMap.put("6", "Панкреонекроз тяжелое течение");
         return diagnosisMap.getOrDefault(code, "-");
-    }
-
-    public boolean isSelected(){
-        return selected;
-    }
-
-    public void setSelected(boolean selected){
-        this.selected = selected;
     }
 
     public long getIdQuestionnaire() {
@@ -38,6 +31,14 @@ public class QuestionnaireItem {
 
     public int getIdPatient() {
         return idPatient;
+    }
+
+    public LocalDate getData() {
+        return data;
+    }
+
+    public void setData(LocalDate data) {
+        this.data = data;
     }
 
     public void setIdPatient(int idPatient) {

@@ -18,7 +18,6 @@ public class MainMenuControl {
     @FXML private Label userNameLabel;
     @FXML private ListView<String> tabsListView;
     @FXML private StackPane contentPane;
-    //private final String absAdressFxmlFile = "resources.io.pankr.";
 
     // кеш загруженных view для быстрого переключения
     private final Map<String, Node> viewCache = new HashMap<>();
@@ -78,7 +77,7 @@ public class MainMenuControl {
                 return;
             }
         }*/
-        tabsListView.setItems(FXCollections.observableArrayList("Вкладка 1", "Список пользователей", "Заявки на регистрацию"));
+        tabsListView.setItems(FXCollections.observableArrayList("Список анкет", "Список пользователей", "Заявки на регистрацию"));
         tabsListView.getSelectionModel().selectedItemProperty().addListener((obs, oldV, newV) -> {
             if (newV != null) showViewForTab(newV);
         });
@@ -95,7 +94,7 @@ public class MainMenuControl {
             Node view = viewCache.get(tab);
             if (view == null) {
                 String fxml = switch (tab) {
-                    case "Вкладка 1" -> "fxml/AnketsView.fxml";
+                    case "Список анкет" -> "fxml/QuestionListView.fxml";
                     case "Список пользователей" -> "fxml/usersView.fxml";
                     case "Заявки на регистрацию" -> "fxml/RegistrationRequestsView.fxml";
                     default -> "DefaultTab.fxml";

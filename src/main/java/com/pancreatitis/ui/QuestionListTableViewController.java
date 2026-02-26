@@ -1,6 +1,7 @@
 package com.pancreatitis.ui;
 
 import com.pancreatitis.models.QuestionnaireItem;
+import com.pancreatitis.modules.database.DatabaseModule;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
@@ -20,7 +21,7 @@ public class QuestionListTableViewController {
 
     @FXML private TableView<QuestionnaireItem> tableViewQuestion;
     @FXML private TableColumn<QuestionnaireItem, String> colNamePerson;
-    @FXML private TableColumn<QuestionnaireItem, LocalDate> colDate;
+    @FXML private TableColumn<QuestionnaireItem, String> colDate;
     @FXML private TableColumn<QuestionnaireItem, String> colDiagnosis;
 
     // Добавленные FXML-элементы для поиска
@@ -39,22 +40,13 @@ public class QuestionListTableViewController {
     private void initialize() {
         colNamePerson.setCellValueFactory(cd -> new SimpleStringProperty(cd.getValue().getFioPatient()));
         colDiagnosis.setCellValueFactory(cd -> new SimpleStringProperty(cd.getValue().getDiagnosis()));
+        colDate.setCellValueFactory(cd -> new SimpleStringProperty(cd.getValue().getDateOfCompletion()));
 
-        colDate.setCellValueFactory(new PropertyValueFactory<>("date"));
-        colDate.setCellFactory(col -> new TableCell<QuestionnaireItem, LocalDate>() {
-            @Override
-            protected void updateItem(LocalDate item, boolean empty) {
-                super.updateItem(item, empty);
-                if (empty || item == null) {
-                    setText(null);
-                } else {
-                    setText(DateTimeFormatter.ofPattern("dd.MM.yyyy").format(item));
-                }
-            }
-        });
-
-        generateTestData(26);
-
+        DatabaseModule databaseModule = DatabaseModule.getInstance();
+        List<QuestionnaireItem> allQuestionnaireItems = databaseModule.getAllQuestionnaireItems();
+        for(QuestionnaireItem item: allQuestionnaireItems){
+            rows.add(item);
+        }
 
         // Открытие анкеты напиши полу
         tableViewQuestion.setRowFactory(tv -> {
@@ -81,31 +73,6 @@ public class QuestionListTableViewController {
         colDate.setSortType(TableColumn.SortType.DESCENDING);
         tableViewQuestion.getSortOrder().add(colDate);
 
-
-
-/*
-        //Автоматическое обновление данных было
-        patientMap = Main.DATA_CONTROLLER.getPatientMap();
-
-        // слушаем изменения в patientMap и синхронизируем rows
-        patientMap.addListener((MapChangeListener<Integer, Patient>) change -> {
-            if (change.wasRemoved() && !change.wasAdded()) {
-                Patient removed = change.getValueRemoved();
-                if (removed != null) removeRowsForPatient(removed);
-            }
-            if (change.wasAdded() && !change.wasRemoved()) {
-                Patient added = change.getValueAdded();
-                if (added != null) addRowsForPatient(added);
-            }
-            if (change.wasAdded() && change.wasRemoved()) {
-                // замена объекта по ключу
-                Patient removed = change.getValueRemoved();
-                Patient added = change.getValueAdded();
-                if (removed != null) removeRowsForPatient(removed);
-                if (added != null) addRowsForPatient(added);
-            }
-        });
-*/
         // привязка обработчика для поля поиска
         if (searchField != null) {
             searchField.setPromptText("Поиск: фио пациента, врач или место поступления...");
@@ -115,9 +82,8 @@ public class QuestionListTableViewController {
                     if (query.isEmpty()) return true;
                     // поиск по ФИО пациента, ФИО врача и месту поступления
                     boolean inPatient = containsIgnoreCase(row.getFioPatient(), query);
-                    boolean inDoctor = containsIgnoreCase(row.getData().toString(), query);
                     boolean inAdmit = containsIgnoreCase(row.getDiagnosis(), query);
-                    return inPatient || inDoctor || inAdmit;
+                    return inPatient || inAdmit;
                 });
                 updateCountLabel();
             });
@@ -129,52 +95,6 @@ public class QuestionListTableViewController {
         // обновим счётчик при старте
         updateCountLabel();
     }
-
-    void generateTestData(int count){
-        List<QuestionnaireItem> items = new ArrayList<>();
-        Random random = new Random();
-
-        // Наборы данных для вариативности
-        String[] firstNames = {"Иван", "Петр", "Сергей", "Анна", "Мария", "Ольга", "Дмитрий", "Алексей"};
-        String[] lastNames = {"Иванов", "Петров", "Сидоров", "Смирнов", "Кузнецов", "Попов", "Васильев"};
-        String[] diagnoses = {"1", "5", "6"}; // Коды МКБ-10
-
-        for (int i = 0; i < count; i++) {
-            QuestionnaireItem item = new QuestionnaireItem();
-
-            // Генерация ФИО
-            String fio = lastNames[random.nextInt(lastNames.length)] + " " +
-                    firstNames[random.nextInt(firstNames.length)] + " " +
-                    (char)('A' + random.nextInt(26)) + ".";
-
-            // Генерация даты (случайная дата за последние 30 дней)
-            LocalDate date = LocalDate.now().minusDays(random.nextInt(30));
-
-            item.setIdQuestionnaire(100 + i); // Уникальный ID анкеты
-            item.setFioPatient(fio);
-            item.setDiagnosis(diagnoses[random.nextInt(diagnoses.length)]);
-            item.setData(date);
-
-            items.add(item);
-        }
-        rows.addAll(items);
-    }
-
-
-    /*// rebuild: всё выстроить заново (например после массового обновления)
-    private void rebuildRowsFromMap() {
-        rows.clear();
-        for (Map.Entry<Integer, Patient> e : patientMap.entrySet()) {
-            Patient p = e.getValue();
-            if (p == null) continue;
-            List<Anket> ankets = p.getAnketList();
-            if (ankets == null) continue;
-            for (Anket a : ankets) rows.add(anketToRow(a));
-        }
-    }*/
-
-
-    private String safeFio(String s) { return s == null ? "" : s; }
 
     private boolean containsIgnoreCase(String source, String query) {
         if (source == null) return false;
@@ -233,35 +153,4 @@ public class QuestionListTableViewController {
             e.printStackTrace();
         }
     }
-
-
-//    public static class AnketRow {
-//        private final SimpleStringProperty patientFio;
-//        private final SimpleStringProperty doctorFio;
-//        private final SimpleStringProperty admittedFrom;
-//        private final LocalDate date;
-//        private final Anket anket;
-//
-//        public AnketRow(String patientFio, String doctorFio, LocalDate date, Anket anket) {
-//            this.admittedFrom = new SimpleStringProperty(anket.getAdmittedFrom());
-//            this.patientFio = new SimpleStringProperty(patientFio);
-//            this.doctorFio = new SimpleStringProperty(doctorFio);
-//            this.date = date;
-//            this.anket = anket;
-//        }
-//
-//        public LocalDate getDate() {
-//            return date;
-//        }
-//
-//
-//        public SimpleStringProperty admittedFromProperty() {
-//            return admittedFrom;
-//        }
-//
-//        public String getAdmittedFrom() { return admittedFrom.get(); }
-//        public String getPatientFio() { return patientFio.get(); }
-//        public String getDoctorFio() { return doctorFio.get(); }
-//        public Anket getAnket() { return anket; }
-//    }
 }

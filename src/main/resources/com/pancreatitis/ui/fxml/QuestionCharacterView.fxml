@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox alignment="CENTER" prefHeight="524.0" prefWidth="506.0" spacing="8.0" xmlns="http://javafx.com/javafx/17.0.12" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.pancreatitis.ui.QuestionItemViewController">
+    <padding>
+        <Insets bottom="12" left="12" right="12" top="12" />
+    </padding>
+    <TextField fx:id="searchField" prefWidth="-Infinity"/>
+
+</VBox>

@@ -22,6 +22,8 @@ public class MainMenuControl {
     // кеш загруженных view для быстрого переключения
     private final Map<String, Node> viewCache = new HashMap<>();
 
+    private static MainMenuControl instance;
+
     @FXML
     public void initialize() {
         /*if (modelDataControl.getCurrentDoctor() == null) {
@@ -77,6 +79,7 @@ public class MainMenuControl {
                 return;
             }
         }*/
+        instance = this;
         tabsListView.setItems(FXCollections.observableArrayList("Список анкет", "Список пользователей", "Заявки на регистрацию"));
         tabsListView.getSelectionModel().selectedItemProperty().addListener((obs, oldV, newV) -> {
             if (newV != null) showViewForTab(newV);
@@ -85,11 +88,15 @@ public class MainMenuControl {
 
     }
 
+    public static MainMenuControl getInstance() {
+        return instance;
+    }
+
     private void restartApplication() {     // ДОДЕЛАТЬ
     }
 
 
-    private void showViewForTab(String tab) {
+    public void showViewForTab(String tab) {
         try {
             Node view = viewCache.get(tab);
             if (view == null) {
@@ -97,12 +104,12 @@ public class MainMenuControl {
                     case "Список анкет" -> "fxml/QuestionListView.fxml";
                     case "Список пользователей" -> "fxml/usersView.fxml";
                     case "Заявки на регистрацию" -> "fxml/RegistrationRequestsView.fxml";
+                    case "Анкета" -> "fxml/QuestionCharacterView.fxml";
                     default -> "DefaultTab.fxml";
                 };
 
                 FXMLLoader loader = new FXMLLoader(getClass().getResource(fxml));
                 view = loader.load();
-
 
                 viewCache.put(tab, view);
             }

@@ -1,7 +1,9 @@
 package com.pancreatitis.ui;
 
+import com.pancreatitis.models.Doctor;
 import com.pancreatitis.models.QuestionnaireItem;
 import com.pancreatitis.modules.database.DatabaseModule;
+import com.sun.tools.javac.Main;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
@@ -116,40 +118,13 @@ public class QuestionListTableViewController {
 
     private void openQuestionnaireDetail(QuestionnaireItem item) {
         try {
-
             System.out.println(item.getIdQuestionnaire());
 
-            long idQuestionnaire = item.getIdQuestionnaire();
-            /*
-            FXMLLoader loader = new FXMLLoader(
-                    getClass().getResource("fxml/QuestionCharacterView.fxml"));
-            Parent root = loader.load();
+            MainMenuControl mainMenuControl = MainMenuControl.getInstance();
+            mainMenuControl.showViewForTab("Анкета");
 
-            AnketCharViewController ctrl = loader.getController();
-            Doctor currentDoctor = Main.DATA_CONTROLLER.getCurrentDoctor();
-
-            ctrl.setDoctor(currentDoctor);
-            ctrl.setAnket(anket);
-            ctrl.applyDataBindings();
-
-            Stage stage = new Stage();
-            stage.setTitle("Анкета: " + safeFio(anket.getPatient().getFioName()));
-            stage.initModality(Modality.NONE);
-            stage.setScene(new Scene(root));
-
-            // 🔒 Добавляем обработчик закрытия окна
-            stage.setOnCloseRequest(event -> {
-                if (!ctrl.requestClose()) {
-                    // Если requestClose() вернул false — отменяем закрытие
-                    event.consume();
-                }
-                // Если вернул true — окно закроется автоматически
-            });
-
-            stage.show();
-            */
         } catch (Exception e) {
-            showAlert("Не удалось открыть окно анкеты: " + e.getMessage());
+            showAlert("Не удалось открыть анкету: " + e.getMessage());
             e.printStackTrace();
         }
     }

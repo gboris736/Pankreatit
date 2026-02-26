@@ -10,7 +10,8 @@ public class QuestionnaireItem {
     private int idPatient;
     private String fioPatient;
     private String diagnosis = "-";
-    private LocalDate data;
+    private String dateOfCompletion;
+
     public QuestionnaireItem() {}
 
     private String codeToDiagnosis(String code){
@@ -33,12 +34,12 @@ public class QuestionnaireItem {
         return idPatient;
     }
 
-    public LocalDate getData() {
-        return data;
+    public String getDateOfCompletion() {
+        return dateOfCompletion;
     }
 
-    public void setData(LocalDate data) {
-        this.data = data;
+    public void setDateOfCompletion(String dateOfCompletion) {
+        this.dateOfCompletion = dateOfCompletion;
     }
 
     public void setIdPatient(int idPatient) {

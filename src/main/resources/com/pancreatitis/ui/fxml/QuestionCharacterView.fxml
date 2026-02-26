@@ -5,9 +5,7 @@
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.text.*?>
 
-<VBox alignment="TOP_CENTER" spacing="15" xmlns="http://javafx.com/javafx/17.0.12"
-      xmlns:fx="http://javafx.com/fxml/1"
-      fx:controller="com.pancreatitis.ui.QuestionnaireController">
+<VBox alignment="TOP_CENTER" spacing="15" xmlns="http://javafx.com/javafx/17.0.12" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.pancreatitis.ui.QuestionnaireController">
     <padding>
         <Insets bottom="15" left="20" right="20" top="15" />
     </padding>
@@ -20,7 +18,7 @@
 
     <Separator />
 
-    <HBox spacing="10" prefWidth="600">
+    <HBox prefWidth="600" spacing="10">
         <children>
             <Button text="Назад" />
             <Region HBox.hgrow="ALWAYS" />
@@ -83,57 +81,7 @@
 
     <Separator />
 
-    <VBox fx:id="characteristicsContainer" style="-fx-background-color: #f5f5f5;" />
-
-<!--    <VBox spacing="15" style="-fx-background-color: white; -fx-border-color: #e0e0e0; -fx-border-radius: 5; -fx-background-radius: 5; -fx-padding: 15;" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1">-->
-<!--        <children>-->
-<!--            &lt;!&ndash; Верхняя строка с заголовком и кнопками &ndash;&gt;-->
-<!--            <BorderPane>-->
-<!--                <left>-->
-<!--                    <HBox alignment="CENTER_LEFT" spacing="10">-->
-<!--                        <children>-->
-<!--                            <Label text="Характеристика 1" textFill="#2c3e50">-->
-<!--                                <font>-->
-<!--                                    <Font name="System Bold" size="16" />-->
-<!--                                </font>-->
-<!--                            </Label>-->
-<!--                            <Button text="?" style="-fx-background-radius: 15; -fx-background-color: #3498db; -fx-text-fill: white;" prefWidth="30" prefHeight="30" />-->
-<!--                        </children>-->
-<!--                    </HBox>-->
-<!--                </left>-->
-<!--                <right>-->
-<!--                    <Button fx:id="addCharacteristic" text="Добавить" style="-fx-background-color: #27ae60; -fx-text-fill: white;" prefWidth="100" />-->
-<!--                </right>-->
-<!--            </BorderPane>-->
-
-<!--            &lt;!&ndash; Блоки характеристик &ndash;&gt;-->
-<!--            <VBox spacing="10">-->
-<!--                <children>-->
-<!--                    &lt;!&ndash; Значение 1 &ndash;&gt;-->
-<!--                    <HBox spacing="10" alignment="CENTER_LEFT" style="-fx-border-color: #bdc3c7; -fx-border-radius: 5; -fx-background-radius: 5; -fx-padding: 10;">-->
-<!--                        <children>-->
-<!--                            <TextField promptText="Значение" HBox.hgrow="ALWAYS" maxWidth="300"/>-->
-<!--                            <TextField promptText="Дата заполнения" HBox.hgrow="ALWAYS" maxWidth="300"/>-->
-<!--                        </children>-->
-<!--                    </HBox>-->
-
-<!--                    &lt;!&ndash; Значение 2 &ndash;&gt;-->
-<!--                    <HBox spacing="10" alignment="CENTER_LEFT" style="-fx-border-color: #bdc3c7; -fx-border-radius: 5; -fx-background-radius: 5; -fx-padding: 10;">-->
-<!--                        <children>-->
-<!--                            <TextField promptText="Значение" HBox.hgrow="ALWAYS" maxWidth="300"/>-->
-<!--                            <TextField promptText="Дата заполнения" HBox.hgrow="ALWAYS" maxWidth="300"/>-->
-<!--                        </children>-->
-<!--                    </HBox>-->
-
-<!--                    &lt;!&ndash; Значение 3 &ndash;&gt;-->
-<!--                    <HBox spacing="10" alignment="CENTER_LEFT" style="-fx-border-color: #bdc3c7; -fx-border-radius: 5; -fx-background-radius: 5; -fx-padding: 10;">-->
-<!--                        <children>-->
-<!--                            <TextField promptText="Значение" HBox.hgrow="ALWAYS" maxWidth="300"/>-->
-<!--                            <TextField promptText="Дата заполнения" HBox.hgrow="ALWAYS" maxWidth="300"/>-->
-<!--                        </children>-->
-<!--                    </HBox>-->
-<!--                </children>-->
-<!--            </VBox>-->
-<!--        </children>-->
-<!--    </VBox>-->
+    <ScrollPane fitToWidth="true" style="-fx-background-color: transparent;">
+        <VBox fx:id="characteristicsContainer" style="-fx-background-color: #f5f5f5;" />
+    </ScrollPane>
 </VBox>

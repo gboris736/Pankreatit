@@ -19,19 +19,17 @@ public class QuestionnaireController implements Initializable {
     @FXML
     private VBox characteristicsContainer;
 
-    private int idQuestionnaire = 1;
+    private int idQuestionnaire = 118;
     private int idPatient = 1;
 
     // Хранение всех характеристик по ID
     private final Map<Integer, VBox> characteristicBlocks = new HashMap<>();
     private final Map<Integer, VBox> valuesContainers = new HashMap<>();
 
-    // Данные характеристик
     private List<CharacteristicItem> characteristicItems = new ArrayList<>();
     private List<CharacterizationAnketPatient> characterizationAnketPatientList = new ArrayList<>();
     private List<Characteristic> characteristics = new ArrayList<>();
 
-    // Данные значений
     private HashMap<Integer, CharacterizationAnketPatient> hashMap = new HashMap<>();
     private HashMap<Integer, List<String>> hashMapOptions = new HashMap<>();
 

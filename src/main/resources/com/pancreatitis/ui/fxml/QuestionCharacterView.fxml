@@ -3,11 +3,91 @@
 <?import javafx.geometry.*?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
+<?import javafx.scene.text.*?>
 
-<VBox alignment="CENTER" prefHeight="524.0" prefWidth="506.0" spacing="8.0" xmlns="http://javafx.com/javafx/17.0.12" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.pancreatitis.ui.QuestionItemViewController">
+<VBox alignment="TOP_CENTER" spacing="15" xmlns="http://javafx.com/javafx/17.0.12"
+      xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.pancreatitis.ui.QuestionnaireController">
     <padding>
-        <Insets bottom="12" left="12" right="12" top="12" />
+        <Insets bottom="15" left="20" right="20" top="15" />
     </padding>
-    <TextField fx:id="searchField" prefWidth="-Infinity"/>
 
+    <Label text="Анкета пациента" textAlignment="CENTER">
+        <font>
+            <Font name="System Bold" size="20" />
+        </font>
+    </Label>
+
+    <Separator />
+
+    <HBox spacing="10" prefWidth="600">
+        <children>
+            <Button text="Назад" />
+            <Region HBox.hgrow="ALWAYS" />
+            <Button text="Сохранить анкету" />
+        </children>
+    </HBox>
+
+    <!-- Основная сетка с полями -->
+    <GridPane hgap="15.0" prefWidth="450.0" vgap="15.0">
+        <columnConstraints>
+            <ColumnConstraints halignment="LEFT" hgrow="SOMETIMES" maxWidth="250.0" minWidth="160.0" prefWidth="130.0" />
+            <ColumnConstraints hgrow="ALWAYS" maxWidth="1.7976931348623157E308" minWidth="200.0" prefWidth="300.0" />
+        </columnConstraints>
+        <rowConstraints>
+            <RowConstraints minHeight="30.0" prefHeight="35.0" vgrow="SOMETIMES" />
+            <RowConstraints minHeight="30.0" prefHeight="35.0" vgrow="SOMETIMES" />
+            <RowConstraints minHeight="30.0" prefHeight="35.0" vgrow="SOMETIMES" />
+            <RowConstraints minHeight="30.0" prefHeight="35.0" vgrow="SOMETIMES" />
+        </rowConstraints>
+        <children>
+            <!-- Строка 0: ФИО пациента -->
+            <Label text="ФИО пациента:" textFill="#34495e">
+                <font>
+                    <Font name="System Bold" size="14.0" />
+                </font>
+            </Label>
+            <TextField promptText="Введите ФИО" style="-fx-background-radius: 3; -fx-border-radius: 3; -fx-border-color: #bdc3c7; -fx-border-width: 1;" GridPane.columnIndex="1">
+                <GridPane.margin>
+                    <Insets right="10.0" />
+                </GridPane.margin>
+            </TextField>
+
+            <!-- Строка 1: Откуда поступил -->
+            <Label text="Откуда поступил:" textFill="#34495e" GridPane.rowIndex="1">
+                <font>
+                    <Font name="System Bold" size="14.0" />
+                </font>
+            </Label>
+            <TextField promptText="Введите источник поступления" style="-fx-background-radius: 3; -fx-border-radius: 3; -fx-border-color: #bdc3c7; -fx-border-width: 1;" GridPane.columnIndex="1" GridPane.rowIndex="1">
+                <GridPane.margin>
+                    <Insets right="10.0" />
+                </GridPane.margin>
+            </TextField>
+
+            <!-- Строка 2: Дата создания анкеты -->
+            <Label text="Дата создания анкеты:" textFill="#34495e" GridPane.rowIndex="2">
+                <font>
+                    <Font name="System Bold" size="14.0" />
+                </font>
+            </Label>
+            <TextField editable="false" style="-fx-background-color: #f9f9f9; -fx-background-radius: 3; -fx-border-radius: 3; -fx-border-color: #bdc3c7; -fx-border-width: 1;" text="2026-02-19" GridPane.columnIndex="1" GridPane.rowIndex="2">
+                <GridPane.margin>
+                    <Insets right="10.0" />
+                </GridPane.margin>
+            </TextField>
+
+            <!-- Строка 3: Диагноз -->
+            <Label text="Диагноз:" textFill="#34495e" GridPane.rowIndex="3">
+                <font>
+                    <Font name="System Bold" size="14.0" />
+                </font>
+            </Label>
+            <TextField editable="false" style="-fx-background-color: #f9f9f9; -fx-background-radius: 3; -fx-border-radius: 3; -fx-border-color: #bdc3c7; -fx-border-width: 1;" text="Острый панкреатит" GridPane.columnIndex="1" GridPane.rowIndex="3">
+                <GridPane.margin>
+                    <Insets right="10.0" />
+                </GridPane.margin>
+            </TextField>
+        </children>
+    </GridPane>
 </VBox>

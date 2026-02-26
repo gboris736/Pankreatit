@@ -1,6 +1,7 @@
 package com.pancreatitis.ui;
 
 import com.pancreatitis.models.*;
+import com.pancreatitis.modules.database.DatabaseModule;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.geometry.Pos;
@@ -8,6 +9,9 @@ import javafx.scene.control.*;
 import javafx.scene.layout.*;
 
 import java.net.URL;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.*;
 
 public class QuestionnaireController implements Initializable {
@@ -15,153 +19,94 @@ public class QuestionnaireController implements Initializable {
     @FXML
     private VBox characteristicsContainer;
 
-    @FXML
-    private Button addCharacteristic;
+    private int idQuestionnaire = 1;
+    private int idPatient = 1;
 
     // Хранение всех характеристик по ID
     private final Map<Integer, VBox> characteristicBlocks = new HashMap<>();
     private final Map<Integer, VBox> valuesContainers = new HashMap<>();
 
-    // Тестовые данные характеристик (заглушка)
-    private List<CharacteristicItem> mockCharacteristics;
+    // Данные характеристик
+    private List<CharacteristicItem> characteristicItems = new ArrayList<>();
+    private List<CharacterizationAnketPatient> characterizationAnketPatientList = new ArrayList<>();
+    private List<Characteristic> characteristics = new ArrayList<>();
 
-    // Тестовые данные значений (заглушка)
-    private List<CharacterizationValue> mockValues;
+    // Данные значений
+    private HashMap<Integer, CharacterizationAnketPatient> hashMap = new HashMap<>();
+    private HashMap<Integer, List<String>> hashMapOptions = new HashMap<>();
+
+    private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+
+    public static boolean compare(String a, String b) throws DateTimeParseException {
+        try {
+            if (b == null || b.isEmpty()) return true;
+            LocalDateTime dtA = LocalDateTime.parse(a, FORMATTER);
+            LocalDateTime dtB = LocalDateTime.parse(b, FORMATTER);
+            return !dtA.isBefore(dtB);
+        } catch (DateTimeParseException e) {
+            return false;
+        }
+    }
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
-        // Инициализация тестовых данных
-        initMockData();
+        // Инициализация данных
+        initData();
 
-        // Очищаем контейнер, если там есть статические элементы из FXML
-        characteristicsContainer.getChildren().clear();
-
-        // Создаем блоки для всех характеристик из тестовых данных
-        for (CharacteristicItem characteristic : mockCharacteristics) {
+        // Создаем блоки для всех характеристи
+        for (CharacteristicItem characteristic : characteristicItems) {
             createCharacteristicBlock(characteristic);
         }
 
         // Добавляем значения к характеристикам
-        for (CharacterizationValue value : mockValues) {
-            addValueToCharacteristic(value.getIdCharacteristic(), value.getValue(), value.getLastModified());
+        for (CharacterizationAnketPatient characterizationAnketPatient : characterizationAnketPatientList) {
+            int characteristicId = characterizationAnketPatient.getIdCharacteristic();
+            List<String> options = hashMapOptions.get(characteristicId);
+            Characteristic characteristic = characteristics.get(characteristicId);
+            if (characteristic.getIdType() != 3) {
+                addNonNumericValueToCharacteristic(characteristicId, characterizationAnketPatient.getIdValue(), characterizationAnketPatient.getCreatedAt(), options);
+            } else {
+                addValueToCharacteristic(characteristicId, Float.toString(characterizationAnketPatient.getValue()), characterizationAnketPatient.getCreatedAt());
+            }
         }
     }
 
     /**
-     * Инициализация тестовых данных
+     * Инициализация данных
      */
-    private void initMockData() {
-        // Создаем типы характеристик
-        CharacteristicType typeNumeric = new CharacteristicType();
-        typeNumeric.setId(1);
-        typeNumeric.setName("Числовая");
+    private void initData() {
+        DatabaseModule databaseModule = DatabaseModule.getInstance();
 
-        CharacteristicType typeNonNumeric = new CharacteristicType();
-        typeNonNumeric.setId(2);
-        typeNonNumeric.setName("Выбор из списка");
+        characterizationAnketPatientList = databaseModule.getCharacterizationsForAnket(idQuestionnaire);
+        characteristics = databaseModule.getAllCharacteristics();
 
-        // Создаем характеристики
-        mockCharacteristics = new ArrayList<>();
+        for(Characteristic characteristic: characteristics){
+            characteristicItems.add(new CharacteristicItem(characteristic));
 
-        // Числовая характеристика: Температура
-        CharacteristicItemNumeric temp = new CharacteristicItemNumeric();
-        temp.setIdCharacteristic(1);
-        temp.setIdType(1);
-        temp.setName("Температура");
-        temp.setHint("°C");
-        temp.setCreatedAt("2024-01-15");
-        mockCharacteristics.add(temp);
+            CharacterizationAnketPatient characterizationAnketPatient = new CharacterizationAnketPatient();
+            characterizationAnketPatient.setIdAnket(idQuestionnaire);
+            characterizationAnketPatient.setIdCharacteristic(characteristic.getId());
 
-//        // Числовая характеристика: Давление (систолическое/диастолическое)
-//        CharacteristicItemNumeric pressure = new CharacteristicItemNumeric();
-//        pressure.setIdCharacteristic(2);
-//        pressure.setIdType(1);
-//        pressure.setName("Давление");
-//        pressure.setHint("мм рт.ст.");
-//        pressure.setCreatedAt("2024-01-15");
-//        mockCharacteristics.add(pressure);
-//
-//        // Числовая характеристика: Пульс
-//        CharacteristicItemNumeric pulse = new CharacteristicItemNumeric();
-//        pulse.setIdCharacteristic(3);
-//        pulse.setIdType(1);
-//        pulse.setName("Пульс");
-//        pulse.setHint("уд/мин");
-//        pulse.setCreatedAt("2024-01-15");
-//        mockCharacteristics.add(pulse);
-//
-//        // Числовая характеристика: Вес
-//        CharacteristicItemNumeric weight = new CharacteristicItemNumeric();
-//        weight.setIdCharacteristic(4);
-//        weight.setIdType(1);
-//        weight.setName("Вес");
-//        weight.setHint("кг");
-//        weight.setCreatedAt("2024-01-15");
-//        mockCharacteristics.add(weight);
+            hashMap.put(characteristic.getId(), characterizationAnketPatient);
 
-        // Нечисловая характеристика: Болевой синдром
-        CharacteristicItemNonNumeric pain = new CharacteristicItemNonNumeric();
-        pain.setIdCharacteristic(5);
-        pain.setIdType(2);
-        pain.setName("Болевой синдром");
-        pain.setHint("Интенсивность боли");
-        pain.setOptions(Arrays.asList("Нет", "Слабая", "Умеренная", "Сильная", "Невыносимая"));
-        pain.setCreatedAt("2024-01-15");
-        mockCharacteristics.add(pain);
+            if (characteristic.getIdType() != 3) {
+                List<CharacterizationValue> characterizationValues = databaseModule.getValuesForCharacteristic(characteristic.getId());
+                List<String> options = new ArrayList<>();
+                options.add("Нет данных");
+                for(CharacterizationValue characterizationValue: characterizationValues){
+                    options.add(characterizationValue.getValue());
+                }
 
-        // Нечисловая характеристика: Локализация боли
-        CharacteristicItemNonNumeric painLocation = new CharacteristicItemNonNumeric();
-        painLocation.setIdCharacteristic(6);
-        painLocation.setIdType(2);
-        painLocation.setName("Локализация боли");
-        painLocation.setHint("Где болит");
-        painLocation.setOptions(Arrays.asList("Эпигастрий", "Левое подреберье", "Правое подреберье", "Опоясывающая", "Диффузная"));
-        painLocation.setCreatedAt("2024-01-15");
-        mockCharacteristics.add(painLocation);
+                hashMapOptions.put(characteristic.getId(), options);
+            }
+        }
 
-        // Создаем значения для характеристик
-        mockValues = new ArrayList<>();
-
-        // Значения для температуры
-        mockValues.add(createValue(1, "36.6", "2024-01-15"));
-        mockValues.add(createValue(1, "36.8", "2024-01-16"));
-        mockValues.add(createValue(1, "36.7", "2024-01-17"));
-        mockValues.add(createValue(1, "37.1", "2024-01-18"));
-
-        // Значения для давления
-        mockValues.add(createValue(2, "120/80", "2024-01-15"));
-        mockValues.add(createValue(2, "118/79", "2024-01-16"));
-        mockValues.add(createValue(2, "122/82", "2024-01-17"));
-
-        // Значения для пульса
-        mockValues.add(createValue(3, "72", "2024-01-15"));
-        mockValues.add(createValue(3, "75", "2024-01-16"));
-        mockValues.add(createValue(3, "70", "2024-01-17"));
-
-        // Значения для веса
-        mockValues.add(createValue(4, "75.5", "2024-01-15"));
-        mockValues.add(createValue(4, "75.2", "2024-01-16"));
-
-        // Значения для болевого синдрома
-        mockValues.add(createValue(5, "Умеренная", "2024-01-15"));
-        mockValues.add(createValue(5, "Сильная", "2024-01-16"));
-        mockValues.add(createValue(5, "Слабая", "2024-01-17"));
-
-        // Значения для локализации боли
-        mockValues.add(createValue(6, "Эпигастрий", "2024-01-15"));
-        mockValues.add(createValue(6, "Левое подреберье", "2024-01-16"));
-        mockValues.add(createValue(6, "Опоясывающая", "2024-01-17"));
-    }
-
-    /**
-     * Вспомогательный метод для создания значения
-     */
-    private CharacterizationValue createValue(int characteristicId, String value, String date) {
-        CharacterizationValue cv = new CharacterizationValue();
-        cv.setIdCharacteristic(characteristicId);
-        cv.setValue(value);
-        cv.setLastModified(date);
-        return cv;
+        // В мапе держатся самые последние значения для каждой характеристики
+        for(CharacterizationAnketPatient characterizationAnketPatient: characterizationAnketPatientList){
+             if(compare(characterizationAnketPatient.getCreatedAt(), hashMap.get(characterizationAnketPatient.getIdCharacteristic()).getCreatedAt())) {
+                  hashMap.put(characterizationAnketPatient.getIdCharacteristic(), characterizationAnketPatient);
+             }
+        }
     }
 
     /**
@@ -173,7 +118,7 @@ public class QuestionnaireController implements Initializable {
         String name = characteristic.getName();
         String hint = characteristic.getHint();
         boolean isNumeric = characteristic instanceof CharacteristicItemNumeric;
-        boolean isNonNumeric = characteristic instanceof CharacteristicItemNonNumeric;
+        boolean isNonNumeric = characteristic.getIdType() != 3;
 
         // Основной блок характеристики
         VBox characteristicBlock = new VBox(10);
@@ -181,43 +126,44 @@ public class QuestionnaireController implements Initializable {
                 "-fx-background-radius: 5; -fx-padding: 15;" +
                 "-fx-background-color: white;");
 
-        // Верхняя строка с заголовком и кнопками
+        // Верхняя строка с заголовком
         BorderPane headerPane = new BorderPane();
 
         // Заголовок с ID, названием и подсказкой
         HBox titleBox = new HBox(10);
         titleBox.setAlignment(Pos.CENTER_LEFT);
 
-        Label titleLabel = new Label(name + " (ID: " + id + ")");
+        Label titleLabel = new Label(name);
         titleLabel.setStyle("-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #2c3e50;");
+
         titleBox.getChildren().add(titleLabel);
 
         // Кнопка информации (для нечисловых характеристик показываем список опций)
-        if (isNonNumeric) {
-            Button infoButton = new Button("?");
-            infoButton.setStyle("-fx-background-radius: 15; -fx-background-color: #3498db; -fx-text-fill: white;");
-            infoButton.setPrefWidth(30);
-            infoButton.setPrefHeight(30);
-            infoButton.setTooltip(new Tooltip("Варианты выбора: " +
-                    String.join(", ", ((CharacteristicItemNonNumeric) characteristic).getOptions())));
-            titleBox.getChildren().add(infoButton);
-        }
+        Button infoButton = new Button("?");
+        infoButton.setStyle("-fx-background-radius: 15; -fx-background-color: #3498db; -fx-text-fill: white;");
+        infoButton.setPrefWidth(30);
+        infoButton.setPrefHeight(30);
+        infoButton.setTooltip(new Tooltip(hint));
+        titleBox.getChildren().add(infoButton);
 
         headerPane.setLeft(titleBox);
 
         // Кнопка добавления значения для этой характеристики
         Button addValueButton = new Button("Добавить значение");
         addValueButton.setStyle("-fx-background-color: #27ae60; -fx-text-fill: white;");
-        addValueButton.setPrefWidth(150);
+        addValueButton.setPrefWidth(180);
 
-        // Сохраняем ID характеристики для использования в обработчике
         final int characteristicId = id;
         final CharacteristicItem currentChar = characteristic;
+        final boolean isNonNumericFinal = isNonNumeric;
 
         addValueButton.setOnAction(event -> {
-            // Здесь будет логика добавления нового значения
-            // Пока просто добавляем пустое значение
-            addValueToCharacteristic(characteristicId, "", new java.text.SimpleDateFormat("yyyy-MM-dd").format(new Date()));
+            // Для нечисловых характеристик добавляем пустое значение с выбором из списка
+            if (isNonNumericFinal) {
+                addNonNumericValueToCharacteristic(characteristicId, 0, "-", hashMapOptions.get(characteristicId));
+            } else {
+                addValueToCharacteristic(characteristicId, "","-");
+            }
         });
 
         headerPane.setRight(addValueButton);
@@ -237,7 +183,7 @@ public class QuestionnaireController implements Initializable {
     }
 
     /**
-     * Добавление значения к характеристике
+     * Добавление числового значения к характеристике
      * @param characteristicId ID характеристики
      * @param value Значение
      * @param date Дата заполнения
@@ -249,23 +195,42 @@ public class QuestionnaireController implements Initializable {
             return;
         }
 
-        // Создаем блок значения
-        HBox valueBlock = createValueBlock(value, date);
+        // Создаем блок числового значения
+        HBox valueBlock = createNumericValueBlock(value, date);
         valuesContainer.getChildren().add(valueBlock);
     }
 
     /**
-     * Создание блока значения
+     * Добавление нечислового значения к характеристике (с выпадающим списком)
+     * @param characteristicId ID характеристики
+     * @param optionIndex Значение
+     * @param date Дата заполнения
+     * @param options Список возможных вариантов
      */
-    private HBox createValueBlock(String value, String date) {
+    public void addNonNumericValueToCharacteristic(int characteristicId, int optionIndex, String date, List<String> options) {
+        VBox valuesContainer = valuesContainers.get(characteristicId);
+        if (valuesContainer == null) {
+            System.err.println("Характеристика с ID " + characteristicId + " не найдена");
+            return;
+        }
+
+        // Создаем блок нечислового значения
+        HBox valueBlock = createNonNumericValueBlock(optionIndex, date, options);
+        valuesContainer.getChildren().add(valueBlock);
+    }
+
+    /**
+     * Создание блока числового значения
+     */
+    private HBox createNumericValueBlock(String value, String date) {
         HBox valueBox = new HBox(10);
         valueBox.setStyle("-fx-border-color: #bdc3c7; -fx-border-radius: 5; " +
                 "-fx-background-radius: 5; -fx-padding: 10;");
         valueBox.setAlignment(Pos.CENTER_LEFT);
 
-        // Поле для значения
+        // Поле для числового значения
         TextField valueField = new TextField(value);
-        valueField.setPromptText("Значение");
+        valueField.setPromptText("Числовое значение");
         valueField.setMaxWidth(300);
         HBox.setHgrow(valueField, Priority.ALWAYS);
 
@@ -276,6 +241,38 @@ public class QuestionnaireController implements Initializable {
         HBox.setHgrow(dateField, Priority.ALWAYS);
 
         valueBox.getChildren().addAll(valueField, dateField);
+        return valueBox;
+    }
+
+    /**
+     * Создание блока нечислового значения с выпадающим списком
+     */
+    private HBox createNonNumericValueBlock(int optionIndex, String date, List<String> options) {
+        HBox valueBox = new HBox(10);
+        valueBox.setStyle("-fx-border-color: #bdc3c7; -fx-border-radius: 5; " +
+                "-fx-background-radius: 5; -fx-padding: 10;");
+        valueBox.setAlignment(Pos.CENTER_LEFT);
+
+        // Выпадающий список для выбора значения
+        ComboBox<String> valueCombo = new ComboBox<>();
+        valueCombo.getItems().addAll(options);
+        valueCombo.setPromptText("Выберите значение");
+        valueCombo.setMaxWidth(300);
+        valueCombo.setEditable(false);
+        HBox.setHgrow(valueCombo, Priority.ALWAYS);
+
+        // Если передано значение, пытаемся его выбрать
+        if (optionIndex >= 0 && optionIndex < options.size()) {
+            valueCombo.setValue(options.get(optionIndex));
+        }
+
+        // Поле для даты
+        TextField dateField = new TextField(date);
+        dateField.setPromptText("Дата заполнения");
+        dateField.setPrefWidth(300);
+        HBox.setHgrow(dateField, Priority.ALWAYS);
+
+        valueBox.getChildren().addAll(valueCombo, dateField);
         return valueBox;
     }
 

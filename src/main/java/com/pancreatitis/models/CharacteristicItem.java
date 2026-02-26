@@ -19,6 +19,13 @@ public class CharacteristicItem {
     public CharacteristicItem() {
     }
 
+    public CharacteristicItem(Characteristic characteristic){
+        idCharacteristic = characteristic.getId();
+        IdType = characteristic.getIdType();
+        name = characteristic.getOpis();
+        hint = characteristic.getHints();
+    }
+
     public int getIdType() {
         return IdType;
     }

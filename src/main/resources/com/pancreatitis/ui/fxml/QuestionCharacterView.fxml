@@ -83,6 +83,8 @@
 
     <Separator />
 
+    <VBox fx:id="characteristicsContainer" style="-fx-background-color: #f5f5f5;" />
+
     <VBox spacing="15" style="-fx-background-color: white; -fx-border-color: #e0e0e0; -fx-border-radius: 5; -fx-background-radius: 5; -fx-padding: 15;" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1">
         <children>
             <!-- Верхняя строка с заголовком и кнопками -->
@@ -100,55 +102,7 @@
                     </HBox>
                 </left>
                 <right>
-                    <Button text="Добавить" style="-fx-background-color: #27ae60; -fx-text-fill: white;" prefWidth="100" />
-                </right>
-            </BorderPane>
-
-            <!-- Блоки характеристик -->
-            <VBox spacing="10">
-                <children>
-                    <!-- Значение 1 -->
-                    <HBox spacing="10" alignment="CENTER_LEFT" style="-fx-border-color: #bdc3c7; -fx-border-radius: 5; -fx-background-radius: 5; -fx-padding: 10;">
-                        <children>
-                            <TextField promptText="Значение" HBox.hgrow="ALWAYS" maxWidth="300"/>
-                            <TextField promptText="Дата заполнения" HBox.hgrow="ALWAYS" maxWidth="300"/>
-                        </children>
-                    </HBox>
-
-                    <!-- Значение 2 -->
-                    <HBox spacing="10" alignment="CENTER_LEFT" style="-fx-border-color: #bdc3c7; -fx-border-radius: 5; -fx-background-radius: 5; -fx-padding: 10;">
-                        <children>
-                            <TextField promptText="Значение" HBox.hgrow="ALWAYS" maxWidth="300"/>
-                            <TextField promptText="Дата заполнения" HBox.hgrow="ALWAYS" maxWidth="300"/>
-                        </children>
-                    </HBox>
-
-                    <!-- Значение 3 -->
-                    <HBox spacing="10" alignment="CENTER_LEFT" style="-fx-border-color: #bdc3c7; -fx-border-radius: 5; -fx-background-radius: 5; -fx-padding: 10;">
-                        <children>
-                            <TextField promptText="Значение" HBox.hgrow="ALWAYS" maxWidth="300"/>
-                            <TextField promptText="Дата заполнения" HBox.hgrow="ALWAYS" maxWidth="300"/>
-                        </children>
-                    </HBox>
-                </children>
-            </VBox>
-
-            <!-- Верхняя строка с заголовком и кнопками -->
-            <BorderPane>
-                <left>
-                    <HBox alignment="CENTER_LEFT" spacing="10">
-                        <children>
-                            <Label text="Характеристика 1" textFill="#2c3e50">
-                                <font>
-                                    <Font name="System Bold" size="16" />
-                                </font>
-                            </Label>
-                            <Button text="?" style="-fx-background-radius: 15; -fx-background-color: #3498db; -fx-text-fill: white;" prefWidth="30" prefHeight="30" />
-                        </children>
-                    </HBox>
-                </left>
-                <right>
-                    <Button text="Добавить" style="-fx-background-color: #27ae60; -fx-text-fill: white;" prefWidth="100" />
+                    <Button fx:id="addCharacteristic" text="Добавить" style="-fx-background-color: #27ae60; -fx-text-fill: white;" prefWidth="100" />
                 </right>
             </BorderPane>
 

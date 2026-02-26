@@ -48,9 +48,6 @@
                 </font>
             </Label>
             <TextField promptText="Введите ФИО" style="-fx-background-radius: 3; -fx-border-radius: 3; -fx-border-color: #bdc3c7; -fx-border-width: 1;" GridPane.columnIndex="1">
-                <GridPane.margin>
-                    <Insets right="10.0" />
-                </GridPane.margin>
             </TextField>
 
             <!-- Строка 1: Откуда поступил -->
@@ -60,9 +57,6 @@
                 </font>
             </Label>
             <TextField promptText="Введите источник поступления" style="-fx-background-radius: 3; -fx-border-radius: 3; -fx-border-color: #bdc3c7; -fx-border-width: 1;" GridPane.columnIndex="1" GridPane.rowIndex="1">
-                <GridPane.margin>
-                    <Insets right="10.0" />
-                </GridPane.margin>
             </TextField>
 
             <!-- Строка 2: Дата создания анкеты -->
@@ -72,9 +66,6 @@
                 </font>
             </Label>
             <TextField editable="false" style="-fx-background-color: #f9f9f9; -fx-background-radius: 3; -fx-border-radius: 3; -fx-border-color: #bdc3c7; -fx-border-width: 1;" text="2026-02-19" GridPane.columnIndex="1" GridPane.rowIndex="2">
-                <GridPane.margin>
-                    <Insets right="10.0" />
-                </GridPane.margin>
             </TextField>
 
             <!-- Строка 3: Диагноз -->
@@ -84,9 +75,6 @@
                 </font>
             </Label>
             <TextField editable="false" style="-fx-background-color: #f9f9f9; -fx-background-radius: 3; -fx-border-radius: 3; -fx-border-color: #bdc3c7; -fx-border-width: 1;" text="Острый панкреатит" GridPane.columnIndex="1" GridPane.rowIndex="3">
-                <GridPane.margin>
-                    <Insets right="10.0" />
-                </GridPane.margin>
             </TextField>
         </children>
     </GridPane>

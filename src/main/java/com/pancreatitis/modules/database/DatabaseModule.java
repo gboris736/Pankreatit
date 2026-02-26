@@ -324,16 +324,14 @@ public class DatabaseModule {
         return null;
     }
 
-    public List<QuestionnaireItem> getAllQuestionnaireItems(int idDoctor) {
+    public List<QuestionnaireItem> getAllQuestionnaireItems() {
         List<QuestionnaireItem> items = new ArrayList<>();
-        String sql = "SELECT ankets.id as idQuestionnaire, patients.id as idPatient, patients.fio as fioPatient, ankets.diagnosis as diagnosis " +
+        String sql = "SELECT ankets.id as idQuestionnaire, patients.id as idPatient, patients.fio as fioPatient, ankets.diagnosis as diagnosis, ankets.date_of_completion as dateOfCompletion " +
                 "FROM ankets JOIN patients ON ankets.id_patient = patients.id " +
-                "WHERE ankets.id_doctor = ? ORDER BY patients.fio";
+                "ORDER BY patients.fio";
 
         try (Connection conn = DriverManager.getConnection(url);
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
-
-            pstmt.setInt(1, idDoctor);
             ResultSet rs = pstmt.executeQuery();
 
             while (rs.next()) {
@@ -342,6 +340,7 @@ public class DatabaseModule {
                 item.setIdPatient(rs.getInt("idPatient"));
                 item.setFioPatient(rs.getString("fioPatient"));
                 item.setDiagnosis(rs.getString("diagnosis"));
+                item.setDateOfCompletion(rs.getString("dateOfCompletion"));
                 items.add(item);
             }
         } catch (SQLException e) {

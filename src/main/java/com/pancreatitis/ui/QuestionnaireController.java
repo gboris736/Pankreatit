@@ -18,9 +18,19 @@ public class QuestionnaireController implements Initializable {
 
     @FXML
     private VBox characteristicsContainer;
+    @FXML
+    private ComboBox<String> diagnosis;
+    @FXML
+    private TextField fio;
+    @FXML
+    private TextField addmitedFrom;
+    @FXML
+    private TextField createdAt;
 
-    private int idQuestionnaire = 118;
+    private int idQuestionnaire = 45;
+    private Questionnaire questionnaire;
     private int idPatient = 1;
+    private Patient patient;
 
     // Хранение всех характеристик по ID
     private final Map<Integer, VBox> characteristicBlocks = new HashMap<>();
@@ -51,6 +61,8 @@ public class QuestionnaireController implements Initializable {
         // Инициализация данных
         initData();
 
+        settingsCommonField();
+
         // Создаем блоки для всех характеристи
         for (CharacteristicItem characteristic : characteristicItems) {
             createCharacteristicBlock(characteristic);
@@ -69,11 +81,28 @@ public class QuestionnaireController implements Initializable {
         }
     }
 
+    private void settingsCommonField(){
+        fio.setText(patient.getFio());
+
+        createdAt.setText(questionnaire.getDateOfCompletion());
+
+        addmitedFrom.setText(questionnaire.getAdmittedFrom());
+
+        if (Objects.equals(questionnaire.getDiagnosis(), "-")){
+            diagnosis.setValue("Нет данных");
+        } else {
+            diagnosis.setValue(questionnaire.getDiagnosis());
+        }
+    }
+
     /**
      * Инициализация данных
      */
     private void initData() {
         DatabaseModule databaseModule = DatabaseModule.getInstance();
+
+        questionnaire = databaseModule.getQuestionnaireById(idQuestionnaire);
+        patient = databaseModule.getPatientById(idPatient);
 
         characterizationAnketPatientList = databaseModule.getCharacterizationsForAnket(idQuestionnaire);
         characteristics = databaseModule.getAllCharacteristics();

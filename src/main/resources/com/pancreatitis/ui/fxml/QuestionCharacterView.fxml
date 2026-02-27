@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<?import java.lang.*?>
+<?import javafx.collections.*?>
 <?import javafx.geometry.*?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
@@ -46,7 +48,7 @@
                     <Font name="System Bold" size="14.0" />
                 </font>
             </Label>
-            <TextField promptText="Введите ФИО" style="-fx-background-radius: 3; -fx-border-radius: 3; -fx-border-color: #bdc3c7; -fx-border-width: 1;" GridPane.columnIndex="1">
+            <TextField fx:id="fio" editable="false" promptText="Введите ФИО" style="-fx-background-radius: 3; -fx-border-radius: 3; -fx-border-color: #bdc3c7; -fx-border-width: 1;" GridPane.columnIndex="1">
             </TextField>
 
             <!-- Строка 1: Откуда поступил -->
@@ -55,7 +57,7 @@
                     <Font name="System Bold" size="14.0" />
                 </font>
             </Label>
-            <TextField promptText="Введите источник поступления" style="-fx-background-radius: 3; -fx-border-radius: 3; -fx-border-color: #bdc3c7; -fx-border-width: 1;" GridPane.columnIndex="1" GridPane.rowIndex="1">
+            <TextField fx:id="addmitedFrom" promptText="Введите источник поступления" style="-fx-background-radius: 3; -fx-border-radius: 3; -fx-border-color: #bdc3c7; -fx-border-width: 1;" GridPane.columnIndex="1" GridPane.rowIndex="1">
             </TextField>
 
             <!-- Строка 2: Дата создания анкеты -->
@@ -64,7 +66,7 @@
                     <Font name="System Bold" size="14.0" />
                 </font>
             </Label>
-            <TextField editable="false" style="-fx-background-color: #f9f9f9; -fx-background-radius: 3; -fx-border-radius: 3; -fx-border-color: #bdc3c7; -fx-border-width: 1;" text="2026-02-19" GridPane.columnIndex="1" GridPane.rowIndex="2">
+            <TextField fx:id="createdAt" editable="false" style="-fx-background-color: #f9f9f9; -fx-background-radius: 3; -fx-border-radius: 3; -fx-border-color: #bdc3c7; -fx-border-width: 1;" text="2026-02-19" GridPane.columnIndex="1" GridPane.rowIndex="2">
             </TextField>
 
             <!-- Строка 3: Диагноз -->
@@ -73,8 +75,19 @@
                     <Font name="System Bold" size="14.0" />
                 </font>
             </Label>
-            <TextField editable="false" style="-fx-background-color: #f9f9f9; -fx-background-radius: 3; -fx-border-radius: 3; -fx-border-color: #bdc3c7; -fx-border-width: 1;" text="Острый панкреатит" GridPane.columnIndex="1" GridPane.rowIndex="3">
-            </TextField>
+            <ComboBox fx:id="diagnosis" style="-fx-background-color: #f9f9f9; -fx-background-radius: 3; -fx-border-radius: 3; -fx-border-color: #bdc3c7; -fx-border-width: 1;" GridPane.columnIndex="1" GridPane.rowIndex="3">
+                <items>
+                    <FXCollections fx:factory="observableArrayList">
+                        <String fx:value="Нет данных" />
+                        <String fx:value="Отечный панкреатит" />
+                        <String fx:value="Панкреонекроз среднетяжелое течение" />
+                        <String fx:value="Панкреонекроз тяжелое течение" />
+                    </FXCollections>
+                </items>
+                <value>
+                    <String fx:value="Нет данных" />
+                </value>
+            </ComboBox>
         </children>
     </GridPane>
     </VBox>

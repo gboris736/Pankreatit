@@ -22,9 +22,9 @@
 
     <HBox prefWidth="600" spacing="10">
         <children>
-            <Button text="Назад" />
+            <Button fx:id="btnBack" text="Назад" />
             <Region HBox.hgrow="ALWAYS" />
-            <Button text="Сохранить анкету" />
+            <Button fx:id="btnSave" text="Сохранить анкету" />
         </children>
     </HBox>
 

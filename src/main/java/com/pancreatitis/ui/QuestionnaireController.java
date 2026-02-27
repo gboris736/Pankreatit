@@ -26,6 +26,8 @@ public class QuestionnaireController implements Initializable {
     private TextField addmitedFrom;
     @FXML
     private TextField createdAt;
+    @FXML
+    private Button btnBack;
 
     private int idQuestionnaire = 45;
     private Questionnaire questionnaire;
@@ -134,6 +136,11 @@ public class QuestionnaireController implements Initializable {
                   hashMap.put(characterizationAnketPatient.getIdCharacteristic(), characterizationAnketPatient);
              }
         }
+
+        btnBack.setOnAction(event -> {
+            MainMenuControl mainMenuControl = MainMenuControl.getInstance();
+            mainMenuControl.showViewForTab("Список анкет");
+        });
     }
 
     /**

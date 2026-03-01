@@ -12,6 +12,7 @@ import javafx.util.Duration;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 public class MainMenuControl {
     public ImageView userAvatar;
@@ -23,6 +24,13 @@ public class MainMenuControl {
     private final Map<String, Node> viewCache = new HashMap<>();
 
     private static MainMenuControl instance;
+
+    private FXMLLoader loader;
+
+    static int idCurrentPatient;
+    static int idCurrentQuestionnaire;
+
+
 
     @FXML
     public void initialize() {
@@ -80,7 +88,7 @@ public class MainMenuControl {
             }
         }*/
         instance = this;
-        tabsListView.setItems(FXCollections.observableArrayList("Список анкет", "Список пользователей", "Заявки на регистрацию"));
+        tabsListView.setItems(FXCollections.observableArrayList("Список анкет", "Список пользователей", "Заявки на регистрацию", "Анкета"));
         tabsListView.getSelectionModel().selectedItemProperty().addListener((obs, oldV, newV) -> {
             if (newV != null) showViewForTab(newV);
         });
@@ -96,9 +104,18 @@ public class MainMenuControl {
     }
 
 
+
+    private static final Set<String> NO_CACHE_TABS = Set.of(
+            "Анкета",
+            "Заявки на регистрацию"
+    );
+
     public void showViewForTab(String tab) {
         try {
-            Node view = viewCache.get(tab);
+            Node view = null;
+            if (!NO_CACHE_TABS.contains(tab)) {         //Не кешируем некоторые вкладки
+                view = viewCache.get(tab);
+            }
             if (view == null) {
                 String fxml = switch (tab) {
                     case "Список анкет" -> "fxml/QuestionListView.fxml";
@@ -108,8 +125,10 @@ public class MainMenuControl {
                     default -> "DefaultTab.fxml";
                 };
 
-                FXMLLoader loader = new FXMLLoader(getClass().getResource(fxml));
+                loader = new FXMLLoader(getClass().getResource(fxml));
                 view = loader.load();
+
+                tabsListView.getSelectionModel().select(tab);
 
                 viewCache.put(tab, view);
             }
@@ -125,6 +144,11 @@ public class MainMenuControl {
         t.setHideDelay(Duration.millis(100));
         node.setOnMouseEntered(e -> Tooltip.install(node, t));
         node.setOnMouseExited(e -> Tooltip.uninstall(node, t));
+    }
+
+
+    public <T> T getTabController(){
+        return loader.getController();
     }
 
 

@@ -14,7 +14,7 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.*;
 
-public class QuestionnaireController implements Initializable {
+public class QuestionnaireController {
 
     @FXML
     private VBox characteristicsContainer;
@@ -29,9 +29,9 @@ public class QuestionnaireController implements Initializable {
     @FXML
     private Button btnBack;
 
-    private int idQuestionnaire = 45;
+    private int idQuestionnaire;
     private Questionnaire questionnaire;
-    private int idPatient = 1;
+    private int idPatient;
     private Patient patient;
 
     // Хранение всех характеристик по ID
@@ -58,8 +58,8 @@ public class QuestionnaireController implements Initializable {
         }
     }
 
-    @Override
-    public void initialize(URL location, ResourceBundle resources) {
+    @FXML
+    public void initialize() {
         // Инициализация данных
         initData();
 
@@ -100,8 +100,11 @@ public class QuestionnaireController implements Initializable {
     /**
      * Инициализация данных
      */
-    private void initData() {
+    void initData() {
         DatabaseModule databaseModule = DatabaseModule.getInstance();
+
+        idQuestionnaire = MainMenuControl.idCurrentQuestionnaire;
+        idPatient = MainMenuControl.idCurrentPatient;
 
         questionnaire = databaseModule.getQuestionnaireById(idQuestionnaire);
         patient = databaseModule.getPatientById(idPatient);

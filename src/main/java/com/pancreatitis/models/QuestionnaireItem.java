@@ -6,7 +6,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class QuestionnaireItem {
-    private long idQuestionnaire;
+    private int idQuestionnaire;
     private int idPatient;
     private String fioPatient;
     private String diagnosis = "-";
@@ -22,11 +22,11 @@ public class QuestionnaireItem {
         return diagnosisMap.getOrDefault(code, "-");
     }
 
-    public long getIdQuestionnaire() {
+    public int getIdQuestionnaire() {
         return idQuestionnaire;
     }
 
-    public void setIdQuestionnaire(long idQuestionnaire) {
+    public void setIdQuestionnaire(int idQuestionnaire) {
         this.idQuestionnaire = idQuestionnaire;
     }
 

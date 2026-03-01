@@ -118,10 +118,18 @@ public class QuestionListTableViewController {
 
     private void openQuestionnaireDetail(QuestionnaireItem item) {
         try {
-            System.out.println(item.getIdQuestionnaire());
+            MainMenuControl.idCurrentQuestionnaire = item.getIdQuestionnaire();
+            MainMenuControl.idCurrentPatient = item.getIdPatient();
 
             MainMenuControl mainMenuControl = MainMenuControl.getInstance();
             mainMenuControl.showViewForTab("Анкета");
+
+            Object controller = mainMenuControl.getTabController();
+            if (controller instanceof QuestionnaireController) {
+                //((QuestionnaireController) controller).initData();        //Не юзать initialize!!!  Хз что в этот момент  происходит и почемуто не работает половина функций
+                //((QuestionnaireController) controller).reload();
+            }
+
 
         } catch (Exception e) {
             showAlert("Не удалось открыть анкету: " + e.getMessage());

@@ -2,11 +2,13 @@ package com.pancreatitis.ui;
 
 import com.pancreatitis.models.*;
 import com.pancreatitis.modules.database.DatabaseModule;
+import javafx.animation.PauseTransition;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
+import javafx.util.Duration;
 
 import java.net.URL;
 import java.time.LocalDateTime;
@@ -16,6 +18,8 @@ import java.util.*;
 
 public class QuestionnaireController {
 
+    @FXML
+    public Button btnSave;
     @FXML
     private VBox characteristicsContainer;
     @FXML
@@ -106,6 +110,10 @@ public class QuestionnaireController {
         idQuestionnaire = MainMenuControl.idCurrentQuestionnaire;
         idPatient = MainMenuControl.idCurrentPatient;
 
+        if (idQuestionnaire == -1 || idPatient == -1){      //Добавить
+
+        }
+
         questionnaire = databaseModule.getQuestionnaireById(idQuestionnaire);
         patient = databaseModule.getPatientById(idPatient);
 
@@ -181,7 +189,28 @@ public class QuestionnaireController {
         infoButton.setPrefWidth(30);
         infoButton.setPrefHeight(30);
         infoButton.setTooltip(new Tooltip(hint));
+
+        Tooltip infoTooltip = new Tooltip(hint);        // Источник hint
+        infoTooltip.setWrapText(true); // Перенос длинного текста
+        infoTooltip.setMaxWidth(300);  // Ограничение ширины
+
+        // Показываем tooltip по клику
+        infoButton.setOnMouseClicked(event -> {
+            // Показываем tooltip у кнопки
+            infoTooltip.show(infoButton,
+                    event.getScreenX() + 10,  // Смещение по X
+                    event.getScreenY() + 30   // Смещение по Y
+            );
+
+            // Автоматически скрыть через 5 секунд
+            PauseTransition delay = new PauseTransition(Duration.seconds(5));
+            delay.setOnFinished(e -> infoTooltip.hide());
+            delay.play();
+        });
+
         titleBox.getChildren().add(infoButton);
+
+
 
         headerPane.setLeft(titleBox);
 
@@ -197,9 +226,9 @@ public class QuestionnaireController {
         addValueButton.setOnAction(event -> {
             // Для нечисловых характеристик добавляем пустое значение с выбором из списка
             if (isNonNumericFinal) {
-                addNonNumericValueToCharacteristic(characteristicId, 0, "-", hashMapOptions.get(characteristicId));
+                addNonNumericValueToCharacteristic(characteristicId, 0, FORMATTER.format(LocalDateTime.now()), hashMapOptions.get(characteristicId));
             } else {
-                addValueToCharacteristic(characteristicId, "","-");
+                addValueToCharacteristic(characteristicId, "", FORMATTER.format(LocalDateTime.now()));
             }
         });
 

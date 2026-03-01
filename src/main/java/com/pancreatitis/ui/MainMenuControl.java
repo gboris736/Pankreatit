@@ -87,6 +87,9 @@ public class MainMenuControl {
                 return;
             }
         }*/
+        idCurrentPatient = -1;
+        idCurrentQuestionnaire = -1;
+
         instance = this;
         tabsListView.setItems(FXCollections.observableArrayList("Список анкет", "Список пользователей", "Заявки на регистрацию", "Анкета"));
         tabsListView.getSelectionModel().selectedItemProperty().addListener((obs, oldV, newV) -> {

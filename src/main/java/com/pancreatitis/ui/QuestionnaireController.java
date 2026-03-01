@@ -4,13 +4,11 @@ import com.pancreatitis.models.*;
 import com.pancreatitis.modules.database.DatabaseModule;
 import javafx.animation.PauseTransition;
 import javafx.fxml.FXML;
-import javafx.fxml.Initializable;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.util.Duration;
 
-import java.net.URL;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
@@ -43,7 +41,7 @@ public class QuestionnaireController {
     private final Map<Integer, VBox> valuesContainers = new HashMap<>();
 
     private List<CharacteristicItem> characteristicItems = new ArrayList<>();
-    private List<CharacterizationAnketPatient> characterizationAnketPatientList = new ArrayList<>();
+    private List<CharacterizationAnketPatient> characterizationQuestionnairePatientList = new ArrayList<>();
     private List<Characteristic> characteristics = new ArrayList<>();
 
     private HashMap<Integer, CharacterizationAnketPatient> hashMap = new HashMap<>();
@@ -75,7 +73,7 @@ public class QuestionnaireController {
         }
 
         // Добавляем значения к характеристикам
-        for (CharacterizationAnketPatient characterizationAnketPatient : characterizationAnketPatientList) {
+        for (CharacterizationAnketPatient characterizationAnketPatient : characterizationQuestionnairePatientList) {
             int characteristicId = characterizationAnketPatient.getIdCharacteristic();
             List<String> options = hashMapOptions.get(characteristicId);
             Characteristic characteristic = characteristics.get(characteristicId);
@@ -117,7 +115,7 @@ public class QuestionnaireController {
         questionnaire = databaseModule.getQuestionnaireById(idQuestionnaire);
         patient = databaseModule.getPatientById(idPatient);
 
-        characterizationAnketPatientList = databaseModule.getCharacterizationsForAnket(idQuestionnaire);
+        characterizationQuestionnairePatientList = databaseModule.getCharacterizationsForAnket(idQuestionnaire);
         characteristics = databaseModule.getAllCharacteristics();
 
         for(Characteristic characteristic: characteristics){
@@ -142,7 +140,7 @@ public class QuestionnaireController {
         }
 
         // В мапе держатся самые последние значения для каждой характеристики
-        for(CharacterizationAnketPatient characterizationAnketPatient: characterizationAnketPatientList){
+        for(CharacterizationAnketPatient characterizationAnketPatient: characterizationQuestionnairePatientList){
              if(compare(characterizationAnketPatient.getCreatedAt(), hashMap.get(characterizationAnketPatient.getIdCharacteristic()).getCreatedAt())) {
                   hashMap.put(characterizationAnketPatient.getIdCharacteristic(), characterizationAnketPatient);
              }
@@ -262,7 +260,7 @@ public class QuestionnaireController {
         }
 
         // Создаем блок числового значения
-        HBox valueBlock = createNumericValueBlock(value, date);
+        HBox valueBlock = createNumericValueBlock(value, date, true, false);
         valuesContainer.getChildren().add(valueBlock);
     }
 
@@ -281,66 +279,103 @@ public class QuestionnaireController {
         }
 
         // Создаем блок нечислового значения
-        HBox valueBlock = createNonNumericValueBlock(optionIndex, date, options);
+        HBox valueBlock = createNonNumericValueBlock(optionIndex, date, options, true, false);
         valuesContainer.getChildren().add(valueBlock);
     }
 
     /**
      * Создание блока числового значения
+     * @param value Начальное значение
+     * @param date Дата заполнения
+     * @param valueEditable Можно ли редактировать значение
+     * @param dateEditable Можно ли редактировать дату
      */
-    private HBox createNumericValueBlock(String value, String date) {
+    private HBox createNumericValueBlock(String value, String date, boolean valueEditable, boolean dateEditable) {
         HBox valueBox = new HBox(10);
         valueBox.setStyle("-fx-border-color: #bdc3c7; -fx-border-radius: 5; " +
                 "-fx-background-radius: 5; -fx-padding: 10;");
         valueBox.setAlignment(Pos.CENTER_LEFT);
 
-        // Поле для числового значения
+        // 🔹 Поле для числового значения
         TextField valueField = new TextField(value);
         valueField.setPromptText("Числовое значение");
         valueField.setMaxWidth(300);
+        applyReadOnlyStyle(valueField, !valueEditable);  // Применяем стиль
         HBox.setHgrow(valueField, Priority.ALWAYS);
 
-        // Поле для даты
+        // 🔹 Поле для даты
         TextField dateField = new TextField(date);
         dateField.setPromptText("Дата заполнения");
         dateField.setPrefWidth(300);
+        applyReadOnlyStyle(dateField, !dateEditable);  // Применяем стиль
         HBox.setHgrow(dateField, Priority.ALWAYS);
 
         valueBox.getChildren().addAll(valueField, dateField);
         return valueBox;
     }
 
+
     /**
      * Создание блока нечислового значения с выпадающим списком
+     * @param optionIndex Индекс выбранного значения
+     * @param date Дата заполнения
+     * @param options Список возможных вариантов
+     * @param valueEditable Можно ли редактировать значение (ComboBox)
+     * @param dateEditable Можно ли редактировать дату
      */
-    private HBox createNonNumericValueBlock(int optionIndex, String date, List<String> options) {
+    private HBox createNonNumericValueBlock(int optionIndex, String date, List<String> options,
+                                            boolean valueEditable, boolean dateEditable) {
         HBox valueBox = new HBox(10);
         valueBox.setStyle("-fx-border-color: #bdc3c7; -fx-border-radius: 5; " +
                 "-fx-background-radius: 5; -fx-padding: 10;");
         valueBox.setAlignment(Pos.CENTER_LEFT);
 
-        // Выпадающий список для выбора значения
+        // 🔹 Выпадающий список для выбора значения
         ComboBox<String> valueCombo = new ComboBox<>();
         valueCombo.getItems().addAll(options);
         valueCombo.setPromptText("Выберите значение");
         valueCombo.setMaxWidth(300);
         valueCombo.setEditable(false);
+
+        // Блокировка ComboBox
+        if (!valueEditable) {
+            valueCombo.setDisable(true);
+            valueCombo.setStyle("-fx-background-color: #f5f5f5; -fx-text-fill: #555;");
+        }
         HBox.setHgrow(valueCombo, Priority.ALWAYS);
 
-        // Если передано значение, пытаемся его выбрать
         if (optionIndex >= 0 && optionIndex < options.size()) {
             valueCombo.setValue(options.get(optionIndex));
         }
 
-        // Поле для даты
+        // 🔹 Поле для даты
         TextField dateField = new TextField(date);
         dateField.setPromptText("Дата заполнения");
         dateField.setPrefWidth(300);
+        applyReadOnlyStyle(dateField, !dateEditable);
         HBox.setHgrow(dateField, Priority.ALWAYS);
 
         valueBox.getChildren().addAll(valueCombo, dateField);
         return valueBox;
     }
+
+    /**
+     * Применяет визуальный стиль и блокировку для TextField в режиме readonly
+     */
+    private void applyReadOnlyStyle(TextField field, boolean readOnly) {
+        field.setEditable(!readOnly);
+
+        if (readOnly) {
+            field.setStyle("-fx-background-color: #f5f5f5; -fx-text-fill: #555;");
+            field.setMouseTransparent(true);      // Игнорировать клики
+            field.setFocusTraversable(false);     // Нельзя получить фокус с Tab
+        } else {
+            field.setStyle("");                    // Сброс стиля
+            field.setMouseTransparent(false);
+            field.setFocusTraversable(true);
+        }
+    }
+
 
     /**
      * Получение контейнера характеристик (для доступа извне)

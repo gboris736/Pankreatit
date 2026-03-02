@@ -188,34 +188,16 @@ public class QuestionnaireController {
 
         titleBox.getChildren().add(titleLabel);
 
-        // Кнопка информации (для нечисловых характеристик показываем список опций)
+        // Кнопка информации (открывает модальное окно с подсказкой)
         Button infoButton = new Button("?");
-        infoButton.setStyle("-fx-background-radius: 15; -fx-background-color: #3498db; -fx-text-fill: white;");
+        infoButton.setStyle("-fx-background-radius: 15; -fx-background-color: #3498db; -fx-text-fill: white; -fx-font-weight: bold;");
         infoButton.setPrefWidth(30);
         infoButton.setPrefHeight(30);
-        infoButton.setTooltip(new Tooltip(hint));
 
-        Tooltip infoTooltip = new Tooltip(hint);        // Источник hint
-        infoTooltip.setWrapText(true); // Перенос длинного текста
-        infoTooltip.setMaxWidth(300);  // Ограничение ширины
-
-        // Показываем tooltip по клику
-        infoButton.setOnMouseClicked(event -> {
-            // Показываем tooltip у кнопки
-            infoTooltip.show(infoButton,
-                    event.getScreenX() + 10,  // Смещение по X
-                    event.getScreenY() + 30   // Смещение по Y
-            );
-
-            // Автоматически скрыть через 5 секунд
-            PauseTransition delay = new PauseTransition(Duration.seconds(5));
-            delay.setOnFinished(e -> infoTooltip.hide());
-            delay.play();
-        });
+        // Открываем модальное окно при клике
+        infoButton.setOnAction(event -> showHintDialog(name, hint));
 
         titleBox.getChildren().add(infoButton);
-
-
 
         headerPane.setLeft(titleBox);
 
@@ -251,6 +233,60 @@ public class QuestionnaireController {
 
         // Добавляем в общий контейнер
         characteristicsContainer.getChildren().add(characteristicBlock);
+    }
+
+    /**
+     * Показывает модальное окно с подсказкой для характеристики
+     * @param characteristicName название характеристики
+     * @param hint текст подсказки
+     */
+    private void showHintDialog(String characteristicName, String hint) {
+        // Создаем диалоговое окно
+        Dialog<String> dialog = new Dialog<>();
+        dialog.setTitle("Подсказка");
+        dialog.setHeaderText("Информация о характеристике: " + characteristicName);
+
+        // Создаем содержимое диалога
+        VBox content = new VBox(15);
+        content.setAlignment(Pos.TOP_LEFT);
+        content.setPrefWidth(400);
+        content.setPrefHeight(200);
+        content.setPadding(new javafx.geometry.Insets(20));
+
+        // Текст подсказки с поддержкой переноса
+        Label hintLabel = new Label(hint);
+        hintLabel.setWrapText(true);
+        hintLabel.setStyle("-fx-font-size: 14px;");
+
+        // Добавляем информацию о типе характеристики (опционально)
+        Label typeLabel = new Label();
+        typeLabel.setStyle("-fx-font-size: 12px; -fx-text-fill: #7f8c8d;");
+
+        // Определяем тип характеристики из characteristicItems
+        for (CharacteristicItem item : characteristicItems) {
+            if (item.getName().equals(characteristicName)) {
+                if (item.getIdType() == 3) {
+                    typeLabel.setText("Тип: числовая характеристика");
+                } else {
+                    typeLabel.setText("Тип: справочное значение");
+                }
+                break;
+            }
+        }
+
+        content.getChildren().addAll(hintLabel, typeLabel);
+
+        // Добавляем кнопки
+        ButtonType okButton = new ButtonType("OK", ButtonBar.ButtonData.OK_DONE);
+        dialog.getDialogPane().getButtonTypes().add(okButton);
+
+        dialog.getDialogPane().setContent(content);
+
+        // Применяем стили
+        dialog.getDialogPane().setStyle("-fx-background-color: white;");
+
+        // Показываем диалог и ждем закрытия
+        dialog.showAndWait();
     }
 
     /**

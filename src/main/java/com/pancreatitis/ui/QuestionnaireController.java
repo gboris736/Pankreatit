@@ -2,6 +2,8 @@ package com.pancreatitis.ui;
 
 import com.pancreatitis.models.*;
 import com.pancreatitis.modules.database.DatabaseModule;
+import com.pancreatitis.modules.prediction.PredictionModule;
+import com.pancreatitis.modules.prediction.PredictionResult;
 import com.pancreatitis.modules.questionnairemanager.QuestionnaireManagerModule;
 import javafx.fxml.FXML;
 import javafx.geometry.Insets;
@@ -163,7 +165,13 @@ public class QuestionnaireController {
         btnPredict.setOnAction(event -> {
             List<CharacterizationAnketPatient> characterizationAnketPatients = getLatestValues();
             List<CharasteristicDTO> charasteristicDTOS = getCharDto(characterizationAnketPatients);
-            System.out.println(charasteristicDTOS);
+            PredictionModule predictionModule = PredictionModule.getInstance();
+            try {
+                PredictionResult predict_result = predictionModule.predict(charasteristicDTOS);
+                // работает, надо сделать модальное окно с результатом
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
         });
     }
 

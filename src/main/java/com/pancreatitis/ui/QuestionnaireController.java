@@ -23,6 +23,7 @@ public class QuestionnaireController {
     @FXML private TextField createdAt;
     @FXML private Button btnBack;
     @FXML private Button btnSave;
+    @FXML private Button btnPredict;
 
     private int idQuestionnaire;
     private int idPatient;
@@ -158,6 +159,27 @@ public class QuestionnaireController {
             boolean result = questionnaireManagerModule.saveQuestionnaire(questionnaire, patient, characterizationAnketPatients);
             System.out.println(result);
         });
+
+        btnPredict.setOnAction(event -> {
+            List<CharacterizationAnketPatient> characterizationAnketPatients = getLatestValues();
+            List<CharasteristicDTO> charasteristicDTOS = getCharDto(characterizationAnketPatients);
+            System.out.println(charasteristicDTOS);
+        });
+    }
+
+    private List<CharasteristicDTO> getCharDto(List<CharacterizationAnketPatient> characterizationAnketPatients) {
+        List<CharasteristicDTO> charasteristicDTOS = new ArrayList<>();
+        List<Characteristic> characteristics = characteristicsMap.values().stream().toList();
+        for(CharacterizationAnketPatient characterizationAnketPatient: characterizationAnketPatients){
+            CharasteristicDTO charasteristicDTO = new CharasteristicDTO(characteristics.get(characterizationAnketPatient.getIdCharacteristic()));
+            if (optionTexts.containsKey(characterizationAnketPatient.getIdCharacteristic())) {
+                charasteristicDTO.setValue(characterizationAnketPatient.getIdValue());
+            } else {
+                charasteristicDTO.setValue(characterizationAnketPatient.getValue());
+            }
+            charasteristicDTOS.add(charasteristicDTO);
+        }
+        return charasteristicDTOS;
     }
 
     private void settingsCommonField() {

@@ -39,4 +39,11 @@ public class CharasteristicDTO extends Characteristic {
         ObjectMapper mapper = new ObjectMapper();
         return mapper.readValue(json, CharasteristicDTO.class);
     }
+
+    @Override
+    public String toString() {
+        return "CharasteristicDTO{" +
+                "value=" + value +
+                '}';
+    }
 }

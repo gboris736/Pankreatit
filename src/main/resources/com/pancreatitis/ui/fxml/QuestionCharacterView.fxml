@@ -25,6 +25,7 @@
             <Button fx:id="btnBack" text="Назад" />
             <Region HBox.hgrow="ALWAYS" />
             <Button fx:id="btnSave" text="Сохранить анкету" />
+            <Button fx:id="btnPredict" text="Сделать прогноз" />
         </children>
     </HBox>
 

@@ -77,7 +77,7 @@ public class QuestionnaireController {
         for (CharacterizationAnketPatient characterizationAnketPatient : characterizationQuestionnairePatientList) {
             int characteristicId = characterizationAnketPatient.getIdCharacteristic();
             List<String> options = hashMapOptions.get(characteristicId);
-            Characteristic characteristic = characteristics.get(characteristicId);
+            Characteristic characteristic = characteristics.get(characteristicId - 1);
             if (characteristic.getIdType() != 3) {
                 addNonNumericValueToCharacteristic(characteristicId, characterizationAnketPatient.getIdValue(), characterizationAnketPatient.getCreatedAt(), options);
             } else {
@@ -121,6 +121,12 @@ public class QuestionnaireController {
 
         for(Characteristic characteristic: characteristics){
             characteristicItems.add(new CharacteristicItem(characteristic));
+
+            try {
+                System.out.println(characteristic.toJson());
+            } catch (Exception e) {
+
+            }
 
             CharacterizationAnketPatient characterizationAnketPatient = new CharacterizationAnketPatient();
             characterizationAnketPatient.setIdAnket(idQuestionnaire);

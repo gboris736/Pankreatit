@@ -5,11 +5,13 @@ import com.pancreatitis.models.Patient;
 import com.pancreatitis.models.Questionnaire;
 import com.pancreatitis.modules.database.DatabaseModule;
 
+import java.util.List;
+
 public class QuestionnaireManagerModule {
     private static QuestionnaireManagerModule instance;
     private static DatabaseModule databaseModule;
 
-    private void QuestionnaireManagerModule() {
+    private QuestionnaireManagerModule() {
         databaseModule = DatabaseModule.getInstance();
     }
 
@@ -25,40 +27,26 @@ public class QuestionnaireManagerModule {
     }
 
     // переделать
-    private boolean saveQuestionnaire(Questionnaire questionnaire, Patient patient) {
+    public boolean saveQuestionnaire(Questionnaire questionnaire, Patient patient, List<CharacterizationAnketPatient> characterizationAnketPatients) {
         try {
             databaseModule.beginTransaction();
 
             long idPatient = questionnaire.getIdPatient();
-            if (idPatient == -1){
+            if (idPatient == -1) {
                 idPatient = databaseModule.insertPatient(patient);
                 questionnaire.setIdPatient(idPatient);
                 patient.setId(idPatient);
             }
 
             long idQuestionnaire = questionnaire.getId();
-            if (idQuestionnaire == -1){
+            if (idQuestionnaire == -1) {
                 idQuestionnaire = databaseModule.insertQuestionnaire(questionnaire);
                 questionnaire.setId(idQuestionnaire);
             } else {
                 databaseModule.updateQuestionnaire(questionnaire);
             }
 
-            databaseModule.setTransactionSuccessful();
-            return true;
-        } catch (Exception e) {
-            return false;
-        } finally {
-            databaseModule.endTransaction();
-        }
-    }
-
-    // переделать
-    private boolean saveValueCharacteristic(CharacterizationAnketPatient characterizationAnketPatient) {
-        try {
-            databaseModule.beginTransaction();
-
-            databaseModule.insertCharacterizationAnketPatient(characterizationAnketPatient);
+            databaseModule.insertAllCharacterizationAnketPatient(characterizationAnketPatients);
 
             databaseModule.setTransactionSuccessful();
             return true;

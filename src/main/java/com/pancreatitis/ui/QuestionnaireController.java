@@ -2,6 +2,7 @@ package com.pancreatitis.ui;
 
 import com.pancreatitis.models.*;
 import com.pancreatitis.modules.database.DatabaseModule;
+import com.pancreatitis.modules.questionnairemanager.QuestionnaireManagerModule;
 import javafx.fxml.FXML;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -150,13 +151,9 @@ public class QuestionnaireController {
 
         btnSave.setOnAction(event -> {
             List<CharacterizationAnketPatient> characterizationAnketPatients = getNewValues();
-            try {
-                for(CharacterizationAnketPatient characterizationAnketPatient: characterizationAnketPatients){
-                    System.out.println(characterizationAnketPatient.toJson());
-                }
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
+            QuestionnaireManagerModule questionnaireManagerModule = QuestionnaireManagerModule.getInstance();
+            boolean result = questionnaireManagerModule.saveQuestionnaire(questionnaire, patient, characterizationAnketPatients);
+            System.out.println(result);
         });
     }
 

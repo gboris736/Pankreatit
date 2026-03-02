@@ -90,8 +90,8 @@ public class QuestionnaireController {
                 texts.add("Нет данных");
 
                 for (CharacterizationValue cv : charValues) {
-                    idToText.put((int)cv.getId(), cv.getValue());
-                    textToId.put(cv.getValue(), (int)cv.getId());
+                    idToText.put((int)cv.getIdValue(), cv.getValue());
+                    textToId.put(cv.getValue(), (int)cv.getIdValue());
                     texts.add(cv.getValue());
                 }
 
@@ -165,7 +165,7 @@ public class QuestionnaireController {
         createdAt.setText(questionnaire != null ? questionnaire.getDateOfCompletion() : "");
         addmitedFrom.setText(questionnaire != null ? questionnaire.getAdmittedFrom() : "");
 
-        String diag = (questionnaire != null && questionnaire.getDiagnosis() != null) ? questionnaire.getDiagnosis() : "Нет данных";
+        String diag = (questionnaire != null && questionnaire.getDiagnosis() != null && questionnaire.getDiagnosis() != "-") ? questionnaire.getDiagnosis() : "Нет данных";
         diagnosis.setValue(diag);
     }
 

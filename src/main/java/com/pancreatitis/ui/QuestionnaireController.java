@@ -122,12 +122,6 @@ public class QuestionnaireController {
         for(Characteristic characteristic: characteristics){
             characteristicItems.add(new CharacteristicItem(characteristic));
 
-            try {
-                System.out.println(characteristic.toJson());
-            } catch (Exception e) {
-
-            }
-
             CharacterizationAnketPatient characterizationAnketPatient = new CharacterizationAnketPatient();
             characterizationAnketPatient.setIdAnket(idQuestionnaire);
             characterizationAnketPatient.setIdCharacteristic(characteristic.getId());

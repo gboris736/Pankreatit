@@ -146,10 +146,13 @@ public class QuestionnaireController {
 
         btnBack.setOnAction(event -> {
             MainMenuControl mainMenuControl = MainMenuControl.getInstance();
+            mainMenuControl.idCurrentPatient = -1;
+            mainMenuControl.idCurrentQuestionnaire = -1;
             mainMenuControl.showViewForTab("Список анкет");
         });
 
         btnSave.setOnAction(event -> {
+            questionnaire.setDiagnosis(diagnosisToCode(getDiagnosis()));
             List<CharacterizationAnketPatient> characterizationAnketPatients = getNewValues();
             QuestionnaireManagerModule questionnaireManagerModule = QuestionnaireManagerModule.getInstance();
             boolean result = questionnaireManagerModule.saveQuestionnaire(questionnaire, patient, characterizationAnketPatients);
@@ -162,8 +165,8 @@ public class QuestionnaireController {
         createdAt.setText(questionnaire != null ? questionnaire.getDateOfCompletion() : "");
         addmitedFrom.setText(questionnaire != null ? questionnaire.getAdmittedFrom() : "");
 
-        String diag = (questionnaire != null && questionnaire.getDiagnosis() != null) ? questionnaire.getDiagnosis() : "-";
-        diagnosis.setValue("-".equals(diag) ? "Нет данных" : diag);
+        String diag = (questionnaire != null && questionnaire.getDiagnosis() != null) ? questionnaire.getDiagnosis() : "Нет данных";
+        diagnosis.setValue(diag);
     }
 
     /** Создаёт визуальные блоки для всех характеристик */
@@ -333,6 +336,7 @@ public class QuestionnaireController {
             combo.valueProperty().addListener((obs, oldVal, newVal) -> {
                 if (newVal != null) {
                     Integer id = optionTextToId.get(charId).get(newVal);
+                    System.out.println(optionTextToId.get(charId));
                     if (id != null) {
                         cap.setIdValue(id);
                     }
@@ -430,4 +434,12 @@ public class QuestionnaireController {
     public String getAdmittedFrom() { return addmitedFrom.getText(); }
     public String getDiagnosis() { return diagnosis.getValue(); }
     public String getCreatedAt() { return createdAt.getText(); }
+
+    private String diagnosisToCode(String diagnosis){
+        Map<String, String> diagnosisMap = new HashMap<>();
+        diagnosisMap.put("Отечный панкреатит", "1");
+        diagnosisMap.put("Панкреонекроз среднетяжелое течение", "5");
+        diagnosisMap.put("Панкреонекроз тяжелое течение", "6");
+        return diagnosisMap.getOrDefault(diagnosis, "0");
+    }
 }

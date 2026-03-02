@@ -285,7 +285,7 @@ public class DatabaseModule {
         try (Connection conn = DriverManager.getConnection(url);
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
-            pstmt.setString(1, questionnaire.getDiagnosis());
+            pstmt.setString(1, questionnaire.getCodeDiagnosis());
             pstmt.setString(2, questionnaire.getAdmittedFrom());
             pstmt.setString(3, LocalDateTime.now().format(formatter));
             pstmt.setInt(4, (int)questionnaire.getId());

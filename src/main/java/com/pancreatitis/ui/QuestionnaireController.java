@@ -168,7 +168,7 @@ public class QuestionnaireController {
             PredictionModule predictionModule = PredictionModule.getInstance();
             try {
                 PredictionResult predict_result = predictionModule.predict(charasteristicDTOS);
-                // работает, надо сделать модальное окно с результатом
+                showPredictionResult(predict_result);
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
@@ -471,5 +471,39 @@ public class QuestionnaireController {
         diagnosisMap.put("Панкреонекроз среднетяжелое течение", "5");
         diagnosisMap.put("Панкреонекроз тяжелое течение", "6");
         return diagnosisMap.getOrDefault(diagnosis, "0");
+    }
+
+    private void showPredictionResult(PredictionResult result) {
+        Dialog<Void> dialog = new Dialog<>();
+        dialog.setTitle("Результат предсказания");
+        dialog.setHeaderText("Прогноз течения заболевания");
+
+        VBox content = new VBox(15);
+        content.setPadding(new Insets(20));
+        content.setPrefWidth(400);
+
+        Label severityLabel = new Label("Тяжесть: " + codeToDiagnosis( result.getPredictedClass() ));
+        severityLabel.setStyle("-fx-font-size: 16px; -fx-font-weight: bold;");
+
+//        Label probabilityLabel = new Label("Вероятность: " + String.format("%.2f%%", result.getProbability() * 100));
+//        probabilityLabel.setStyle("-fx-font-size: 14px;");
+//
+//        Label recommendationLabel = new Label("Рекомендация: " + result.getRecommendation());
+//        recommendationLabel.setWrapText(true);
+//        recommendationLabel.setStyle("-fx-font-size: 14px;");
+
+        content.getChildren().addAll(severityLabel);
+        dialog.getDialogPane().setContent(content);
+        dialog.getDialogPane().getButtonTypes().add(ButtonType.OK);
+        dialog.showAndWait();
+    }
+
+    private String codeToDiagnosis(int code) {
+        return switch (code) {
+            case 1 -> "Отечный панкреатит";
+            case 5 -> "Панкреонекроз среднетяжелое течение";
+            case 6 -> "Панкреонекроз тяжелое течение";
+            default -> "Нет данных";
+        };
     }
 }

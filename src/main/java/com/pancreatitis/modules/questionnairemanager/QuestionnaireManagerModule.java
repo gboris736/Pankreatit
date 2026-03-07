@@ -31,14 +31,14 @@ public class QuestionnaireManagerModule {
         try {
             databaseModule.beginTransaction();
 
-            long idPatient = questionnaire.getIdPatient();
+            int idPatient = questionnaire.getIdPatient();
             if (idPatient == -1) {
                 idPatient = databaseModule.insertPatient(patient);
                 questionnaire.setIdPatient(idPatient);
                 patient.setId(idPatient);
             }
 
-            long idQuestionnaire = questionnaire.getId();
+            int idQuestionnaire = questionnaire.getId();
             if (idQuestionnaire == -1) {
                 idQuestionnaire = databaseModule.insertQuestionnaire(questionnaire);
                 questionnaire.setId(idQuestionnaire);

@@ -206,7 +206,7 @@ public class DatabaseModule {
         return null;
     }
 
-    public long insertPatient(Patient patient) {
+    public int insertPatient(Patient patient) {
         String sql = "INSERT INTO patients (fio, last_modified) VALUES (?, ?)";
 
         try (Connection conn = DriverManager.getConnection(url);
@@ -220,7 +220,7 @@ public class DatabaseModule {
             if (affectedRows > 0) {
                 ResultSet rs = pstmt.getGeneratedKeys();
                 if (rs.next()) {
-                    return rs.getLong(1);
+                    return rs.getInt(1);
                 }
             }
         } catch (SQLException e) {
@@ -251,7 +251,7 @@ public class DatabaseModule {
     }
 
     // ========== Questionnaire ==========
-    public long insertQuestionnaire(Questionnaire questionnaire) {
+    public int insertQuestionnaire(Questionnaire questionnaire) {
         String sql = "INSERT INTO ankets (id_patient, id_doctor, id_expert, diagnosis, admitted_from, date_of_completion, last_modified) VALUES (?, ?, ?, ?, ?, ?, ?)";
 
         try (Connection conn = DriverManager.getConnection(url);
@@ -270,7 +270,7 @@ public class DatabaseModule {
             if (affectedRows > 0) {
                 ResultSet rs = pstmt.getGeneratedKeys();
                 if (rs.next()) {
-                    return rs.getLong(1);
+                    return rs.getInt(1);
                 }
             }
         } catch (SQLException e) {

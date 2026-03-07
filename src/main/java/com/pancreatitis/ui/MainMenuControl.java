@@ -91,7 +91,7 @@ public class MainMenuControl {
         idCurrentQuestionnaire = -1;
 
         instance = this;
-        tabsListView.setItems(FXCollections.observableArrayList("Список анкет", "Список пользователей", "Заявки на регистрацию", "Анкета"));
+        tabsListView.setItems(FXCollections.observableArrayList("Список анкет", "Список пользователей", "Заявки на регистрацию", "Анкета", "~Тест"));
         tabsListView.getSelectionModel().selectedItemProperty().addListener((obs, oldV, newV) -> {
             if (newV != null) showViewForTab(newV);
         });
@@ -110,10 +110,11 @@ public class MainMenuControl {
 
     private static final Set<String> NO_CACHE_TABS = Set.of(
             "Анкета",
-            "Заявки на регистрацию"
+            "Заявки на регистрацию",
+            "~Тест"
     );
 
-    public void showViewForTab(String tab) {
+    public boolean showViewForTab(String tab) {
         try {
             Node view = null;
             if (!NO_CACHE_TABS.contains(tab)) {         //Не кешируем некоторые вкладки
@@ -125,6 +126,7 @@ public class MainMenuControl {
                     case "Список пользователей" -> "fxml/usersView.fxml";
                     case "Заявки на регистрацию" -> "fxml/RegistrationRequestsView.fxml";
                     case "Анкета" -> "fxml/QuestionCharacterView.fxml";
+                    case "~Тест" -> "fxml/QuestionRequestsList.fxml";
                     default -> "DefaultTab.fxml";
                 };
 
@@ -136,9 +138,13 @@ public class MainMenuControl {
                 viewCache.put(tab, view);
             }
             contentPane.getChildren().setAll(view);
+
+            return true;
         } catch (IOException e) {
             e.printStackTrace();
         }
+
+        return false;
     }
 
     public static void attachHelp(Node node, String text) {

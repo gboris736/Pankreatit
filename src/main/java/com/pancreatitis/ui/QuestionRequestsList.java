@@ -55,7 +55,14 @@ public class QuestionRequestsList {
 
         // Получаем анкеты, требующие верификации
         //List<Questionnaire> questionnaires = databaseModule.getQuestionnairesForVerification();
+        Questionnaire t1 = new Questionnaire();
+        t1.setAdmittedFrom("Под мостом");
+        t1.setDiagnosis("1");
+        t1.setDateOfCompletion("2016-03-23");
+        t1.setIdPatient(1);
+
         List<Questionnaire> questionnaires = new ArrayList<>();
+        questionnaires.add(t1);
 
         pendingQuestionnaires.addAll(questionnaires);
 
@@ -99,9 +106,11 @@ public class QuestionRequestsList {
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
 
-        Label statusLabel = new Label(getStatusText(questionnaire.));
-        statusLabel.setStyle("-fx-font-size: 12px; -fx-text-fill: " + getStatusColor(questionnaire.getStatus()) + "; " +
-                "-fx-background-color: " + getStatusBackgroundColor(questionnaire.getStatus()) + "; " +
+        //Label statusLabel = new Label(getStatusText(questionnaire.));
+        Label statusLabel = new Label(getStatusText(1));
+
+        statusLabel.setStyle("-fx-font-size: 12px; -fx-text-fill: " + getStatusColor(1) + "; " +
+                "-fx-background-color: " + getStatusBackgroundColor(1) + "; " +
                 "-fx-padding: 5 10 5 10; -fx-background-radius: 10;");
 
         headerBox.getChildren().addAll(idLabel, dateLabel, spacer, statusLabel);
@@ -117,7 +126,7 @@ public class QuestionRequestsList {
         );
 
         // ФИО пациента
-        addInfoRow(infoGrid, 0, "ФИО пациента:", getPatientFio(questionnaire.getIdPatient()));
+        addInfoRow(infoGrid, 0, "ФИО пациента:", getPatientFio((int) questionnaire.getIdPatient()));
 
         // Откуда поступил
         addInfoRow(infoGrid, 1, "Откуда поступил:", questionnaire.getAdmittedFrom());
@@ -126,7 +135,7 @@ public class QuestionRequestsList {
         addInfoRow(infoGrid, 2, "Диагноз:", questionnaire.getDiagnosis());
 
         // Количество заполненных характеристик
-        int characteristicsCount = getCharacteristicsCount(questionnaire.getId());
+        int characteristicsCount = getCharacteristicsCount((int) questionnaire.getId());
         addInfoRow(infoGrid, 3, "Заполнено характеристик:", String.valueOf(characteristicsCount));
 
         // Кнопки верификации
@@ -184,7 +193,7 @@ public class QuestionRequestsList {
     private ColumnConstraints createColumnConstraint(double prefWidth) {
         ColumnConstraints cc = new ColumnConstraints();
         cc.setPrefWidth(prefWidth);
-        cc.setHgrow(javafx.layout.Priority.SOMETIMES);
+        //cc.setHgrow(javafx.layout.Priority.SOMETIMES);
         cc.setHalignment(javafx.geometry.HPos.LEFT);
         return cc;
     }
@@ -213,9 +222,17 @@ public class QuestionRequestsList {
      */
     private void viewQuestionnaire(Questionnaire questionnaire) {
         MainMenuControl mainMenuControl = MainMenuControl.getInstance();
-        MainMenuControl.idCurrentQuestionnaire = questionnaire.getId();
-        MainMenuControl.idCurrentPatient = questionnaire.getIdPatient();
-        mainMenuControl.showViewForTab("Анкета пациента");
+
+        /*MainMenuControl.idCurrentQuestionnaire = questionnaire.getId();
+        MainMenuControl.idCurrentPatient = questionnaire.getIdPatient();*/
+
+        if ( mainMenuControl.showViewForTab("Анкета") ){
+            Object controller = mainMenuControl.getTabController();
+            if (controller instanceof QuestionnaireController) {
+                DatabaseModule databaseModule = DatabaseModule.getInstance();
+                // ((QuestionnaireController) controller).initData( );
+            }
+        }
     }
 
     /**
@@ -234,7 +251,7 @@ public class QuestionRequestsList {
         Optional<ButtonType> result = alert.showAndWait();
 
         if (result.isPresent() && result.get() == confirmBtn) {
-            DatabaseModule databaseModule = DatabaseModule.getInstance();
+            /*DatabaseModule databaseModule = DatabaseModule.getInstance();
             boolean success = databaseModule.verifyQuestionnaire(questionnaire.getId(), true);
 
             if (success) {
@@ -257,7 +274,7 @@ public class QuestionRequestsList {
                 pause.play();
             } else {
                 showNotification("Ошибка при подтверждении анкеты", false);
-            }
+            }*/
         }
     }
 
@@ -273,7 +290,7 @@ public class QuestionRequestsList {
         Optional<String> result = dialog.showAndWait();
 
         if (result.isPresent()) {
-            String reason = result.get();
+            /*String reason = result.get();
             DatabaseModule databaseModule = DatabaseModule.getInstance();
             boolean success = databaseModule.verifyQuestionnaire(questionnaire.getId(), false);
 
@@ -299,7 +316,7 @@ public class QuestionRequestsList {
                 pause.play();
             } else {
                 showNotification("Ошибка при отклонении анкеты", false);
-            }
+            }*/
         }
     }
 
@@ -328,9 +345,9 @@ public class QuestionRequestsList {
             int successCount = 0;
 
             for (Questionnaire questionnaire : new ArrayList<>(pendingQuestionnaires)) {
-                if (databaseModule.verifyQuestionnaire(questionnaire.getId(), true)) {
+                /*if (databaseModule.verifyQuestionnaire(questionnaire.getId(), true)) {
                     successCount++;
-                }
+                }*/
             }
 
             showNotification("Подтверждено анкет: " + successCount + " из " + pendingQuestionnaires.size(), true);

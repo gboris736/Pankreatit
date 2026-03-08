@@ -91,7 +91,7 @@ public class MainMenuControl {
         idCurrentQuestionnaire = -1;
 
         instance = this;
-        tabsListView.setItems(FXCollections.observableArrayList("Список анкет", "Список пользователей", "Заявки на регистрацию", "Анкета"));
+        tabsListView.setItems(FXCollections.observableArrayList("Список анкет", "Список пользователей", "Обучающая выборка", "Заявки на регистрацию", "Анкета"));
         tabsListView.getSelectionModel().selectedItemProperty().addListener((obs, oldV, newV) -> {
             if (newV != null) showViewForTab(newV);
         });
@@ -124,6 +124,7 @@ public class MainMenuControl {
                     case "Список анкет" -> "fxml/QuestionListView.fxml";
                     case "Список пользователей" -> "fxml/usersView.fxml";
                     case "Заявки на регистрацию" -> "fxml/RegistrationRequestsView.fxml";
+                    case "Обучающая выборка" -> "fxml/QuestionListTrainSet.fxml";
                     case "Анкета" -> "fxml/QuestionCharacterView.fxml";
                     default -> "DefaultTab.fxml";
                 };

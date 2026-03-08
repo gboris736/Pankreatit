@@ -64,14 +64,11 @@ public class QuestionnaireController {
 
         idQuestionnaire = MainMenuControl.idCurrentQuestionnaire;
         idPatient = MainMenuControl.idCurrentPatient;
+        questionnaire = MainMenuControl.currentQuestionnaire;
+        patient = MainMenuControl.currentPatient;
 
         if (idQuestionnaire == -1 || idPatient == -1) {
             // Новая анкета
-            questionnaire = new Questionnaire();
-            patient = db.getPatientById(idPatient);
-            if (patient == null) patient = new Patient();
-        } else {
-            questionnaire = db.getQuestionnaireById(idQuestionnaire);
             patient = db.getPatientById(idPatient);
         }
 
@@ -149,8 +146,10 @@ public class QuestionnaireController {
 
         btnBack.setOnAction(event -> {
             MainMenuControl mainMenuControl = MainMenuControl.getInstance();
-            mainMenuControl.idCurrentPatient = -1;
-            mainMenuControl.idCurrentQuestionnaire = -1;
+            MainMenuControl.idCurrentPatient = -1;
+            MainMenuControl.currentPatient = new Patient();
+            MainMenuControl.idCurrentQuestionnaire = -1;
+            MainMenuControl.currentQuestionnaire = new Questionnaire();
             mainMenuControl.showViewForTab("Список анкет");
         });
 

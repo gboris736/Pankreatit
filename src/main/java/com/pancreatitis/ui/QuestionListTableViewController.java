@@ -118,8 +118,12 @@ public class QuestionListTableViewController {
 
     private void openQuestionnaireDetail(QuestionnaireItem item) {
         try {
+            DatabaseModule databaseModule = DatabaseModule.getInstance();
+
             MainMenuControl.idCurrentQuestionnaire = item.getIdQuestionnaire();
             MainMenuControl.idCurrentPatient = item.getIdPatient();
+            MainMenuControl.currentPatient = databaseModule.getPatientById(item.getIdPatient());
+            MainMenuControl.currentQuestionnaire = databaseModule.getQuestionnaireById(item.getIdQuestionnaire());
 
             MainMenuControl mainMenuControl = MainMenuControl.getInstance();
             mainMenuControl.showViewForTab("Анкета");

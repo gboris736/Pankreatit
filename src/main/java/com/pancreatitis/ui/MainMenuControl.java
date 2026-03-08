@@ -1,5 +1,7 @@
 package com.pancreatitis.ui;
 
+import com.pancreatitis.models.Patient;
+import com.pancreatitis.models.Questionnaire;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
@@ -29,6 +31,8 @@ public class MainMenuControl {
 
     static int idCurrentPatient;
     static int idCurrentQuestionnaire;
+    static Patient currentPatient;
+    static Questionnaire currentQuestionnaire;
 
 
 
@@ -87,12 +91,14 @@ public class MainMenuControl {
                 return;
             }
         }*/
+
         idCurrentPatient = -1;
         idCurrentQuestionnaire = -1;
+        currentPatient = new Patient();
+        currentQuestionnaire = new Questionnaire();
 
         instance = this;
-        tabsListView.setItems(FXCollections.observableArrayList("Список анкет", "Список пользователей", "Обучающая выборка", "Заявки на регистрацию", "Анкета"));
-        tabsListView.setItems(FXCollections.observableArrayList("Список анкет", "Список пользователей", "Заявки на регистрацию", "Анкеты на верификацию", "Анкета"));
+        tabsListView.setItems(FXCollections.observableArrayList("Список анкет", "Список пользователей", "Обучающая выборка", "Заявки на регистрацию", "Анкеты на верификацию", "Анкета"));
         tabsListView.getSelectionModel().selectedItemProperty().addListener((obs, oldV, newV) -> {
             if (newV != null) showViewForTab(newV);
         });
@@ -125,6 +131,8 @@ public class MainMenuControl {
                     case "Список анкет" -> "fxml/QuestionListView.fxml";
                     case "Список пользователей" -> "fxml/usersView.fxml";
                     case "Заявки на регистрацию" -> "fxml/RegistrationRequestsView.fxml";
+                    case "Обучающая выборка" -> "fxml/QuestionListTrainSet.fxml";
+                    case "Анкеты на верификацию" -> "fxml/QuestionRequestsList.fxml";
                     case "Анкета" -> "fxml/QuestionCharacterView.fxml";
                     default -> "DefaultTab.fxml";
                 };

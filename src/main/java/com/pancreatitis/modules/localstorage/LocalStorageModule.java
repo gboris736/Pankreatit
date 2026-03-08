@@ -106,9 +106,9 @@ public class LocalStorageModule {
         }
     }
 
-    public byte[] downloadUserKey(String login) throws Exception {
+    public byte[] downloadUserKey(String login, String user) throws Exception {
         Callable<byte[]> task = () -> {
-            File keyFile = new File(new File(getFolder(USERS_DIR), login), "key_user.enc");
+            File keyFile = new File(new File(getFolder(USERS_DIR), login), "key_" + user + ".enc");
 
             if (!keyFile.exists()) {
                 throw new FileNotFoundException("File not found: " + keyFile.getAbsolutePath());

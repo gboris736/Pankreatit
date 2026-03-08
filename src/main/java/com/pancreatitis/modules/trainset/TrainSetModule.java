@@ -76,7 +76,7 @@ public class TrainSetModule {
 
     public boolean addQuestionnaire(Questionnaire questionnaire, List<CharacterizationAnketPatient> characterizationAnketPatientLists) {
         try {
-            int codeDiagnosis = Integer.parseInt(questionnaire.getCodeDiagnosis());
+            int codeDiagnosis = Integer.parseInt(questionnaire.getDiagnosis());
             long idQuestionnaire = questionnaire.getId();
             float[] records = new float[characterizationAnketPatientLists.size() + 1];
             records[0] = idQuestionnaire;

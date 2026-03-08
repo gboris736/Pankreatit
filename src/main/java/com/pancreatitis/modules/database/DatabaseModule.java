@@ -260,7 +260,7 @@ public class DatabaseModule {
             pstmt.setInt(1, (int)questionnaire.getIdPatient());
             pstmt.setInt(2, questionnaire.getIdDoctor());
             pstmt.setInt(3, questionnaire.getIdExpert());
-            pstmt.setString(4, questionnaire.getDiagnosis());
+            pstmt.setString(4, questionnaire.getTextDiagnosis());
             pstmt.setString(5, questionnaire.getAdmittedFrom());
             pstmt.setString(6, LocalDateTime.now().format(formatter));
             pstmt.setString(7, LocalDateTime.now().format(formatter));
@@ -285,7 +285,7 @@ public class DatabaseModule {
         try (Connection conn = DriverManager.getConnection(url);
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
-            pstmt.setString(1, questionnaire.getCodeDiagnosis());
+            pstmt.setString(1, questionnaire.getDiagnosis());
             pstmt.setString(2, questionnaire.getAdmittedFrom());
             pstmt.setString(3, LocalDateTime.now().format(formatter));
             pstmt.setInt(4, (int)questionnaire.getId());

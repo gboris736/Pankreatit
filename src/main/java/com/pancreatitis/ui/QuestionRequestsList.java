@@ -2,6 +2,7 @@ package com.pancreatitis.ui;
 
 import com.pancreatitis.models.*;
 import com.pancreatitis.modules.database.DatabaseModule;
+import com.pancreatitis.modules.questionnairemanager.QuestionnaireManagerModule;
 import com.pancreatitis.modules.updates.UpdatesModule;
 import javafx.fxml.FXML;
 import javafx.geometry.Pos;
@@ -138,19 +139,19 @@ public class QuestionRequestsList {
         Button btnView = new Button("📋 Просмотр");
         btnView.setStyle("-fx-background-color: #3498db; -fx-text-fill: white; -fx-font-weight: bold;");
         btnView.setPrefWidth(120);
-        btnView.setOnAction(event -> viewQuestionnaire(questionnaire));
+        btnView.setOnAction(event -> viewQuestionnaire(id));
 
         // Кнопка "Подтвердить" (галочка)
         Button btnConfirm = new Button("✓ Подтвердить");
         btnConfirm.setStyle("-fx-background-color: #27ae60; -fx-text-fill: white; -fx-font-weight: bold;");
         btnConfirm.setPrefWidth(130);
-        btnConfirm.setOnAction(event -> confirmQuestionnaire(questionnaire, cardBox));
+        btnConfirm.setOnAction(event -> confirmQuestionnaire(id, cardBox));
 
         // Кнопка "Отклонить" (крестик)
         Button btnReject = new Button("✗ Отклонить");
         btnReject.setStyle("-fx-background-color: #e74c3c; -fx-text-fill: white; -fx-font-weight: bold;");
         btnReject.setPrefWidth(130);
-        btnReject.setOnAction(event -> rejectQuestionnaire(questionnaire, cardBox));
+        btnReject.setOnAction(event -> rejectQuestionnaire(id, cardBox));
 
         actionBox.getChildren().addAll(btnView, btnConfirm, btnReject);
 
@@ -202,22 +203,26 @@ public class QuestionRequestsList {
     /**
      * Просмотр анкеты
      */
-    private void viewQuestionnaire(Questionnaire questionnaire) {
+    private void viewQuestionnaire(int id) {
         MainMenuControl mainMenuControl = MainMenuControl.getInstance();
         DatabaseModule databaseModule = DatabaseModule.getInstance();
 
         //MainMenuControl.currentPatient = questionnaire.getIdPatient();
         //MainMenuControl.currentQuestionnaire = questionnaire;
 
-        MainMenuControl.idCurrentQuestionnaire = (int)questionnaire.getId();
-        MainMenuControl.idCurrentPatient = (int)questionnaire.getIdPatient();
-        mainMenuControl.showViewForTab("Анкета пациента");
+//        MainMenuControl.idCurrentQuestionnaire = (int)questionnaire.getId();
+//        MainMenuControl.idCurrentPatient = (int)questionnaire.getIdPatient();
+//        mainMenuControl.showViewForTab("Анкета пациента");
     }
 
     /**
      * Подтверждение анкеты
      */
-    private void confirmQuestionnaire(Questionnaire questionnaire, VBox cardBox) {
+    private void confirmQuestionnaire(int id, VBox cardBox) {
+        Questionnaire questionnaire = updatesModule.getQuestionnairList().get(id);
+        Patient patient = updatesModule.getPatientList().get(id);
+        List<CharacterizationAnketPatient> characterizationAnketPatientList = updatesModule.getCharacterizationAnketPatientList().get(id);
+
         Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
         alert.setTitle("Подтверждение анкеты");
         alert.setHeaderText("Подтвердить анкету #" + questionnaire.getId() + "?");
@@ -229,19 +234,19 @@ public class QuestionRequestsList {
 
         Optional<ButtonType> result = alert.showAndWait();
 
-//        if (result.isPresent() && result.get() == confirmBtn) {
-//            DatabaseModule databaseModule = DatabaseModule.getInstance();
-//            boolean success = databaseModule.verifyQuestionnaire(questionnaire.getId(), true);
-//
-//            if (success) {
-//                showNotification("Анкета #" + questionnaire.getId() + " подтверждена", true);
-//                cardBox.setStyle("-fx-border-color: #27ae60; -fx-border-radius: 5; " +
-//                        "-fx-background-radius: 5; -fx-padding: 15;" +
-//                        "-fx-background-color: #e8f8f5; -fx-effect: dropshadow(gaussian, rgba(39,174,96,0.3), 10, 0, 0, 2);");
-//
-//                // Обновляем статус
-//                questionnaire.setStatus(1); // 1 = подтверждено
-//
+        if (result.isPresent() && result.get() == confirmBtn) {
+            QuestionnaireManagerModule questionnaireManagerModule = QuestionnaireManagerModule.getInstance();
+            boolean success = questionnaireManagerModule.saveQuestionnaire(questionnaire, patient, characterizationAnketPatientList);
+
+            if (success) {
+                showNotification("Анкета #" + questionnaire.getId() + " подтверждена", true);
+                cardBox.setStyle("-fx-border-color: #27ae60; -fx-border-radius: 5; " +
+                        "-fx-background-radius: 5; -fx-padding: 15;" +
+                        "-fx-background-color: #e8f8f5; -fx-effect: dropshadow(gaussian, rgba(39,174,96,0.3), 10, 0, 0, 2);");
+
+                // Обновляем статус
+                //questionnaire.setStatus(1); // 1 = подтверждено
+
 //                // Удаляем карточку через паузу
 //                PauseTransition pause = new PauseTransition(javafx.util.Duration.seconds(1));
 //                pause.setOnFinished(event -> {
@@ -251,28 +256,31 @@ public class QuestionRequestsList {
 //                    lblCount.setText("Найдено: " + pendingQuestionnaires.size());
 //                });
 //                pause.play();
-//            } else {
-//                showNotification("Ошибка при подтверждении анкеты", false);
-//            }
-//        }
+            } else {
+                showNotification("Ошибка при подтверждении анкеты", false);
+            }
+        }
     }
 
     /**
      * Отклонение анкеты
      */
-    private void rejectQuestionnaire(Questionnaire questionnaire, VBox cardBox) {
+    private void rejectQuestionnaire(int id, VBox cardBox) {
+        Questionnaire questionnaire = updatesModule.getQuestionnairList().get(id);
+        Patient patient = updatesModule.getPatientList().get(id);
+        List<CharacterizationAnketPatient> characterizationAnketPatientList = updatesModule.getCharacterizationAnketPatientList().get(id);
+
         TextInputDialog dialog = new TextInputDialog();
         dialog.setTitle("Отклонение анкеты");
         dialog.setHeaderText("Отклонить анкету #" + questionnaire.getId() + "?");
-        dialog.setContentText("Укажите причину отклонения (необязательно):");
 
         Optional<String> result = dialog.showAndWait();
 
-//        if (result.isPresent()) {
-//            String reason = result.get();
-//            DatabaseModule databaseModule = DatabaseModule.getInstance();
-//            boolean success = databaseModule.verifyQuestionnaire(questionnaire.getId(), false);
-//
+        if (result.isPresent()) {
+            String reason = result.get();
+            DatabaseModule databaseModule = DatabaseModule.getInstance();
+            //boolean success = databaseModule.verifyQuestionnaire(questionnaire.getId(), false);
+
 //            if (success) {
 //                if (!reason.isEmpty()) {
 //                    databaseModule.addRejectionReason(questionnaire.getId(), reason);
@@ -283,20 +291,20 @@ public class QuestionRequestsList {
 //                        "-fx-background-radius: 5; -fx-padding: 15;" +
 //                        "-fx-background-color: #fdedec; -fx-effect: dropshadow(gaussian, rgba(231,76,60,0.3), 10, 0, 0, 2);");
 //
-//                questionnaire.setStatus(2); // 2 = отклонено
-//
-//                PauseTransition pause = new PauseTransition(javafx.util.Duration.seconds(1));
-//                pause.setOnFinished(event -> {
-//                    questionnairesContainer.getChildren().remove(cardBox);
-//                    questionnaireCards.remove(questionnaire.getId());
-//                    pendingQuestionnaires.remove(questionnaire);
-//                    lblCount.setText("Найдено: " + pendingQuestionnaires.size());
-//                });
-//                pause.play();
+////                questionnaire.setStatus(2); // 2 = отклонено
+////
+////                PauseTransition pause = new PauseTransition(javafx.util.Duration.seconds(1));
+////                pause.setOnFinished(event -> {
+////                    questionnairesContainer.getChildren().remove(cardBox);
+////                    questionnaireCards.remove(questionnaire.getId());
+////                    pendingQuestionnaires.remove(questionnaire);
+////                    lblCount.setText("Найдено: " + pendingQuestionnaires.size());
+////                });
+////                pause.play();
 //            } else {
 //                showNotification("Ошибка при отклонении анкеты", false);
 //            }
-//        }
+        }
     }
 
     /**

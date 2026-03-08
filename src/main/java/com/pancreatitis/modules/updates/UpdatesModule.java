@@ -43,7 +43,7 @@ public class UpdatesModule {
                 if (update.getPatientList() != null) {
                     for (Patient patient : update.getPatientList()) {
                         patient.setFio(safetyModule.decryptString(patient.getFio(), key_admin));
-                        
+                        patient.setId(-1);
                         patientList.add(patient);
                     }
                 }
@@ -55,6 +55,7 @@ public class UpdatesModule {
 
                         // Преобразование DTO в обычную анкету (копирование полей)
                         Questionnaire questionnaire = new Questionnaire(dto);
+                        questionnaire.setId(-1);
                         questionnairList.add(questionnaire);
 
                         List<CharacterizationAnketPatient> localCcharacterizationAnketPatientList = new ArrayList<>();

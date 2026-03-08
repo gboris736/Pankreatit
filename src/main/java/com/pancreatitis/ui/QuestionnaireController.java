@@ -194,7 +194,7 @@ public class QuestionnaireController {
         createdAt.setText(questionnaire != null ? questionnaire.getDateOfCompletion() : "");
         addmitedFrom.setText(questionnaire != null ? questionnaire.getAdmittedFrom() : "");
 
-        String diag = (questionnaire != null && questionnaire.getDiagnosis() != null && questionnaire.getDiagnosis() != "-") ? questionnaire.getDiagnosis() : "Нет данных";
+        String diag = (questionnaire != null && questionnaire.getTextDiagnosis() != null && questionnaire.getTextDiagnosis() != "-") ? questionnaire.getTextDiagnosis() : "Нет данных";
         diagnosis.setValue(diag);
     }
 

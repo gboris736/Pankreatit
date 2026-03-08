@@ -1,16 +1,13 @@
 package com.pancreatitis.ui;
 
 import com.pancreatitis.models.*;
-import com.pancreatitis.modules.cloudstorage.CloudStorageModule;
 import com.pancreatitis.modules.database.DatabaseModule;
-import com.pancreatitis.modules.questionnairemanager.QuestionnaireManagerModule;
+import com.pancreatitis.modules.updates.UpdatesModule;
 import javafx.fxml.FXML;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
-import javafx.scene.text.Font;
 
-import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 
@@ -26,6 +23,8 @@ public class QuestionRequestsList {
     private Label lblCount;
     @FXML
     private VBox questionnairesContainer;
+
+    private UpdatesModule updatesModule = UpdatesModule.getInstance();
 
     private final Map<Integer, QuestionnaireCard> questionnaireCards = new HashMap<>();
     private final List<Questionnaire> pendingQuestionnaires = new ArrayList<>();
@@ -50,22 +49,22 @@ public class QuestionRequestsList {
      * Загрузка анкет на верификацию
      */
     private void loadQuestionnaires() {
-        DatabaseModule databaseModule = DatabaseModule.getInstance();
-        //QuestionnaireManagerModule questionnaireManagerModule = QuestionnaireManagerModule.getInstance();
+        updatesModule.load();
+
         questionnairesContainer.getChildren().clear();
         questionnaireCards.clear();
         pendingQuestionnaires.clear();
 
         // Получаем анкеты, требующие верификации
-        //List<Questionnaire> questionnaires =
-        List<Questionnaire> questionnaires = new ArrayList<>();
+        List<Questionnaire> questionnaires = new ArrayList<>(updatesModule.getQuestionnairList());
+        List<Patient> patientList = new ArrayList<>(updatesModule.getPatientList());
 
         pendingQuestionnaires.addAll(questionnaires);
 
         lblCount.setText("Найдено: " + questionnaires.size());
 
-        for (Questionnaire questionnaire : questionnaires) {
-            createQuestionnaireCard(questionnaire);
+        for (int i = 0; i < questionnaires.size(); i++) {
+            createQuestionnaireCard(questionnaires.get(i), patientList.get(i), i);
         }
 
         if (questionnaires.isEmpty()) {
@@ -80,9 +79,7 @@ public class QuestionRequestsList {
     /**
      * Создание карточки анкеты
      */
-    private void createQuestionnaireCard(Questionnaire questionnaire) {
-        int id = (int)questionnaire.getId();
-
+    private void createQuestionnaireCard(Questionnaire questionnaire, Patient patient, int id) {
         // Основной блок карточки
         VBox cardBox = new VBox(10);
         cardBox.setStyle("-fx-border-color: #e0e0e0; -fx-border-radius: 5; " +
@@ -93,7 +90,7 @@ public class QuestionRequestsList {
         HBox headerBox = new HBox(10);
         headerBox.setAlignment(Pos.CENTER_LEFT);
 
-        Label idLabel = new Label("Анкета #" + questionnaire.getId());
+        Label idLabel = new Label("Анкета #" + id);
         idLabel.setStyle("-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #2c3e50;");
 
         Label dateLabel = new Label(questionnaire.getDateOfCompletion());
@@ -120,13 +117,13 @@ public class QuestionRequestsList {
         );
 
         // ФИО пациента
-        addInfoRow(infoGrid, 0, "ФИО пациента:", getPatientFio((int)questionnaire.getIdPatient()));
+        addInfoRow(infoGrid, 0, "ФИО пациента:", patient.getFio());
 
         // Откуда поступил
         addInfoRow(infoGrid, 1, "Откуда поступил:", questionnaire.getAdmittedFrom());
 
         // Диагноз
-        addInfoRow(infoGrid, 2, "Диагноз:", questionnaire.getDiagnosis());
+        addInfoRow(infoGrid, 2, "Диагноз:", questionnaire.getTextDiagnosis());
 
         // Количество заполненных характеристик
         int characteristicsCount = getCharacteristicsCount((int)questionnaire.getId());
@@ -193,15 +190,6 @@ public class QuestionRequestsList {
     }
 
     /**
-     * Получение ФИО пациента
-     */
-    private String getPatientFio(int idPatient) {
-        DatabaseModule databaseModule = DatabaseModule.getInstance();
-        Patient patient = databaseModule.getPatientById(idPatient);
-        return patient != null ? patient.getFio() : "Неизвестно";
-    }
-
-    /**
      * Получение количества заполненных характеристик
      */
     private int getCharacteristicsCount(int idQuestionnaire) {
@@ -216,6 +204,11 @@ public class QuestionRequestsList {
      */
     private void viewQuestionnaire(Questionnaire questionnaire) {
         MainMenuControl mainMenuControl = MainMenuControl.getInstance();
+        DatabaseModule databaseModule = DatabaseModule.getInstance();
+
+        //MainMenuControl.currentPatient = questionnaire.getIdPatient();
+        //MainMenuControl.currentQuestionnaire = questionnaire;
+
         MainMenuControl.idCurrentQuestionnaire = (int)questionnaire.getId();
         MainMenuControl.idCurrentPatient = (int)questionnaire.getIdPatient();
         mainMenuControl.showViewForTab("Анкета пациента");

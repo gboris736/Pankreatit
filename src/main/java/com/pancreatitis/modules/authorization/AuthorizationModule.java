@@ -37,16 +37,41 @@ public class AuthorizationModule {
         return key;
     }
 
-    private byte[] getKey(String login) throws Exception {
+    public SecretKey authenticateForAdmin(String login) throws Exception {
+
+        if (!cloudStorageModule.isUserFolderExists(login) && !localStorageModule.isUserFolderExists(login)){
+            return null;
+        }
+
+        byte[] encrypted_key = getAdminUserKey(login);
+        SecretKey key = safetyModule.decryptKey(encrypted_key, safetyModule.getAdminPassword());
+        return key;
+    }
+
+    private byte[] getAdminUserKey(String login) throws Exception {
         if (!localStorageModule.isUserKeyExists(login)) {
-            byte[] key = cloudStorageModule.downloadUserKey(login);
+            byte[] key = cloudStorageModule.downloadUserKey(login, "admin");
             User user_info = cloudStorageModule.downloadUserInfo(login);
             localStorageModule.createUserFolder(login);
             localStorageModule.saveLocalUserKey(login, key);
             localStorageModule.saveUserInfo(user_info);
             return key;
         } else {
-            byte[] key = localStorageModule.downloadUserKey(login);
+            byte[] key = localStorageModule.downloadUserKey(login, "admin");
+            return key;
+        }
+    }
+
+    private byte[] getKey(String login) throws Exception {
+        if (!localStorageModule.isUserKeyExists(login)) {
+            byte[] key = cloudStorageModule.downloadUserKey(login, "user");
+            User user_info = cloudStorageModule.downloadUserInfo(login);
+            localStorageModule.createUserFolder(login);
+            localStorageModule.saveLocalUserKey(login, key);
+            localStorageModule.saveUserInfo(user_info);
+            return key;
+        } else {
+            byte[] key = localStorageModule.downloadUserKey(login, "user");
             return key;
         }
     }

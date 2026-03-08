@@ -1,7 +1,9 @@
 package com.pancreatitis.ui;
 
 import com.pancreatitis.models.*;
+import com.pancreatitis.modules.cloudstorage.CloudStorageModule;
 import com.pancreatitis.modules.database.DatabaseModule;
+import com.pancreatitis.modules.questionnairemanager.QuestionnaireManagerModule;
 import javafx.fxml.FXML;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
@@ -49,12 +51,13 @@ public class QuestionRequestsList {
      */
     private void loadQuestionnaires() {
         DatabaseModule databaseModule = DatabaseModule.getInstance();
+        //QuestionnaireManagerModule questionnaireManagerModule = QuestionnaireManagerModule.getInstance();
         questionnairesContainer.getChildren().clear();
         questionnaireCards.clear();
         pendingQuestionnaires.clear();
 
         // Получаем анкеты, требующие верификации
-        //List<Questionnaire> questionnaires = databaseModule.getQuestionnairesForVerification();
+        //List<Questionnaire> questionnaires =
         List<Questionnaire> questionnaires = new ArrayList<>();
 
         pendingQuestionnaires.addAll(questionnaires);
@@ -99,9 +102,9 @@ public class QuestionRequestsList {
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
 
-        Label statusLabel = new Label(getStatusText(questionnaire.));
-        statusLabel.setStyle("-fx-font-size: 12px; -fx-text-fill: " + getStatusColor(questionnaire.getStatus()) + "; " +
-                "-fx-background-color: " + getStatusBackgroundColor(questionnaire.getStatus()) + "; " +
+        Label statusLabel = new Label(getStatusText(1));
+        statusLabel.setStyle("-fx-font-size: 12px; -fx-text-fill: " + getStatusColor(0) + "; " +
+                "-fx-background-color: " + getStatusBackgroundColor(1) + "; " +
                 "-fx-padding: 5 10 5 10; -fx-background-radius: 10;");
 
         headerBox.getChildren().addAll(idLabel, dateLabel, spacer, statusLabel);
@@ -117,7 +120,7 @@ public class QuestionRequestsList {
         );
 
         // ФИО пациента
-        addInfoRow(infoGrid, 0, "ФИО пациента:", getPatientFio(questionnaire.getIdPatient()));
+        addInfoRow(infoGrid, 0, "ФИО пациента:", getPatientFio((int)questionnaire.getIdPatient()));
 
         // Откуда поступил
         addInfoRow(infoGrid, 1, "Откуда поступил:", questionnaire.getAdmittedFrom());
@@ -126,7 +129,7 @@ public class QuestionRequestsList {
         addInfoRow(infoGrid, 2, "Диагноз:", questionnaire.getDiagnosis());
 
         // Количество заполненных характеристик
-        int characteristicsCount = getCharacteristicsCount(questionnaire.getId());
+        int characteristicsCount = getCharacteristicsCount((int)questionnaire.getId());
         addInfoRow(infoGrid, 3, "Заполнено характеристик:", String.valueOf(characteristicsCount));
 
         // Кнопки верификации
@@ -184,7 +187,7 @@ public class QuestionRequestsList {
     private ColumnConstraints createColumnConstraint(double prefWidth) {
         ColumnConstraints cc = new ColumnConstraints();
         cc.setPrefWidth(prefWidth);
-        cc.setHgrow(javafx.layout.Priority.SOMETIMES);
+        //cc.setHgrow(layout.Priority.SOMETIMES);
         cc.setHalignment(javafx.geometry.HPos.LEFT);
         return cc;
     }
@@ -213,8 +216,8 @@ public class QuestionRequestsList {
      */
     private void viewQuestionnaire(Questionnaire questionnaire) {
         MainMenuControl mainMenuControl = MainMenuControl.getInstance();
-        MainMenuControl.idCurrentQuestionnaire = questionnaire.getId();
-        MainMenuControl.idCurrentPatient = questionnaire.getIdPatient();
+        MainMenuControl.idCurrentQuestionnaire = (int)questionnaire.getId();
+        MainMenuControl.idCurrentPatient = (int)questionnaire.getIdPatient();
         mainMenuControl.showViewForTab("Анкета пациента");
     }
 
@@ -233,32 +236,32 @@ public class QuestionRequestsList {
 
         Optional<ButtonType> result = alert.showAndWait();
 
-        if (result.isPresent() && result.get() == confirmBtn) {
-            DatabaseModule databaseModule = DatabaseModule.getInstance();
-            boolean success = databaseModule.verifyQuestionnaire(questionnaire.getId(), true);
-
-            if (success) {
-                showNotification("Анкета #" + questionnaire.getId() + " подтверждена", true);
-                cardBox.setStyle("-fx-border-color: #27ae60; -fx-border-radius: 5; " +
-                        "-fx-background-radius: 5; -fx-padding: 15;" +
-                        "-fx-background-color: #e8f8f5; -fx-effect: dropshadow(gaussian, rgba(39,174,96,0.3), 10, 0, 0, 2);");
-
-                // Обновляем статус
-                questionnaire.setStatus(1); // 1 = подтверждено
-
-                // Удаляем карточку через паузу
-                PauseTransition pause = new PauseTransition(javafx.util.Duration.seconds(1));
-                pause.setOnFinished(event -> {
-                    questionnairesContainer.getChildren().remove(cardBox);
-                    questionnaireCards.remove(questionnaire.getId());
-                    pendingQuestionnaires.remove(questionnaire);
-                    lblCount.setText("Найдено: " + pendingQuestionnaires.size());
-                });
-                pause.play();
-            } else {
-                showNotification("Ошибка при подтверждении анкеты", false);
-            }
-        }
+//        if (result.isPresent() && result.get() == confirmBtn) {
+//            DatabaseModule databaseModule = DatabaseModule.getInstance();
+//            boolean success = databaseModule.verifyQuestionnaire(questionnaire.getId(), true);
+//
+//            if (success) {
+//                showNotification("Анкета #" + questionnaire.getId() + " подтверждена", true);
+//                cardBox.setStyle("-fx-border-color: #27ae60; -fx-border-radius: 5; " +
+//                        "-fx-background-radius: 5; -fx-padding: 15;" +
+//                        "-fx-background-color: #e8f8f5; -fx-effect: dropshadow(gaussian, rgba(39,174,96,0.3), 10, 0, 0, 2);");
+//
+//                // Обновляем статус
+//                questionnaire.setStatus(1); // 1 = подтверждено
+//
+//                // Удаляем карточку через паузу
+//                PauseTransition pause = new PauseTransition(javafx.util.Duration.seconds(1));
+//                pause.setOnFinished(event -> {
+//                    questionnairesContainer.getChildren().remove(cardBox);
+//                    questionnaireCards.remove(questionnaire.getId());
+//                    pendingQuestionnaires.remove(questionnaire);
+//                    lblCount.setText("Найдено: " + pendingQuestionnaires.size());
+//                });
+//                pause.play();
+//            } else {
+//                showNotification("Ошибка при подтверждении анкеты", false);
+//            }
+//        }
     }
 
     /**
@@ -272,35 +275,35 @@ public class QuestionRequestsList {
 
         Optional<String> result = dialog.showAndWait();
 
-        if (result.isPresent()) {
-            String reason = result.get();
-            DatabaseModule databaseModule = DatabaseModule.getInstance();
-            boolean success = databaseModule.verifyQuestionnaire(questionnaire.getId(), false);
-
-            if (success) {
-                if (!reason.isEmpty()) {
-                    databaseModule.addRejectionReason(questionnaire.getId(), reason);
-                }
-
-                showNotification("Анкета #" + questionnaire.getId() + " отклонена", true);
-                cardBox.setStyle("-fx-border-color: #e74c3c; -fx-border-radius: 5; " +
-                        "-fx-background-radius: 5; -fx-padding: 15;" +
-                        "-fx-background-color: #fdedec; -fx-effect: dropshadow(gaussian, rgba(231,76,60,0.3), 10, 0, 0, 2);");
-
-                questionnaire.setStatus(2); // 2 = отклонено
-
-                PauseTransition pause = new PauseTransition(javafx.util.Duration.seconds(1));
-                pause.setOnFinished(event -> {
-                    questionnairesContainer.getChildren().remove(cardBox);
-                    questionnaireCards.remove(questionnaire.getId());
-                    pendingQuestionnaires.remove(questionnaire);
-                    lblCount.setText("Найдено: " + pendingQuestionnaires.size());
-                });
-                pause.play();
-            } else {
-                showNotification("Ошибка при отклонении анкеты", false);
-            }
-        }
+//        if (result.isPresent()) {
+//            String reason = result.get();
+//            DatabaseModule databaseModule = DatabaseModule.getInstance();
+//            boolean success = databaseModule.verifyQuestionnaire(questionnaire.getId(), false);
+//
+//            if (success) {
+//                if (!reason.isEmpty()) {
+//                    databaseModule.addRejectionReason(questionnaire.getId(), reason);
+//                }
+//
+//                showNotification("Анкета #" + questionnaire.getId() + " отклонена", true);
+//                cardBox.setStyle("-fx-border-color: #e74c3c; -fx-border-radius: 5; " +
+//                        "-fx-background-radius: 5; -fx-padding: 15;" +
+//                        "-fx-background-color: #fdedec; -fx-effect: dropshadow(gaussian, rgba(231,76,60,0.3), 10, 0, 0, 2);");
+//
+//                questionnaire.setStatus(2); // 2 = отклонено
+//
+//                PauseTransition pause = new PauseTransition(javafx.util.Duration.seconds(1));
+//                pause.setOnFinished(event -> {
+//                    questionnairesContainer.getChildren().remove(cardBox);
+//                    questionnaireCards.remove(questionnaire.getId());
+//                    pendingQuestionnaires.remove(questionnaire);
+//                    lblCount.setText("Найдено: " + pendingQuestionnaires.size());
+//                });
+//                pause.play();
+//            } else {
+//                showNotification("Ошибка при отклонении анкеты", false);
+//            }
+//        }
     }
 
     /**
@@ -323,19 +326,19 @@ public class QuestionRequestsList {
 
         Optional<ButtonType> result = alert.showAndWait();
 
-        if (result.isPresent() && result.get() == confirmBtn) {
-            DatabaseModule databaseModule = DatabaseModule.getInstance();
-            int successCount = 0;
-
-            for (Questionnaire questionnaire : new ArrayList<>(pendingQuestionnaires)) {
-                if (databaseModule.verifyQuestionnaire(questionnaire.getId(), true)) {
-                    successCount++;
-                }
-            }
-
-            showNotification("Подтверждено анкет: " + successCount + " из " + pendingQuestionnaires.size(), true);
-            loadQuestionnaires();
-        }
+//        if (result.isPresent() && result.get() == confirmBtn) {
+//            DatabaseModule databaseModule = DatabaseModule.getInstance();
+//            int successCount = 0;
+//
+//            for (Questionnaire questionnaire : new ArrayList<>(pendingQuestionnaires)) {
+//                if (databaseModule.verifyQuestionnaire(questionnaire.getId(), true)) {
+//                    successCount++;
+//                }
+//            }
+//
+//            showNotification("Подтверждено анкет: " + successCount + " из " + pendingQuestionnaires.size(), true);
+//            loadQuestionnaires();
+//        }
     }
 
     /**

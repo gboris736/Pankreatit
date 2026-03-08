@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.lang.*?>
+<?import javafx.collections.*?>
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.*?>
+
+<VBox alignment="TOP_CENTER" spacing="15" xmlns="http://javafx.com/javafx/17.0.12" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.pancreatitis.ui.QuestionRequestsList">
+    <padding>
+        <Insets bottom="15" left="20" right="20" top="15" />
+    </padding>
+
+    <Label text="Список анкет на верификацию" textAlignment="CENTER">
+        <font>
+            <Font name="System Bold" size="20" />
+        </font>
+    </Label>
+
+    <Separator />
+
+    <HBox prefWidth="600" spacing="10">
+        <children>
+            <Button fx:id="btnBack" text="Назад" />
+            <Region HBox.hgrow="ALWAYS" />
+            <Label fx:id="lblCount" text="Найдено: 0" style="-fx-text-fill: #7f8c8d;" />
+        </children>
+    </HBox>
+
+    <!-- Контейнер для списка анкет -->
+    <ScrollPane fitToWidth="true" style="-fx-background-color: transparent;" VBox.vgrow="ALWAYS">
+        <VBox fx:id="questionnairesContainer" spacing="10" style="-fx-background-color: #f5f5f5; -fx-padding: 10;" />
+    </ScrollPane>
+
+    <Separator />
+
+    <HBox prefWidth="600" spacing="10">
+        <children>
+            <Button fx:id="btnConfirmAll" text="Подтвердить все" style="-fx-background-color: #27ae60; -fx-text-fill: white;" />
+            <Region HBox.hgrow="ALWAYS" />
+            <Button fx:id="btnRefresh" text="Обновить" />
+        </children>
+    </HBox>
+</VBox>

@@ -1,6 +1,5 @@
 package com.pancreatitis.modules.localstorage;
 
-
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -26,6 +25,11 @@ public class LocalStorageModule {
     private File storageBaseDir;
     private static final String USERS_DIR = "users";
 
+    // Константы для имен ключей
+    private static final String USER_KEY_FILE = "key_user.enc";
+    private static final String ADMIN_KEY_FILE = "key_admin.enc";
+    private static final String USER_INFO_FILE = "user_info.json";
+
     private LocalStorageModule() {
         diskStorageControl = DiskStorageControl.getInstance();
         initializeStorage();
@@ -43,10 +47,7 @@ public class LocalStorageModule {
     }
 
     private void initializeStorage() {
-        // Инициализация папок в фоне
-        executorService.execute(() -> {
-            createFolder(USERS_DIR);
-        });
+        executorService.execute(() -> createFolder(USERS_DIR));
     }
 
     private File getStorageBaseDir() {
@@ -68,22 +69,15 @@ public class LocalStorageModule {
         try {
             Future<Boolean> future = executorService.submit(() -> {
                 File userFolder = new File(getFolder(USERS_DIR), login);
-
                 if (userFolder.exists()) {
                     return true;
                 }
-
                 boolean created = userFolder.mkdirs();
-
                 if (created) {
                     System.out.println("Папка пользователя создана: " + userFolder.getAbsolutePath());
-                } else {
-                    System.out.println("Не удалось создать папку пользователя: " + login);
                 }
-
                 return created;
             });
-
             return future.get();
         } catch (Exception e) {
             return false;
@@ -106,12 +100,28 @@ public class LocalStorageModule {
         }
     }
 
-    public byte[] downloadUserKey(String login, String user) throws Exception {
+    // ==================== МЕТОДЫ ДЛЯ РАБОТЫ С КЛЮЧАМИ ====================
+
+    /**
+     * Загрузка пользовательского ключа
+     */
+    public byte[] downloadUserKey(String login) throws Exception {
+        return downloadKey(login, USER_KEY_FILE);
+    }
+
+    /**
+     * Загрузка административного ключа
+     */
+    public byte[] downloadAdminKey(String login) throws Exception {
+        return downloadKey(login, ADMIN_KEY_FILE);
+    }
+
+    private byte[] downloadKey(String login, String keyFileName) throws Exception {
         Callable<byte[]> task = () -> {
-            File keyFile = new File(new File(getFolder(USERS_DIR), login), "key_" + user + ".enc");
+            File keyFile = new File(new File(getFolder(USERS_DIR), login), keyFileName);
 
             if (!keyFile.exists()) {
-                throw new FileNotFoundException("File not found: " + keyFile.getAbsolutePath());
+                throw new FileNotFoundException("Файл ключа не найден: " + keyFile.getAbsolutePath());
             }
 
             return readFileAsBytes(keyFile);
@@ -120,7 +130,21 @@ public class LocalStorageModule {
         return executorService.submit(task).get();
     }
 
-    public boolean saveLocalUserKey(String login, byte[] keyData) throws Exception {
+    /**
+     * Сохранение пользовательского ключа
+     */
+    public boolean saveUserKey(String login, byte[] keyData) throws Exception {
+        return saveKey(login, USER_KEY_FILE, keyData);
+    }
+
+    /**
+     * Сохранение административного ключа
+     */
+    public boolean saveAdminKey(String login, byte[] keyData) throws Exception {
+        return saveKey(login, ADMIN_KEY_FILE, keyData);
+    }
+
+    private boolean saveKey(String login, String keyFileName, byte[] keyData) throws Exception {
         File userFolder = new File(getFolder(USERS_DIR), login);
 
         if (!userFolder.exists()) {
@@ -129,7 +153,7 @@ public class LocalStorageModule {
             }
         }
 
-        File keyFile = new File(userFolder, "key_user.enc");
+        File keyFile = new File(userFolder, keyFileName);
 
         try (FileOutputStream fos = new FileOutputStream(keyFile)) {
             fos.write(keyData);
@@ -140,21 +164,36 @@ public class LocalStorageModule {
         }
     }
 
+    /**
+     * Проверка существования пользовательского ключа
+     */
     public boolean isUserKeyExists(String login) throws Exception {
+        return isKeyExists(login, USER_KEY_FILE);
+    }
+
+    /**
+     * Проверка существования административного ключа
+     */
+    public boolean isAdminKeyExists(String login) throws Exception {
+        return isKeyExists(login, ADMIN_KEY_FILE);
+    }
+
+    private boolean isKeyExists(String login, String keyFileName) throws Exception {
         Callable<Boolean> task = () -> {
-            File keyFile = new File(new File(getFolder(USERS_DIR), login), "key_user.enc");
+            File keyFile = new File(new File(getFolder(USERS_DIR), login), keyFileName);
             return keyFile.exists();
         };
-
         return executorService.submit(task).get();
     }
 
+    // ==================== МЕТОДЫ ДЛЯ РАБОТЫ С ИНФОРМАЦИЕЙ ПОЛЬЗОВАТЕЛЯ ====================
+
     public User downloadUserInfo(String login) throws Exception {
         Callable<User> task = () -> {
-            File userInfoFile = new File(new File(getFolder(USERS_DIR), login), "user_info.json");
+            File userInfoFile = new File(new File(getFolder(USERS_DIR), login), USER_INFO_FILE);
 
             if (!userInfoFile.exists()) {
-                throw new FileNotFoundException("User info not found: " + userInfoFile.getAbsolutePath());
+                throw new FileNotFoundException("Информация о пользователе не найдена: " + userInfoFile.getAbsolutePath());
             }
 
             byte[] jsonBytes = readFileAsBytes(userInfoFile);
@@ -172,7 +211,6 @@ public class LocalStorageModule {
                 throw new IllegalArgumentException("User or login cannot be null or empty");
             }
 
-            // Создаем папку пользователя, если её нет
             File userFolder = new File(getFolder(USERS_DIR), user.getLogin());
             if (!userFolder.exists()) {
                 if (!userFolder.mkdirs()) {
@@ -180,11 +218,9 @@ public class LocalStorageModule {
                 }
             }
 
-            // Создаем объект для сериализации в JSON
             ObjectMapper mapper = new ObjectMapper();
             ObjectNode userJson = mapper.createObjectNode();
 
-            // Заполняем JSON данными из объекта User
             if (user.getEmail() != null) {
                 userJson.put("email", user.getEmail());
             }
@@ -200,11 +236,8 @@ public class LocalStorageModule {
             userJson.put("login", user.getLogin());
             userJson.put("updatedAt", LocalDateTime.now().format(formatter));
 
-            // Конвертируем в JSON строку
             String jsonData = mapper.writerWithDefaultPrettyPrinter().writeValueAsString(userJson);
-
-            // Сохраняем в файл
-            File userInfoFile = new File(userFolder, "user_info.json");
+            File userInfoFile = new File(userFolder, USER_INFO_FILE);
             return writeFile(userInfoFile, jsonData.getBytes(StandardCharsets.UTF_8));
         };
 
@@ -239,6 +272,8 @@ public class LocalStorageModule {
             throw new IOException("Failed to parse user JSON: " + e.getMessage(), e);
         }
     }
+
+    // ==================== МЕТОДЫ ДЛЯ РАБОТЫ С ТРЕНИРОВОЧНЫМИ ДАННЫМИ ====================
 
     public byte[] getTrainingData() throws Exception {
         Callable<byte[]> task = () -> {
@@ -290,7 +325,8 @@ public class LocalStorageModule {
         executorService.submit(task).get();
     }
 
-    // Вспомогательные методы для работы с файлами
+    // ==================== ВСПОМОГАТЕЛЬНЫЕ МЕТОДЫ ====================
+
     private byte[] readFileAsBytes(File file) throws IOException {
         try (FileInputStream fis = new FileInputStream(file);
              ByteArrayOutputStream bos = new ByteArrayOutputStream()) {
@@ -306,7 +342,6 @@ public class LocalStorageModule {
     }
 
     private boolean writeFile(File file, byte[] data) throws IOException {
-        // Создаем родительские директории, если их нет
         File parentDir = file.getParentFile();
         if (parentDir != null && !parentDir.exists()) {
             parentDir.mkdirs();
@@ -322,25 +357,21 @@ public class LocalStorageModule {
         }
     }
 
-    // Метод для получения полного пути к файлу пользователя (для отладки)
     public String getUserFolderPath(String login) {
         File userFolder = new File(getFolder(USERS_DIR), login);
         return userFolder.getAbsolutePath();
     }
 
-    // Метод для проверки доступности хранилища
     public boolean isStorageAvailable() {
         return getStorageBaseDir() != null && getStorageBaseDir().canWrite();
     }
 
-    // Метод для очистки ресурсов
     public void shutdown() {
         if (!executorService.isShutdown()) {
             executorService.shutdown();
         }
     }
 
-    // Метод для удаления данных пользователя
     public boolean deleteUserData(String login) throws Exception {
         Callable<Boolean> task = () -> {
             File userFolder = new File(getFolder(USERS_DIR), login);

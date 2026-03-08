@@ -267,7 +267,7 @@ public class CloudStorageModule {
         }
     }
 
-    public byte[] downloadUserKey(String login, String user) throws Exception {
+    public byte[] downloadKey(String login, String user) throws Exception {
         return downloadFile(USERS_PATH + login + "/key_" + user + ".enc");
     }
 

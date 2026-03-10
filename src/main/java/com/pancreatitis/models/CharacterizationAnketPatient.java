@@ -55,4 +55,16 @@ public class CharacterizationAnketPatient {
         ObjectMapper mapper = new ObjectMapper();
         return mapper.readValue(json, CharacterizationAnketPatient.class);
     }
+
+    @Override
+    public String toString() {
+        return "CharacterizationAnketPatient{" +
+                "idAnket=" + idAnket +
+                ", idCharacteristic=" + idCharacteristic +
+                ", idValue=" + idValue +
+                ", value=" + value +
+                ", createdAt='" + createdAt + '\'' +
+                ", lastModified='" + lastModified + '\'' +
+                '}';
+    }
 }

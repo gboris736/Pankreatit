@@ -205,14 +205,8 @@ public class QuestionRequestsList {
      */
     private void viewQuestionnaire(int id) {
         MainMenuControl mainMenuControl = MainMenuControl.getInstance();
-        DatabaseModule databaseModule = DatabaseModule.getInstance();
-
-        //MainMenuControl.currentPatient = questionnaire.getIdPatient();
-        //MainMenuControl.currentQuestionnaire = questionnaire;
-
-//        MainMenuControl.idCurrentQuestionnaire = (int)questionnaire.getId();
-//        MainMenuControl.idCurrentPatient = (int)questionnaire.getIdPatient();
-//        mainMenuControl.showViewForTab("Анкета пациента");
+        QuestionnaireViewUpdate.id = id;
+        mainMenuControl.showViewForTab("Анкета обновления");
     }
 
     /**

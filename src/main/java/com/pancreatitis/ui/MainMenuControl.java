@@ -134,6 +134,7 @@ public class MainMenuControl {
                     case "Обучающая выборка" -> "fxml/QuestionListTrainSet.fxml";
                     case "Анкеты на верификацию" -> "fxml/QuestionRequestsList.fxml";
                     case "Анкета" -> "fxml/QuestionCharacterView.fxml";
+                    case "Анкета обновления" -> "fxml/QuestionnaireViewUpdate.fxml";
                     default -> "DefaultTab.fxml";
                 };
 

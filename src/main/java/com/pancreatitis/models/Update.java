@@ -3,26 +3,24 @@ package com.pancreatitis.models;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import java.util.List;
-
 public class Update {
-    private List<Patient> patientList;
-    private List<QuestionnaireDTO> questionnaireDTOS;
+    private Patient patient;
+    private QuestionnaireDTO questionnaireDTO;
 
-    public List<Patient> getPatientList() {
-        return patientList;
+    public Patient getPatient() {
+        return patient;
     }
 
-    public void setPatientList(List<Patient> patientList) {
-        this.patientList = patientList;
+    public void setPatient(Patient patient) {
+        this.patient = patient;
     }
 
-    public List<QuestionnaireDTO> getQuestionnaireDTOS() {
-        return questionnaireDTOS;
+    public QuestionnaireDTO getQuestionnaireDTO() {
+        return questionnaireDTO;
     }
 
-    public void setQuestionnaireDTOS(List<QuestionnaireDTO> questionnaireDTOS) {
-        this.questionnaireDTOS = questionnaireDTOS;
+    public void setQuestionnaireDTO(QuestionnaireDTO questionnaireDTO) {
+        this.questionnaireDTO = questionnaireDTO;
     }
 
     public String toJson() throws JsonProcessingException {

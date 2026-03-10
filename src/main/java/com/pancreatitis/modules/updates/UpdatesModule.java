@@ -40,47 +40,41 @@ public class UpdatesModule {
                 SecretKey key_admin = authorizationModule.authenticateForAdmin(doctor);
 
                 // 1. Обработка пациентов
-                if (update.getPatientList() != null) {
-                    for (Patient patient : update.getPatientList()) {
-                        patient.setFio(safetyModule.decryptString(patient.getFio(), key_admin));
-                        patient.setId(-1);
-                        patientList.add(patient);
-                    }
-                }
+                Patient patient = update.getPatient();
+                patient.setFio(safetyModule.decryptString(patient.getFio(), key_admin));
+                patient.setId(-1);
+                patientList.add(patient);
 
                 // 2. Обработка анкет и их характеристик
-                if (update.getQuestionnaireDTOS() != null) {
-                    for (QuestionnaireDTO dto : update.getQuestionnaireDTOS()) {
-                        long questionnaireId = dto.getId();
+                QuestionnaireDTO dto = update.getQuestionnaireDTO();
+                long questionnaireId = dto.getId();
 
-                        // Преобразование DTO в обычную анкету (копирование полей)
-                        Questionnaire questionnaire = new Questionnaire(dto);
-                        questionnaire.setId(-1);
-                        questionnairList.add(questionnaire);
+                // Преобразование DTO в обычную анкету (копирование полей)
+                Questionnaire questionnaire = new Questionnaire(dto);
+                questionnaire.setId(-1);
+                questionnairList.add(questionnaire);
 
-                        List<CharacterizationAnketPatient> localCcharacterizationAnketPatientList = new ArrayList<>();
+                List<CharacterizationAnketPatient> localCcharacterizationAnketPatientList = new ArrayList<>();
 
-                        // Создание характеристик анкеты (значений)
-                        if (dto.getCharacteristicValues() != null) {
-                            for (CharasteristicDTO charDto : dto.getCharacteristicValues()) {
-                                CharacterizationAnketPatient cap = new CharacterizationAnketPatient();
-                                cap.setIdAnket(questionnaireId);
-                                cap.setIdCharacteristic(charDto.getId()); // id характеристики из DTO
-                                if (charDto.getIdType() == 3) {
-                                    cap.setValue(charDto.getValue());
-                                } else {
-                                    cap.setIdValue((int)charDto.getValue());
-                                }
-                                localCcharacterizationAnketPatientList.add(cap);
-                            }
+                // Создание характеристик анкеты (значений)
+                if (dto.getCharacteristicValues() != null) {
+                    for (CharasteristicDTO charDto : dto.getCharacteristicValues()) {
+                        CharacterizationAnketPatient cap = new CharacterizationAnketPatient();
+                        cap.setIdAnket(questionnaireId);
+                        cap.setIdCharacteristic(charDto.getId());
+                        if (charDto.getIdType() == 3) {
+                            cap.setValue(charDto.getValue());
+                        } else {
+                            cap.setIdValue((int)charDto.getValue());
                         }
-
-                        characterizationAnketPatientList.add(localCcharacterizationAnketPatientList);
+                        localCcharacterizationAnketPatientList.add(cap);
                     }
                 }
-            }
-        } catch (Exception e) {
-            throw new RuntimeException(e);
+
+                characterizationAnketPatientList.add(localCcharacterizationAnketPatientList);
+                }
+            } catch (Exception ex) {
+            throw new RuntimeException(ex);
         }
     }
 

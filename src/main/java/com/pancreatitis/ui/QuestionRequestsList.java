@@ -210,12 +210,12 @@ public class QuestionRequestsList {
      */
     private void viewQuestionnaire(int id) {
         DatabaseModule databaseModule = DatabaseModule.getInstance();
-        /*
+
         MainMenuControl mainMenuControl = MainMenuControl.getInstance();
         QuestionnaireViewUpdate.id = id;
         mainMenuControl.showViewForTab("Анкета обновления");
-        */
-        try {
+
+        /*try {
             FXMLLoader loader = new FXMLLoader(
                     getClass().getResource("fxml/QuestionnaireViewUpdateWindow.fxml"));
             Parent root = loader.load();
@@ -227,18 +227,21 @@ public class QuestionRequestsList {
             Stage stage = new Stage();
             stage.setTitle("Анкета: " + fio);
             stage.initModality(Modality.NONE);
-            stage.setScene(new Scene(root));
 
-            /*
+            Scene scene = new Scene(root);
+            scene.getStylesheets().add(StartApplication.class.getResource("fxml/css/style.css").toExternalForm());
+            stage.setScene(scene);
+
+
             // 🔒 Добавляем обработчик закрытия окна
-            stage.setOnCloseRequest(event -> {
-                if (!ctrl.requestClose()) {
-                    // Если requestClose() вернул false — отменяем закрытие
-                    event.consume();
-                }
-                // Если вернул true — окно закроется автоматически
-            });
-            */
+//            stage.setOnCloseRequest(event -> {
+//                if (!ctrl.requestClose()) {
+//                    // Если requestClose() вернул false — отменяем закрытие
+//                    event.consume();
+//                }
+//                // Если вернул true — окно закроется автоматически
+//            });
+
 
 
             stage.show();
@@ -247,7 +250,7 @@ public class QuestionRequestsList {
             new Alert(Alert.AlertType.ERROR,"Не удалось открыть окно анкеты: " + e.getMessage());
 
             e.printStackTrace();
-        }
+        }*/
     }
 
     /**

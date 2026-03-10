@@ -167,7 +167,12 @@ public class QuestionnaireController {
             PredictionModule predictionModule = PredictionModule.getInstance();
             try {
                 PredictionResult predict_result = predictionModule.predict(charasteristicDTOS);
-                // работает, надо сделать модальное окно с результатом
+
+                Alert alert = new Alert(Alert.AlertType.INFORMATION );
+                alert.setTitle("Прогноз");
+                alert.setHeaderText( patient.getFio() );
+                alert.setContentText( codeToDiagnosis( predict_result.getPredictedClass() ) );
+                alert.show();
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
@@ -470,5 +475,13 @@ public class QuestionnaireController {
         diagnosisMap.put("Панкреонекроз среднетяжелое течение", "5");
         diagnosisMap.put("Панкреонекроз тяжелое течение", "6");
         return diagnosisMap.getOrDefault(diagnosis, "0");
+    }
+
+    private String codeToDiagnosis(int code){
+        Map<Integer, String> diagnosisMap = new HashMap<>();
+        diagnosisMap.put(1, "Отечный панкреатит");
+        diagnosisMap.put(5, "Панкреонекроз среднетяжелое течение");
+        diagnosisMap.put(6, "Панкреонекроз тяжелое течение");
+        return diagnosisMap.get(code);
     }
 }

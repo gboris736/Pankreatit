@@ -27,6 +27,7 @@ public class QuestionnaireViewUpdateWindow {
     @FXML private Button btnBack;
     @FXML private Button btnSave;
     @FXML private Button btnPredict;
+    @FXML public Button btnWindow;
 
     // Объекты, переданные извне
     private Questionnaire questionnaire;
@@ -50,6 +51,8 @@ public class QuestionnaireViewUpdateWindow {
 
     private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
     private static final Map<String, String> DIAGNOSIS_MAP = new HashMap<>();
+
+    boolean inWindow = false; // Состояние (в окне или нет)
 
     static {
         DIAGNOSIS_MAP.put("Отечный панкреатит", "1");
@@ -191,6 +194,7 @@ public class QuestionnaireViewUpdateWindow {
         btnBack.setOnAction(e -> handleBack());
         btnSave.setOnAction(e -> handleSave());
         btnPredict.setOnAction(e -> handlePredict());
+        btnWindow.setOnAction(e -> handleWindow() );
     }
 
     // ------------------- Построение UI для характеристик -------------------
@@ -439,6 +443,13 @@ public class QuestionnaireViewUpdateWindow {
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
+    }
+
+    private void handleWindow() {
+        inWindow = !inWindow;
+
+        MainMenuControl mainMenuControl = MainMenuControl.getInstance();
+        mainMenuControl.detachTabToNewWindow("Анкета обновления");
     }
 
     // ------------------- Вспомогательные методы -------------------

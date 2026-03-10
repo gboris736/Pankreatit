@@ -184,7 +184,16 @@ public class CloudStorageModule {
             if (response.code() == 200) {
                 JsonNode rootNode = objectMapper.readTree(response.body().byteStream());
                 JsonNode itemsNode = rootNode.get("_embedded").get("items");
-                // ... остальная логика без изменений
+
+                // Добавлена недостающая логика обработки
+                if (itemsNode != null && itemsNode.isArray()) {
+                    for (JsonNode item : itemsNode) {
+                        items.add(new FolderItem(
+                                item.get("name").asText(),
+                                item.get("type").asText()
+                        ));
+                    }
+                }
             }
             return items;
         });

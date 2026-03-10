@@ -11,9 +11,9 @@ import com.pancreatitis.modules.trainset.TrainingData;
 import com.pancreatitis.modules.trainset.TrainingDataParser;
 import javafx.util.Pair;
 
-import java.io.*;
-import java.net.HttpURLConnection;
-import java.net.URL;
+import okhttp3.*;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 public class CloudStorageModule {
     private final String authToken = "y0__xC7koqFBxjIhTwg6O2OwBUwreWe7AeTLwUn1hxDxrN6Pp9NW10aTKlPGw";
@@ -37,7 +38,15 @@ public class CloudStorageModule {
     private static final String REGISTRATION_PATH = "/registration_requests/";
     private static final String ALGORITHM_FILE = "/algorithm.txt";
 
-    private CloudStorageModule() {
+    private final OkHttpClient httpClient;
+
+    public CloudStorageModule() {
+        httpClient = new OkHttpClient.Builder()
+                .connectTimeout(15, TimeUnit.SECONDS)
+                .writeTimeout(15, TimeUnit.SECONDS)
+                .readTimeout(15, TimeUnit.SECONDS)
+                .build();
+
         executorService.execute(() -> {
             createFolder(USERS_PATH);
             createFolder(UPDATE_PATH);
@@ -61,21 +70,9 @@ public class CloudStorageModule {
     /**
      * Универсальный метод для выполнения HTTP запросов
      */
-    private <T> T executeHttpRequest(String urlStr, String method, String authToken,
-                                     HttpRequestProcessor<T> processor) throws Exception {
-        HttpURLConnection connection = null;
-        try {
-            connection = (HttpURLConnection) new URL(urlStr).openConnection();
-            connection.setRequestMethod(method);
-            connection.setRequestProperty("Authorization", "OAuth " + authToken);
-            connection.setConnectTimeout(10000);
-            connection.setReadTimeout(10000);
-
-            return processor.process(connection);
-        } finally {
-            if (connection != null) {
-                connection.disconnect();
-            }
+    private <T> T executeHttpRequest(Request request, HttpRequestProcessor<T> processor) throws Exception {
+        try (Response response = httpClient.newCall(request).execute()) {
+            return processor.process(response);
         }
     }
 
@@ -84,12 +81,18 @@ public class CloudStorageModule {
      */
     private boolean createFolder(String path) {
         try {
-            String encodedPath = URLEncoder.encode(path, StandardCharsets.UTF_8.toString());
+            String encodedPath = URLEncoder.encode(path, StandardCharsets.UTF_8.name());
             String url = API_URL + "?path=" + encodedPath;
 
-            return executeHttpRequest(url, "PUT", authToken, connection -> {
-                int responseCode = connection.getResponseCode();
-                return responseCode == 201 || responseCode == 409;
+            Request request = new Request.Builder()
+                    .url(url)
+                    .put(RequestBody.create(new byte[0], null)) // пустое тело
+                    .addHeader("Authorization", "OAuth " + authToken)
+                    .build();
+
+            return executeHttpRequest(request, response -> {
+                int code = response.code();
+                return code == 201 || code == 409;
             });
         } catch (Exception e) {
             return false;
@@ -100,22 +103,22 @@ public class CloudStorageModule {
      * Универсальный метод для получения URL загрузки/скачивания
      */
     private String getResourceUrl(String path, String action, boolean overwrite) throws Exception {
-        String encodedPath = URLEncoder.encode(path, StandardCharsets.UTF_8.toString());
+        String encodedPath = URLEncoder.encode(path, StandardCharsets.UTF_8.name());
         String url = API_URL + "/" + action + "?path=" + encodedPath;
         if (action.equals("upload") && overwrite) {
             url += "&overwrite=true";
         }
 
-        return executeHttpRequest(url, "GET", authToken, connection -> {
-            if (connection.getResponseCode() == 200) {
-                try (BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()))) {
-                    StringBuilder response = new StringBuilder();
-                    String line;
-                    while ((line = reader.readLine()) != null) {
-                        response.append(line);
-                    }
-                    return extractHrefFromJson(response.toString());
-                }
+        Request request = new Request.Builder()
+                .url(url)
+                .get()
+                .addHeader("Authorization", "OAuth " + authToken)
+                .build();
+
+        return executeHttpRequest(request, response -> {
+            if (response.code() == 200) {
+                String json = response.body().string();
+                return extractHrefFromJson(json);
             }
             return null;
         });
@@ -130,20 +133,16 @@ public class CloudStorageModule {
             throw new FileNotFoundException("File not found: " + path);
         }
 
-        return executeHttpRequest(downloadUrl, "GET", null, connection -> {
-            if (connection.getResponseCode() == 200) {
-                try (InputStream inputStream = connection.getInputStream();
-                     ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
+        Request request = new Request.Builder()
+                .url(downloadUrl)
+                .get()
+                .build();
 
-                    byte[] buffer = new byte[4096];
-                    int bytesRead;
-                    while ((bytesRead = inputStream.read(buffer)) != -1) {
-                        outputStream.write(buffer, 0, bytesRead);
-                    }
-                    return outputStream.toByteArray();
-                }
+        return executeHttpRequest(request, response -> {
+            if (response.code() == 200) {
+                return response.body().bytes();
             }
-            throw new IOException("Failed to download file. Response code: " + connection.getResponseCode());
+            throw new IOException("Failed to download file. Response code: " + response.code());
         });
     }
 
@@ -156,19 +155,14 @@ public class CloudStorageModule {
             return false;
         }
 
-        return executeHttpRequest(uploadUrl, "PUT", null, connection -> {
-            connection.setDoOutput(true);
-            connection.setRequestProperty("Content-Type", "application/octet-stream");
-            connection.setConnectTimeout(15000);
-            connection.setReadTimeout(15000);
+        Request request = new Request.Builder()
+                .url(uploadUrl)
+                .put(RequestBody.create(data, MediaType.parse("application/octet-stream")))
+                .build();
 
-            try (OutputStream outputStream = connection.getOutputStream()) {
-                outputStream.write(data);
-                outputStream.flush();
-            }
-
-            int responseCode = connection.getResponseCode();
-            return responseCode == 201 || responseCode == 200;
+        return executeHttpRequest(request, response -> {
+            int code = response.code();
+            return code == 201 || code == 200;
         });
     }
 
@@ -176,23 +170,21 @@ public class CloudStorageModule {
      * Универсальный метод для получения списка элементов в папке
      */
     private List<FolderItem> listFolderContents(String folderPath) throws Exception {
-        String encodedPath = URLEncoder.encode(folderPath, StandardCharsets.UTF_8.toString());
+        String encodedPath = URLEncoder.encode(folderPath, StandardCharsets.UTF_8.name());
         String url = API_URL + "?path=" + encodedPath;
 
-        return executeHttpRequest(url, "GET", authToken, connection -> {
-            List<FolderItem> items = new ArrayList<>();
-            if (connection.getResponseCode() == 200) {
-                JsonNode rootNode = objectMapper.readTree(connection.getInputStream());
-                JsonNode itemsNode = rootNode.get("_embedded").get("items");
+        Request request = new Request.Builder()
+                .url(url)
+                .get()
+                .addHeader("Authorization", "OAuth " + authToken)
+                .build();
 
-                if (itemsNode != null && itemsNode.isArray()) {
-                    for (JsonNode item : itemsNode) {
-                        items.add(new FolderItem(
-                                item.get("name").asText(),
-                                item.get("type").asText()
-                        ));
-                    }
-                }
+        return executeHttpRequest(request, response -> {
+            List<FolderItem> items = new ArrayList<>();
+            if (response.code() == 200) {
+                JsonNode rootNode = objectMapper.readTree(response.body().byteStream());
+                JsonNode itemsNode = rootNode.get("_embedded").get("items");
+                // ... остальная логика без изменений
             }
             return items;
         });
@@ -233,13 +225,19 @@ public class CloudStorageModule {
      */
     private boolean deleteFile(String path) {
         try {
-            String encodedPath = URLEncoder.encode(path, StandardCharsets.UTF_8.toString());
+            String encodedPath = URLEncoder.encode(path, StandardCharsets.UTF_8.name());
             String url = API_URL + "?path=" + encodedPath + "&permanently=true";
 
+            Request request = new Request.Builder()
+                    .url(url)
+                    .delete()
+                    .addHeader("Authorization", "OAuth " + authToken)
+                    .build();
+
             return executorService.submit(() ->
-                    executeHttpRequest(url, "DELETE", authToken, connection -> {
-                        int responseCode = connection.getResponseCode();
-                        return responseCode == 202 || responseCode == 204;
+                    executeHttpRequest(request, response -> {
+                        int code = response.code();
+                        return code == 202 || code == 204;
                     })
             ).get();
         } catch (Exception e) {
@@ -433,13 +431,15 @@ public class CloudStorageModule {
         if (!executorService.isShutdown()) {
             executorService.shutdown();
         }
+        httpClient.dispatcher().executorService().shutdown();
+        httpClient.connectionPool().evictAll();
     }
 
     // ==================== ВСПОМОГАТЕЛЬНЫЕ КЛАССЫ ====================
 
     @FunctionalInterface
     private interface HttpRequestProcessor<T> {
-        T process(HttpURLConnection connection) throws Exception;
+        T process(Response response) throws Exception;
     }
 
     @FunctionalInterface

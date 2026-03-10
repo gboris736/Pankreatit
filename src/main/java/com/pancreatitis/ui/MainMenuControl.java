@@ -164,5 +164,8 @@ public class MainMenuControl {
         return loader.getController();
     }
 
+    public static void openQuestionInNewWindow( Questionnaire quest ) {
+
+    }
 
 }

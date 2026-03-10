@@ -7,12 +7,14 @@ import javafx.stage.Stage;
 
 import java.io.IOException;
 
-public class HelloApplication extends Application {
+public class StartApplication extends Application {
+
+
     @Override
     public void start(Stage stage) throws IOException {
-        FXMLLoader fxmlLoader = new FXMLLoader(HelloApplication.class.getResource("fxml/panelView.fxml"));
+        FXMLLoader fxmlLoader = new FXMLLoader(StartApplication.class.getResource("fxml/panelView.fxml"));
         Scene scene = new Scene(fxmlLoader.load(), 320, 240);
-        scene.getStylesheets().add(HelloApplication.class.getResource("fxml/css/style.css").toExternalForm());
+        scene.getStylesheets().add(StartApplication.class.getResource("fxml/css/style.css").toExternalForm());
 
 
         stage.setTitle("Крутое Название");

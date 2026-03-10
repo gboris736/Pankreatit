@@ -5,9 +5,14 @@ import com.pancreatitis.modules.database.DatabaseModule;
 import com.pancreatitis.modules.questionnairemanager.QuestionnaireManagerModule;
 import com.pancreatitis.modules.updates.UpdatesModule;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
 import javafx.geometry.Pos;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
+import javafx.stage.Modality;
+import javafx.stage.Stage;
 
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -204,9 +209,45 @@ public class QuestionRequestsList {
      * Просмотр анкеты
      */
     private void viewQuestionnaire(int id) {
+        DatabaseModule databaseModule = DatabaseModule.getInstance();
+        /*
         MainMenuControl mainMenuControl = MainMenuControl.getInstance();
         QuestionnaireViewUpdate.id = id;
         mainMenuControl.showViewForTab("Анкета обновления");
+        */
+        try {
+            FXMLLoader loader = new FXMLLoader(
+                    getClass().getResource("fxml/QuestionnaireViewUpdateWindow.fxml"));
+            Parent root = loader.load();
+
+            QuestionnaireViewUpdateWindow ctrl = loader.getController();
+
+            String fio = updatesModule.getPatientList().get(id).getFio();
+
+            Stage stage = new Stage();
+            stage.setTitle("Анкета: " + fio);
+            stage.initModality(Modality.NONE);
+            stage.setScene(new Scene(root));
+
+            /*
+            // 🔒 Добавляем обработчик закрытия окна
+            stage.setOnCloseRequest(event -> {
+                if (!ctrl.requestClose()) {
+                    // Если requestClose() вернул false — отменяем закрытие
+                    event.consume();
+                }
+                // Если вернул true — окно закроется автоматически
+            });
+            */
+
+
+            stage.show();
+
+        } catch (Exception e) {
+            new Alert(Alert.AlertType.ERROR,"Не удалось открыть окно анкеты: " + e.getMessage());
+
+            e.printStackTrace();
+        }
     }
 
     /**

@@ -26,6 +26,7 @@
             <Region HBox.hgrow="ALWAYS" />
             <Button fx:id="btnSave" text="Сохранить анкету" />
             <Button fx:id="btnPredict" text="Сделать прогноз" />
+            <Button fx:id="btnWindow" mnemonicParsing="false" text="IN" />
         </children>
     </HBox>
 

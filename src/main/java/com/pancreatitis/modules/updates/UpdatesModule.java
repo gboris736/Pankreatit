@@ -34,6 +34,10 @@ public class UpdatesModule {
     public void load(){
         try {
             updatesList = new ArrayList<>();
+            questionnairList = new ArrayList<>();
+            patientList = new ArrayList<>();
+            characterizationAnketPatientList = new ArrayList<>();
+
             updatesList = cloudStorageModule.downloadAllUpdates();
 
             for (Pair<Pair<String, String>, Update> pair : updatesList) {

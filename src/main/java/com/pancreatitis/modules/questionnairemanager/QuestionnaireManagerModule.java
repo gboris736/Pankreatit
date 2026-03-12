@@ -46,6 +46,9 @@ public class QuestionnaireManagerModule {
                 databaseModule.updateQuestionnaire(questionnaire);
             }
 
+            for(CharacterizationAnketPatient ch: characterizationAnketPatients){
+                ch.setIdAnket(idQuestionnaire);
+            }
             databaseModule.insertAllCharacterizationAnketPatient(characterizationAnketPatients);
 
             databaseModule.setTransactionSuccessful();

@@ -401,10 +401,8 @@ public class QuestionnaireViewUpdate {
     // ------------------- Обработка действий -------------------
 
     private void handleBack() {
-        // Просто закрываем окно/вкладку. Здесь можно вызвать callback,
-        // но для простоты предположим, что сцена закрывается внешним кодом.
-        // Например, можно получить Stage и закрыть:
-        // ((Stage) btnBack.getScene().getWindow()).close();
+        MainMenuControl mainMenuControl = MainMenuControl.getInstance();
+        mainMenuControl.showViewForTab("Анкеты на верификацию");
     }
 
     private void handleSave() {

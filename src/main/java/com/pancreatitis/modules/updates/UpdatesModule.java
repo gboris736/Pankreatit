@@ -60,22 +60,7 @@ public class UpdatesModule {
                 questionnaire.setId(-1);
                 questionnairList.add(questionnaire);
 
-                List<CharacterizationAnketPatient> localCcharacterizationAnketPatientList = new ArrayList<>();
-
-                // Создание характеристик анкеты (значений)
-                if (dto.getCharacteristicValues() != null) {
-                    for (CharasteristicDTO charDto : dto.getCharacteristicValues()) {
-                        CharacterizationAnketPatient cap = new CharacterizationAnketPatient();
-                        cap.setIdAnket(questionnaireId);
-                        cap.setIdCharacteristic(charDto.getId());
-                        if (charDto.getIdType() == 3) {
-                            cap.setValue(charDto.getValue());
-                        } else {
-                            cap.setIdValue((int)charDto.getValue());
-                        }
-                        localCcharacterizationAnketPatientList.add(cap);
-                    }
-                }
+                List<CharacterizationAnketPatient> localCcharacterizationAnketPatientList = dto.getCharacteristicValues();
 
                 characterizationAnketPatientList.add(localCcharacterizationAnketPatientList);
                 }

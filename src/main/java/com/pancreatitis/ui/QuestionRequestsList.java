@@ -238,18 +238,7 @@ public class QuestionRequestsList {
                         "-fx-background-radius: 5; -fx-padding: 15;" +
                         "-fx-background-color: #e8f8f5; -fx-effect: dropshadow(gaussian, rgba(39,174,96,0.3), 10, 0, 0, 2);");
 
-                // Обновляем статус
-                //questionnaire.setStatus(1); // 1 = подтверждено
-
-//                // Удаляем карточку через паузу
-//                PauseTransition pause = new PauseTransition(javafx.util.Duration.seconds(1));
-//                pause.setOnFinished(event -> {
-//                    questionnairesContainer.getChildren().remove(cardBox);
-//                    questionnaireCards.remove(questionnaire.getId());
-//                    pendingQuestionnaires.remove(questionnaire);
-//                    lblCount.setText("Найдено: " + pendingQuestionnaires.size());
-//                });
-//                pause.play();
+                updatesModule.deleteUpdate(id);
             } else {
                 showNotification("Ошибка при подтверждении анкеты", false);
             }
@@ -264,40 +253,24 @@ public class QuestionRequestsList {
         Patient patient = updatesModule.getPatientList().get(id);
         List<CharacterizationAnketPatient> characterizationAnketPatientList = updatesModule.getCharacterizationAnketPatientList().get(id);
 
-        TextInputDialog dialog = new TextInputDialog();
-        dialog.setTitle("Отклонение анкеты");
-        dialog.setHeaderText("Отклонить анкету #" + questionnaire.getId() + "?");
+        Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+        alert.setTitle("Отказ анкеты");
+        alert.setHeaderText("Отказать анкете #" + questionnaire.getId() + "?");
+        alert.setContentText("Анкета будет помечена как удаленная и не сохранена в базе данных.");
 
-        Optional<String> result = dialog.showAndWait();
+        ButtonType confirmBtn = new ButtonType("Подтвердить", ButtonBar.ButtonData.OK_DONE);
+        ButtonType cancelBtn = new ButtonType("Отмена", ButtonBar.ButtonData.CANCEL_CLOSE);
+        alert.getButtonTypes().setAll(confirmBtn, cancelBtn);
 
-        if (result.isPresent()) {
-            String reason = result.get();
-            DatabaseModule databaseModule = DatabaseModule.getInstance();
-            //boolean success = databaseModule.verifyQuestionnaire(questionnaire.getId(), false);
+        Optional<ButtonType> result = alert.showAndWait();
 
-//            if (success) {
-//                if (!reason.isEmpty()) {
-//                    databaseModule.addRejectionReason(questionnaire.getId(), reason);
-//                }
-//
-//                showNotification("Анкета #" + questionnaire.getId() + " отклонена", true);
-//                cardBox.setStyle("-fx-border-color: #e74c3c; -fx-border-radius: 5; " +
-//                        "-fx-background-radius: 5; -fx-padding: 15;" +
-//                        "-fx-background-color: #fdedec; -fx-effect: dropshadow(gaussian, rgba(231,76,60,0.3), 10, 0, 0, 2);");
-//
-////                questionnaire.setStatus(2); // 2 = отклонено
-////
-////                PauseTransition pause = new PauseTransition(javafx.util.Duration.seconds(1));
-////                pause.setOnFinished(event -> {
-////                    questionnairesContainer.getChildren().remove(cardBox);
-////                    questionnaireCards.remove(questionnaire.getId());
-////                    pendingQuestionnaires.remove(questionnaire);
-////                    lblCount.setText("Найдено: " + pendingQuestionnaires.size());
-////                });
-////                pause.play();
-//            } else {
-//                showNotification("Ошибка при отклонении анкеты", false);
-//            }
+        if (result.isPresent() && result.get() == confirmBtn) {
+            showNotification("Анкета #" + questionnaire.getId() + " отклонена", true);
+            cardBox.setStyle("-fx-border-color: #e74c3c; -fx-border-radius: 5; " +
+                    "-fx-background-radius: 5; -fx-padding: 15;" +
+                    "-fx-background-color: #fdedec; -fx-effect: dropshadow(gaussian, rgba(231,76,60,0.3), 10, 0, 0, 2);");
+
+            updatesModule.deleteUpdate(id);
         }
     }
 

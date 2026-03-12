@@ -260,7 +260,7 @@ public class DatabaseModule {
             pstmt.setInt(1, (int)questionnaire.getIdPatient());
             pstmt.setInt(2, questionnaire.getIdDoctor());
             pstmt.setInt(3, questionnaire.getIdExpert());
-            pstmt.setString(4, questionnaire.getTextDiagnosis());
+            pstmt.setString(4, questionnaire.getDiagnosis());
             pstmt.setString(5, questionnaire.getAdmittedFrom());
             pstmt.setString(6, LocalDateTime.now().format(formatter));
             pstmt.setString(7, LocalDateTime.now().format(formatter));

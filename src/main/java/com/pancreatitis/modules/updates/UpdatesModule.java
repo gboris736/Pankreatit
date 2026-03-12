@@ -17,6 +17,7 @@ public class UpdatesModule {
     private List<Patient> patientList = new ArrayList<>();
     private List<Questionnaire> questionnairList = new ArrayList<>();
     private List<List<CharacterizationAnketPatient>> characterizationAnketPatientList = new ArrayList<>();
+    List<Pair<Pair<String, String>, Update>> updatesList = new ArrayList<>();
     private static UpdatesModule instance;
 
     private UpdatesModule() {
@@ -32,7 +33,8 @@ public class UpdatesModule {
 
     public void load(){
         try {
-            List<Pair<Pair<String, String>, Update>> updatesList = cloudStorageModule.downloadAllUpdates();
+            updatesList = new ArrayList<>();
+            updatesList = cloudStorageModule.downloadAllUpdates();
 
             for (Pair<Pair<String, String>, Update> pair : updatesList) {
                 Update update = pair.getValue();
@@ -76,6 +78,15 @@ public class UpdatesModule {
             } catch (Exception ex) {
             throw new RuntimeException(ex);
         }
+    }
+
+    public void deleteUpdate(int id) {
+        Pair<Pair<String, String>, Update> pair = updatesList.get(id);
+        Update update = pair.getValue();
+        String doctor = pair.getKey().getKey();
+        String datetime = pair.getKey().getValue();
+        cloudStorageModule.deleteUpdateFile(String.format("%s_update_%s.json", doctor, datetime));
+        updatesList.remove(id);
     }
 
     public List<Patient> getPatientList(){

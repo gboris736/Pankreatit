@@ -13,7 +13,7 @@ public class DiskStorageControl {
     private final static String appName = "PankreatManager";
     private final static String appDB = "dataBaseStor";
     private final static String appAlg = "appAlgStor";
-    private final static String dbFileName = "pancreatitis_v6.db";
+    private final static String dbFileName = "pancreatitis_v6.5.db";
     private final static String algFileName = "algorithm.txt";
 
     private HashMap<String, Path> pathLibrary;

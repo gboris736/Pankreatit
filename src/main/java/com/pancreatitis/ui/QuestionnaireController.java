@@ -294,10 +294,7 @@ public class QuestionnaireController {
         TextField valueField = new TextField(cap.getValue() == -1 ? "" : String.valueOf(cap.getValue()));
         valueField.setPromptText("Числовое значение");
         valueField.setMaxWidth(300);
-        valueField.setEditable(isNew); // Только новые можно редактировать
-        if (!isNew) {
-            valueField.setStyle("-fx-background-color: #f5f5f5; -fx-text-fill: #555;");
-        }
+        valueField.setDisable(!isNew);
         HBox.setHgrow(valueField, Priority.ALWAYS);
 
         TextField dateField = new TextField(cap.getCreatedAt());
@@ -348,9 +345,6 @@ public class QuestionnaireController {
         combo.setPromptText("Выберите значение");
         combo.setMaxWidth(300);
         combo.setDisable(!isNew);
-        if (!isNew) {
-            combo.setStyle("-fx-background-color: #f5f5f5;");
-        }
         HBox.setHgrow(combo, Priority.ALWAYS);
 
         String currentText = optionIdToText.get(charId).get(cap.getIdValue());

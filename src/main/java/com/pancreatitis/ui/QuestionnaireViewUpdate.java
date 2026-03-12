@@ -264,10 +264,7 @@ public class QuestionnaireViewUpdate {
         TextField valueField = new TextField(cap.getValue() == -1 ? "" : String.valueOf(cap.getValue()));
         valueField.setPromptText("Числовое значение");
         valueField.setMaxWidth(300);
-        valueField.setEditable(isNew);
-        if (!isNew) {
-            valueField.setStyle("-fx-background-color: #f5f5f5; -fx-text-fill: #555;");
-        }
+        valueField.setDisable(!isNew);
         HBox.setHgrow(valueField, Priority.ALWAYS);
 
         TextField dateField = new TextField(cap.getCreatedAt());
@@ -315,10 +312,7 @@ public class QuestionnaireViewUpdate {
         combo.getItems().addAll(optionTexts.get(charId));
         combo.setPromptText("Выберите значение");
         combo.setMaxWidth(300);
-        combo.setEditable(isNew);
-        if (!isNew) {
-            combo.setStyle("-fx-background-color: #f5f5f5;");
-        }
+        combo.setDisable(!isNew);
         HBox.setHgrow(combo, Priority.ALWAYS);
 
         String currentText = optionIdToText.get(charId).get(cap.getIdValue());

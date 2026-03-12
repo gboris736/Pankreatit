@@ -410,7 +410,7 @@ public class QuestionnaireViewUpdate {
     private void handleSave() {
         // Обновляем объект анкеты
         questionnaire.setDiagnosis(diagnosisToCode(diagnosisCombo.getValue()));
-        questionnaire.setDiagnosis(DIAGNOSIS_MAP.get(diagnosisCombo.getValue()));
+        //questionnaire.setDiagnosis(DIAGNOSIS_MAP.get(diagnosisCombo.getValue()));
         questionnaire.setAdmittedFrom(addmitedFrom.getText());
         // дата заполнения может не меняться
 

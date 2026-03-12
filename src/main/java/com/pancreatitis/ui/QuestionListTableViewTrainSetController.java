@@ -1,5 +1,6 @@
 package com.pancreatitis.ui;
 
+import com.pancreatitis.models.CharacterizationAnketPatient;
 import com.pancreatitis.models.Questionnaire;
 import com.pancreatitis.models.QuestionnaireItem;
 import com.pancreatitis.models.RegistrationForm;
@@ -16,7 +17,11 @@ import javafx.scene.control.*;
 import javafx.scene.input.MouseButton;
 import javafx.scene.layout.HBox;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class QuestionListTableViewTrainSetController {
 
@@ -33,6 +38,7 @@ public class QuestionListTableViewTrainSetController {
     // таблица отображает список анкет
     private final ObservableList<QuestionnaireItem> rows = FXCollections.observableArrayList();
     private FilteredList<QuestionnaireItem> filteredRows;
+    private static final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
     TrainSetModule trainSetModule = TrainSetModule.getInstance();
 
@@ -60,17 +66,17 @@ public class QuestionListTableViewTrainSetController {
                 container.setPadding(new Insets(2));
             }
 
-            @Override
-            protected void updateItem(Void item, boolean empty) {
-                super.updateItem(item, empty);
-                if (empty || getTableRow() == null || getTableRow().getItem() == null) {
-                    setGraphic(null);
-                } else {
-                    approveBtn.setOnAction(e -> handleAdd(form));
-                    rejectBtn.setOnAction(e -> handleRemove(form));
-                    setGraphic(container);
-                }
-            }
+//            @Override
+//            protected void updateItem(Void item, boolean empty) {
+//                super.updateItem(item, empty);
+//                if (empty || getTableRow() == null || getTableRow().getItem() == null) {
+//                    setGraphic(null);
+//                } else {
+//                    approveBtn.setOnAction(e -> handleAdd(form));
+//                    rejectBtn.setOnAction(e -> handleRemove(form));
+//                    setGraphic(container);
+//                }
+//            }
         });
 
         HelpUtils.attachHelp(colNamePerson, "ФИО пациента");
@@ -120,14 +126,34 @@ public class QuestionListTableViewTrainSetController {
     }
 
     private void handleAdd(Questionnaire questionnaire) {
-
-        trainSetModule.addQuestionnaire(questionnaire.);
+        //trainSetModule.addQuestionnaire(questionnaire);
     }
 
     private void handleRemove(Questionnaire questionnaire) {
         trainSetModule.deleteQuestionnaire(questionnaire);
     }
 
+    public List<CharacterizationAnketPatient> getLatestCharacterizationsForAnket(int anketId) {
+        DatabaseModule databaseModule = DatabaseModule.getInstance();
+        List<CharacterizationAnketPatient> characterizationAnketPatientList = databaseModule.getCharacterizationsForAnket(anketId);
+        return characterizationAnketPatientList.stream()
+                .collect(Collectors.toMap(
+                        item -> item.getIdCharacteristic(),
+                        item -> item,
+                        (existing, replacement) -> {
+                            try {
+                                LocalDateTime existingTime = LocalDateTime.parse(existing.getCreatedAt(), formatter);
+                                LocalDateTime replacementTime = LocalDateTime.parse(replacement.getCreatedAt(), formatter);
+                                return replacementTime.isAfter(existingTime) ? replacement : existing;
+                            } catch (Exception e) {
+                                return existing;
+                            }
+                        }
+                ))
+                .values()
+                .stream()
+                .collect(Collectors.toList());
+    }
 
     private Button createButton(String text, String styleClass) {
         Button btn = new Button(text);

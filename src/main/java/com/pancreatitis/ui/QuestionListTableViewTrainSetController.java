@@ -1,5 +1,6 @@
 package com.pancreatitis.ui;
 
+import com.pancreatitis.models.Questionnaire;
 import com.pancreatitis.models.QuestionnaireItem;
 import com.pancreatitis.models.RegistrationForm;
 import com.pancreatitis.modules.database.DatabaseModule;
@@ -33,8 +34,7 @@ public class QuestionListTableViewTrainSetController {
     private final ObservableList<QuestionnaireItem> rows = FXCollections.observableArrayList();
     private FilteredList<QuestionnaireItem> filteredRows;
 
-    // основная коллекция пациентов — ObservableMap<id, Patient>
-    //private ObservableMap<Integer, Patient> patientMap = FXCollections.observableHashMap();
+    TrainSetModule trainSetModule = TrainSetModule.getInstance();
 
 
     @FXML
@@ -45,35 +45,33 @@ public class QuestionListTableViewTrainSetController {
             rows.add(item);
         }
 
-        TrainSetModule trainSetModule = TrainSetModule.getInstance();
         trainSetModule.load();
 
         colNamePerson.setCellValueFactory(cd -> new SimpleStringProperty(cd.getValue().getFioPatient()));
         colDiagnosis.setCellValueFactory(cd -> new SimpleStringProperty(cd.getValue().getDiagnosis()));
         colDate.setCellValueFactory(cd -> new SimpleStringProperty(cd.getValue().getDateOfCompletion()));
-//        colAction.setCellFactory(param -> new TableCell<>() {
-//            private final Button approveBtn = createButton("✅", "approve");
-//            private final Button rejectBtn = createButton("❌", "reject");
-//            private final HBox container = new HBox(5, approveBtn, rejectBtn);
-//
-//            {
-//                container.setAlignment(javafx.geometry.Pos.CENTER);
-//                container.setPadding(new Insets(2));
-//            }
-//
-//            @Override
-//            protected void updateItem(Void item, boolean empty) {
-//                super.updateItem(item, empty);
-//                if (empty || getTableRow() == null || getTableRow().getItem() == null) {
-//                    setGraphic(null);
-//                } else {
-//                    RegistrationForm form = getTableRow().getItem();
-//                    approveBtn.setOnAction(e -> handleApprove(form));
-//                    rejectBtn.setOnAction(e -> handleReject(form));
-//                    setGraphic(container);
-//                }
-//            }
-//        });
+        colAction.setCellFactory(param -> new TableCell<>() {
+            private final Button approveBtn = createButton("✅", "approve");
+            private final Button rejectBtn = createButton("❌", "reject");
+            private final HBox container = new HBox(5, approveBtn, rejectBtn);
+
+            {
+                container.setAlignment(javafx.geometry.Pos.CENTER);
+                container.setPadding(new Insets(2));
+            }
+
+            @Override
+            protected void updateItem(Void item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || getTableRow() == null || getTableRow().getItem() == null) {
+                    setGraphic(null);
+                } else {
+                    approveBtn.setOnAction(e -> handleAdd(form));
+                    rejectBtn.setOnAction(e -> handleRemove(form));
+                    setGraphic(container);
+                }
+            }
+        });
 
         HelpUtils.attachHelp(colNamePerson, "ФИО пациента");
         HelpUtils.attachHelp(colDate, "Дата создания анкеты");
@@ -121,23 +119,22 @@ public class QuestionListTableViewTrainSetController {
         }
     }
 
-    private void handleAdd(RegistrationForm form) {
-        Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
-        confirm.setTitle("Подтвердить одобрение");
-        confirm.setHeaderText("Одобрить заявку пользователя " + form.getLogin() + "?");
+    private void handleAdd(Questionnaire questionnaire) {
 
-        if (confirm.showAndWait().orElse(ButtonType.CANCEL) == ButtonType.OK) {
-
-        }
+        trainSetModule.addQuestionnaire(questionnaire.);
     }
 
-    private void handleRemove(RegistrationForm form) {
-        Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
-        confirm.setTitle("Отклонение заявки");
-        confirm.setHeaderText("Отклонить заявку пользователя " + form.getLogin() + "?");
+    private void handleRemove(Questionnaire questionnaire) {
+        trainSetModule.deleteQuestionnaire(questionnaire);
+    }
 
-        if (confirm.showAndWait().orElse(ButtonType.CANCEL) == ButtonType.OK) {
 
-        }
+    private Button createButton(String text, String styleClass) {
+        Button btn = new Button(text);
+        btn.setMinWidth(30);
+        btn.getStyleClass().add("table-button");
+        btn.getStyleClass().add("table-button-" + styleClass);
+        btn.setOnAction(e -> e.consume()); // Предотвращает снятие выделения строки
+        return btn;
     }
 }

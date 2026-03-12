@@ -2,13 +2,17 @@ package com.pancreatitis.ui;
 
 import com.pancreatitis.models.Patient;
 import com.pancreatitis.models.Questionnaire;
+import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.StackPane;
 import javafx.collections.FXCollections;
+import javafx.stage.Stage;
 import javafx.util.Duration;
 
 import java.io.IOException;
@@ -134,7 +138,7 @@ public class MainMenuControl {
                     case "Обучающая выборка" -> "fxml/QuestionListTrainSet.fxml";
                     case "Анкеты на верификацию" -> "fxml/QuestionRequestsList.fxml";
                     case "Анкета" -> "fxml/QuestionCharacterView.fxml";
-                    case "Анкета обновления" -> "fxml/QuestionnaireViewUpdate.fxml";
+                    case "Анкета обновления" -> "fxml/QuestionnaireViewUpdateWindow.fxml";
                     default -> "DefaultTab.fxml";
                 };
 
@@ -147,6 +151,47 @@ public class MainMenuControl {
             }
             contentPane.getChildren().setAll(view);
         } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void detachTabToNewWindow(String tabTitle) {
+        try {
+            Node view = viewCache.get(tabTitle);
+            if (view == null) {
+                // Если вкладка ещё не загружена — загрузим
+                showViewForTab(tabTitle);
+                view = viewCache.get(tabTitle);
+            }
+
+            if (view != null) {
+                // Удаляем из текущего контейнера
+
+                final Node finalView = view;
+                contentPane.getChildren().remove(view);
+
+                // Создаём новое окно
+                Stage newStage = new Stage();
+                newStage.setTitle(tabTitle + " (отдельное окно)");
+
+                Scene newScene = new Scene((Parent) view);
+                if (contentPane.getScene() != null) {
+                    newScene.getStylesheets().addAll(contentPane.getScene().getStylesheets());
+                }
+                newStage.setScene( newScene );
+                newStage.setOnCloseRequest(event -> {
+                    Platform.runLater(() -> {
+                        viewCache.put(tabTitle, finalView);
+                        contentPane.getChildren().setAll(finalView);
+
+                        // Опционально: переключиться на эту вкладку, если это TabPane
+                        // tabsListView.getSelectionModel().select(finalTabTitle);
+                    });
+                });
+
+                newStage.show();
+            }
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
@@ -164,5 +209,8 @@ public class MainMenuControl {
         return loader.getController();
     }
 
+    public static void openQuestionInNewWindow( Questionnaire quest ) {
+
+    }
 
 }

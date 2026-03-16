@@ -3,11 +3,13 @@ package com.pancreatitis.modules.trainset;
 import com.pancreatitis.models.CharacterizationAnketPatient;
 import com.pancreatitis.models.Questionnaire;
 import com.pancreatitis.modules.cloudstorage.CloudStorageModule;
+import com.pancreatitis.modules.database.DatabaseModule;
 import com.pancreatitis.modules.localstorage.LocalStorageModule;
 
 import java.io.ByteArrayInputStream;
 import java.io.FileWriter;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.List;
 
 public class TrainSetModule {
@@ -63,6 +65,22 @@ public class TrainSetModule {
         } catch (Exception e) {
             return false;
         }
+    }
+
+    public List<Integer> getQuestionIdTrainList() throws TrainingDataException{
+        List<Integer> ret = new ArrayList<>();
+        DatabaseModule databaseModule = DatabaseModule.getInstance();
+        for ( float[] record : trainingData.getTrainingRecords() ){
+            int id = (int) record[0];
+            if (databaseModule.containsQuestion(id)) {
+                ret.add( id );
+            }
+            else {
+                throw new TrainingDataException( String.format("Not found this questionnaire in data base, %d", id) );
+            }
+        }
+
+        return ret;
     }
 
     public boolean submit() {

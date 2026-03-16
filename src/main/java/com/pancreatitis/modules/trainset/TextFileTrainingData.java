@@ -14,7 +14,7 @@ public class TextFileTrainingData implements TrainingData {
                                 List<float[]> trainingRecords) {
         this.version = version;
         this.characteristicIds = characteristicIds.clone();
-        this.trainingRecords = Collections.unmodifiableList(trainingRecords);
+        this.trainingRecords = (trainingRecords);
 
         // Инициализируем массив диагнозов
         this.diagnoses = new int[trainingRecords.size()];
@@ -97,6 +97,7 @@ public class TextFileTrainingData implements TrainingData {
     public boolean deleteRecord(long questionnaireId) {
         try {
             // Ищем индекс записи с указанным ID
+            int old = trainingRecords.size();
             int indexToRemove = -1;
             for (int i = 0; i < trainingRecords.size(); i++) {
                 if ((int) trainingRecords.get(i)[0] == (int) questionnaireId) {
@@ -111,7 +112,7 @@ public class TextFileTrainingData implements TrainingData {
 
             trainingRecords.remove(indexToRemove);
             removeCodeDiagnosisAt(diagnoses, indexToRemove);
-
+            System.out.println(trainingRecords.size()-old);
             return true;
         } catch (Exception e) {
             return false;

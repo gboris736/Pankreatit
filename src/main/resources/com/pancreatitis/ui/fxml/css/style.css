@@ -242,3 +242,7 @@
         -fx-padding: 20;
     }
 }
+
+.table-row-cell:moved {
+    -fx-background-color: #fff3cd !important;
+}

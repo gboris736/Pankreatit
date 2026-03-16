@@ -534,6 +534,12 @@ public class DatabaseModule {
         return values;
     }
 
+    public boolean containsQuestion(int id){
+        return getQuestionnaireById(id) != null;
+    }
+
+
+
     // ========== Transaction methods ==========
     public void beginTransaction() {
         try {

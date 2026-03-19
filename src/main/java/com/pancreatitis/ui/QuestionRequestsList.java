@@ -274,6 +274,9 @@ public class QuestionRequestsList {
 
         if (result.isPresent() && result.get() == confirmBtn) {
             QuestionnaireManagerModule questionnaireManagerModule = QuestionnaireManagerModule.getInstance();
+            questionnaire.setId(-1);
+            questionnaire.setIdPatient(-1);
+            patient.setId(-1);
             boolean success = questionnaireManagerModule.saveQuestionnaire(questionnaire, patient, characterizationAnketPatientList);
 
             if (success) {

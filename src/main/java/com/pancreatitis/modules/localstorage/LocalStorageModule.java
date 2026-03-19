@@ -325,6 +325,12 @@ public class LocalStorageModule {
         executorService.submit(task).get();
     }
 
+    public String getPathAlgorithmFile() {
+        File algorithmFile = new File(getStorageBaseDir(), "algorithm.txt");
+        String filePath = algorithmFile.getAbsolutePath();
+        return filePath;
+    }
+
     // ==================== ВСПОМОГАТЕЛЬНЫЕ МЕТОДЫ ====================
 
     private byte[] readFileAsBytes(File file) throws IOException {

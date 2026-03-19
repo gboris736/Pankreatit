@@ -56,7 +56,7 @@ public class TrainSetModule {
 
     public boolean saveChanges() {
         try {
-            String filePath = ""; // через локальное хранилище получить путь, по идее константа
+            String filePath = localStorageModule.getPathAlgorithmFile();
             String content = TrainingDataParser.serializeToTextFormat(trainingData);
             try (FileWriter writer = new FileWriter(filePath, StandardCharsets.UTF_8)) {
                 writer.write(content);
@@ -85,7 +85,6 @@ public class TrainSetModule {
 
     public boolean submit() {
         try {
-            saveChanges(); //может стоит автоматом сохраняться при этом
             return cloudStorageModule.uploadTrainingData(trainingData);
         } catch (Exception e) {
             return false;
@@ -96,12 +95,17 @@ public class TrainSetModule {
         try {
             int codeDiagnosis = Integer.parseInt(questionnaire.getDiagnosis());
             long idQuestionnaire = questionnaire.getId();
-            float[] records = new float[characterizationAnketPatientLists.size() + 1];
+            float[] records = new float[characterizationAnketPatientLists.size() + 2];
             records[0] = idQuestionnaire;
             for(int i = 0; i < characterizationAnketPatientLists.size(); i++) {
                 CharacterizationAnketPatient characterizationAnketPatient = characterizationAnketPatientLists.get(i);
-                records[i+1] = characterizationAnketPatient.getValue();
+                if (characterizationAnketPatient.getValue() != -1) {
+                    records[i+1] = characterizationAnketPatient.getValue();
+                } else {
+                    records[i+1] = characterizationAnketPatient.getIdValue();
+                }
             }
+            records[characterizationAnketPatientLists.size() + 1] = codeDiagnosis;
             return trainingData.addRecord(records, codeDiagnosis);
         } catch (Exception e) {
             return false;

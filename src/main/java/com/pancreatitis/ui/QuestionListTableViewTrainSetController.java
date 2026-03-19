@@ -453,6 +453,7 @@ public class QuestionListTableViewTrainSetController {
             tableViewUsualQuestion.refresh();
             tableViewTrainQuestion.refresh();
             markAsClean();
+            btnSubmit.setDisable(false);
             showAlert(Alert.AlertType.INFORMATION, "Успех", "Изменения успешно сохранены!");
         });
 
@@ -472,6 +473,7 @@ public class QuestionListTableViewTrainSetController {
     private void setupSubmitButton() {
         if (btnSubmit != null) {
             btnSubmit.setText("💾 Отправить изменения");
+            btnSubmit.setDisable(true);
             btnSubmit.setOnAction(e -> submitChangesAsync());
         }
     }
@@ -491,6 +493,7 @@ public class QuestionListTableViewTrainSetController {
 
         saveTask.setOnSucceeded(e -> {
             showAlert(Alert.AlertType.INFORMATION, "Успех", "Новая версия успешно отправлена!");
+            btnSubmit.setDisable(true);
         });
 
         saveTask.setOnFailed(e -> {

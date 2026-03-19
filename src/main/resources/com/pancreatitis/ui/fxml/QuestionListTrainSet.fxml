@@ -28,6 +28,8 @@
         <Label fx:id="lblStatus" text="" style="-fx-text-fill: #6c757d;"/>
         <Button fx:id="btnSave" text="💾 Сохранить изменения"
                 styleClass="btn-save" onAction="#saveChangesAsync"/>
+        <Button fx:id="btnSubmit" text="💾 Отправить изменения"
+                styleClass="btn-save" onAction="#submitChangesAsync"/>
     </HBox>
 
     <!-- Поле поиска и счётчик -->

@@ -42,6 +42,7 @@ public class QuestionListTableViewTrainSetController {
     @FXML private Label countLabel;
     @FXML private Label lblStatus;
     @FXML private Button btnSave;
+    @FXML private Button btnSubmit;
     @FXML private Button btnAddToTrain;
     @FXML private Button btnRemoveFromTrain;
     @FXML private HBox legendBox;
@@ -71,6 +72,7 @@ public class QuestionListTableViewTrainSetController {
         setupSearch();
         setupRowFactory();
         setupSaveButton();
+        setupSubmitButton();
         setupWindowCloseHandler();
         setupLegend();
         loadData();
@@ -418,10 +420,6 @@ public class QuestionListTableViewTrainSetController {
         new Thread(task).start();
     }
 
-
-
-
-
     @FXML
     private void saveChangesAsync() {
         Task<Boolean> saveTask = new Task<>() {
@@ -437,12 +435,12 @@ public class QuestionListTableViewTrainSetController {
                     );
                 }
 
-
-
                 for (QuestionnaireItem item : getRemovedFromTrain()) {
                     Questionnaire questionnaire = databaseModule.getQuestionnaireById(item.getIdQuestionnaire());
                     trainSetModule.deleteQuestionnaire(questionnaire);
                 }
+
+                trainSetModule.saveChanges();
 
                 return true;
             }
@@ -462,6 +460,43 @@ public class QuestionListTableViewTrainSetController {
             Throwable ex = saveTask.getException();
             showAlert(Alert.AlertType.ERROR, "Ошибка сохранения",
                     "Не удалось сохранить изменения:\n" + ex.getMessage());
+            ex.printStackTrace();
+        });
+
+        new Thread(saveTask).start();
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // 6.5. Кнопка Submit + асинхронная отправка
+    // ─────────────────────────────────────────────────────────────
+    private void setupSubmitButton() {
+        if (btnSubmit != null) {
+            btnSubmit.setText("💾 Отправить изменения");
+            btnSubmit.setOnAction(e -> submitChangesAsync());
+        }
+    }
+
+    @FXML
+    private void submitChangesAsync() {
+        Task<Boolean> saveTask = new Task<>() {
+            @Override
+            protected Boolean call() {
+                updateMessage("Отправка новой версии...");
+
+                trainSetModule.submit();
+
+                return true;
+            }
+        };
+
+        saveTask.setOnSucceeded(e -> {
+            showAlert(Alert.AlertType.INFORMATION, "Успех", "Новая версия успешно отправлена!");
+        });
+
+        saveTask.setOnFailed(e -> {
+            Throwable ex = saveTask.getException();
+            showAlert(Alert.AlertType.ERROR, "Ошибка отправка",
+                    "Не удалось отправить новую версию:\n" + ex.getMessage());
             ex.printStackTrace();
         });
 

@@ -144,6 +144,7 @@ public class UpdatesModule {
             QuestionnaireDTO dto = update.getQuestionnaireDTO();
             Questionnaire questionnaire = new Questionnaire(dto);
             questionnaire.setId(-1);
+            questionnaire.setIdPatient(-1);
             questionnairList.add(questionnaire);
 
             // 3. Получение характеристик

@@ -1,4 +1,4 @@
-// UpdatesModule.java (модифицированная версия)
+// UpdatesModule.java (обновленная асинхронная версия)
 package com.pancreatitis.modules.updates;
 
 import com.pancreatitis.models.*;
@@ -8,9 +8,9 @@ import com.pancreatitis.modules.safety.SafetyModule;
 import javafx.util.Pair;
 
 import javax.crypto.SecretKey;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class UpdatesModule {
     private static CloudStorageModule cloudStorageModule = CloudStorageModule.getInstance();
@@ -23,11 +23,11 @@ public class UpdatesModule {
     private List<Pair<Pair<String, String>, Update>> updatesList = new ArrayList<>();
     private static UpdatesModule instance;
 
-    // Для обратной совместимости - синхронная загрузка
-    private boolean asyncMode = false;
+    private ExecutorService processingExecutor;
 
     private UpdatesModule() {
-
+        // Создаем пул для обработки с 3 потоками
+        processingExecutor = Executors.newFixedThreadPool(3);
     }
 
     public static UpdatesModule getInstance() {
@@ -37,16 +37,16 @@ public class UpdatesModule {
         return instance;
     }
 
-    // Асинхронная загрузка с callback
+    /**
+     * Асинхронная загрузка с callback
+     */
     public void loadAsync(UpdateLoadCallback callback) {
-        asyncMode = true;
-
         // Запускаем загрузку в отдельном потоке
-        new Thread(() -> {
+        CompletableFuture.runAsync(() -> {
             try {
-                // Получаем список обновлений
-                List<Pair<Pair<String, String>, Update>> updates = cloudStorageModule.downloadAllUpdates();
-                int total = updates.size();
+                // Шаг 1: Получаем список файлов обновлений
+                List<String> fileNames = cloudStorageModule.getUpdateFileNamesAsync().get();
+                int total = fileNames.size();
 
                 if (total == 0) {
                     callback.onStart(0);
@@ -57,63 +57,112 @@ public class UpdatesModule {
                 // Уведомляем о начале загрузки
                 callback.onStart(total);
 
-                // Создаем пул потоков для параллельной обработки (3 потока)
-                ExecutorService executor = Executors.newFixedThreadPool(3);
-                CompletionService<UpdateLoadResult> completionService = new ExecutorCompletionService<>(executor);
+                // Шаг 2: Создаем задачи для загрузки и обработки каждого файла
+                List<CompletableFuture<UpdateLoadResult>> futures = new ArrayList<>();
+                AtomicInteger loadedCount = new AtomicInteger(0);
 
-                // Отправляем задачи на обработку
                 for (int i = 0; i < total; i++) {
-                    completionService.submit(new UpdateProcessingTask(i, updates.get(i)));
+                    final int index = i;
+                    final String fileName = fileNames.get(i);
+
+                    CompletableFuture<UpdateLoadResult> future = CompletableFuture
+                            .supplyAsync(() -> {
+                                try {
+                                    // Загружаем обновление
+                                    Pair<Pair<String, String>, Update> updatePair =
+                                            cloudStorageModule.downloadUpdateAsync(fileName).get();
+
+                                    if (updatePair == null) {
+                                        return new UpdateLoadResult(index, null, null, null, false,
+                                                "Не удалось распарсить файл", fileName);
+                                    }
+
+                                    // Обрабатываем загруженное обновление
+                                    return processUpdate(index, updatePair, fileName);
+
+                                } catch (Exception e) {
+                                    return new UpdateLoadResult(index, null, null, null, false,
+                                            e.getMessage(), fileName);
+                                }
+                            }, processingExecutor)
+                            .thenApply(result -> {
+                                // Обновляем прогресс
+                                int loaded = loadedCount.incrementAndGet();
+                                callback.onProgress(loaded, total);
+                                callback.onUpdateLoaded(result);
+                                return result;
+                            });
+
+                    futures.add(future);
                 }
 
-                // Собираем результаты
-                int loaded = 0;
+                // Шаг 3: Ждем завершения всех задач
+                CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
+
+                // Шаг 4: Подсчитываем результаты
                 int successCount = 0;
                 int failCount = 0;
 
-                for (int i = 0; i < total; i++) {
-                    try {
-                        UpdateLoadResult result = completionService.take().get();
-                        loaded++;
-
-                        // Уведомляем о прогрессе
-                        callback.onProgress(loaded, total);
-
-                        // Уведомляем о загруженном обновлении
-                        callback.onUpdateLoaded(result);
-
-                        if (result.isSuccess()) {
-                            successCount++;
-                        } else {
-                            failCount++;
-                        }
-
-                    } catch (Exception e) {
+                for (CompletableFuture<UpdateLoadResult> future : futures) {
+                    UpdateLoadResult result = future.get();
+                    if (result.isSuccess()) {
+                        successCount++;
+                    } else {
                         failCount++;
-                        callback.onError("Ошибка при обработке обновления: " + e.getMessage());
                     }
                 }
 
-                // Завершаем работу пула
-                executor.shutdown();
-
-                // Уведомляем о завершении
+                // Шаг 5: Завершаем загрузку
                 callback.onComplete(successCount, failCount);
-
-                // Очищаем временные списки после асинхронной загрузки
-                if (asyncMode) {
-                    clearTempData();
-                }
 
             } catch (Exception ex) {
                 callback.onError("Ошибка загрузки обновлений: " + ex.getMessage());
             }
-        }).start();
+        });
     }
 
-    // Синхронная загрузка (для обратной совместимости)
+    /**
+     * Обработка одного обновления
+     */
+    private UpdateLoadResult processUpdate(int index, Pair<Pair<String, String>, Update> updatePair, String fileName) {
+        try {
+            Update update = updatePair.getValue();
+            String doctor = updatePair.getKey().getKey();
+
+            // Аутентификация врача для получения ключа
+            SecretKey key_admin = authorizationModule.authenticateForAdmin(doctor);
+
+            // 1. Обработка пациента
+            Patient patient = update.getPatient();
+            if (patient != null && patient.getFio() != null) {
+                patient.setFio(safetyModule.decryptString(patient.getFio(), key_admin));
+            }
+            patient.setId(-1);
+            patientList.add(patient);
+
+            // 2. Обработка анкеты
+            QuestionnaireDTO dto = update.getQuestionnaireDTO();
+            Questionnaire questionnaire = new Questionnaire(dto);
+            questionnaire.setId(-1);
+            questionnairList.add(questionnaire);
+
+            // 3. Получение характеристик
+            List<CharacterizationAnketPatient> characteristics = dto.getCharacteristicValues();
+            characterizationAnketPatientList.add(characteristics);
+
+            return new UpdateLoadResult(index, patient, questionnaire, characteristics,
+                    true, null, fileName);
+
+        } catch (Exception ex) {
+            return new UpdateLoadResult(index, null, null, null, false,
+                    ex.getMessage(), fileName);
+        }
+    }
+
+    /**
+     * Синхронная загрузка (для обратной совместимости)
+     */
     public void load() {
-        asyncMode = false;
         try {
             updatesList = new ArrayList<>();
             questionnairList = new ArrayList<>();
@@ -128,7 +177,9 @@ public class UpdatesModule {
                 SecretKey key_admin = authorizationModule.authenticateForAdmin(doctor);
 
                 Patient patient = update.getPatient();
-                patient.setFio(safetyModule.decryptString(patient.getFio(), key_admin));
+                if (patient != null && patient.getFio() != null) {
+                    patient.setFio(safetyModule.decryptString(patient.getFio(), key_admin));
+                }
                 patient.setId(-1);
                 patientList.add(patient);
 
@@ -161,8 +212,7 @@ public class UpdatesModule {
             cloudStorageModule.deleteUpdateFile(String.format("%s_update_%s.json", doctor, datetime));
             updatesList.remove(id);
 
-            // Также удаляем из временных списков
-            if (!asyncMode && id < patientList.size()) {
+            if (id < patientList.size()) {
                 patientList.remove(id);
                 questionnairList.remove(id);
                 characterizationAnketPatientList.remove(id);
@@ -180,9 +230,5 @@ public class UpdatesModule {
 
     public List<List<CharacterizationAnketPatient>> getCharacterizationAnketPatientList() {
         return characterizationAnketPatientList;
-    }
-
-    public boolean isAsyncMode() {
-        return asyncMode;
     }
 }

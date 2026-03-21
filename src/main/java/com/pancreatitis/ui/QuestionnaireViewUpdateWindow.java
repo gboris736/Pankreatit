@@ -75,9 +75,6 @@ public class QuestionnaireViewUpdateWindow {
         questionnaire = updatesModule.getQuestionnairList().get(id);
         patient = updatesModule.getPatientList().get(id);
         allValues = updatesModule.getCharacterizationAnketPatientList().get(id);
-
-        System.out.println(allValues);
-
         DatabaseModule databaseModule = DatabaseModule.getInstance();
         allCharacteristics = databaseModule.getAllCharacteristics();
         for(Characteristic ch: allCharacteristics){

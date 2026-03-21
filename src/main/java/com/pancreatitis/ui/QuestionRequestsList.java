@@ -39,8 +39,6 @@ public class QuestionRequestsList {
     private UpdatesModule updatesModule = UpdatesModule.getInstance();
     private boolean isLoading = false;
 
-    // Хранилище для временных данных при асинхронной загрузке
-    private final Map<Integer, TempUpdateData> tempUpdateData = new ConcurrentHashMap<>();
     private int totalUpdates = 0;
     private int loadedUpdates = 0;
 
@@ -74,7 +72,6 @@ public class QuestionRequestsList {
 
         // Очищаем контейнер
         questionnairesContainer.getChildren().clear();
-        tempUpdateData.clear();
 
         // Показываем индикатор загрузки
         showLoading(true, "Загрузка списка обновлений...");
@@ -117,13 +114,6 @@ public class QuestionRequestsList {
             public void onUpdateLoaded(UpdateLoadResult result) {
                 Platform.runLater(() -> {
                     if (result.isSuccess()) {
-                        // Сохраняем данные
-                        tempUpdateData.put(result.getIndex(), new TempUpdateData(
-                                result.getPatient(),
-                                result.getQuestionnaire(),
-                                result.getCharacteristics()
-                        ));
-
                         // Создаем карточку
                         createQuestionnaireCard(
                                 result.getIndex(),
@@ -327,12 +317,6 @@ public class QuestionRequestsList {
      * Подтверждение анкеты
      */
     private void confirmQuestionnaire(int id, VBox cardBox) {
-        TempUpdateData data = tempUpdateData.get(id);
-        if (data == null) {
-            showNotification("Данные анкеты не найдены", false);
-            return;
-        }
-
         Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
         alert.setTitle("Подтверждение анкеты");
         alert.setHeaderText("Подтвердить анкету #" + (id + 1) + "?");
@@ -347,9 +331,9 @@ public class QuestionRequestsList {
         if (result.isPresent() && result.get() == confirmBtn) {
             QuestionnaireManagerModule questionnaireManagerModule = QuestionnaireManagerModule.getInstance();
 
-            Questionnaire questionnaire = data.getQuestionnaire();
-            Patient patient = data.getPatient();
-            List<CharacterizationAnketPatient> characteristics = data.getCharacteristics();
+            Questionnaire questionnaire = updatesModule.getQuestionnairList().get(id);
+            Patient patient = updatesModule.getPatientList().get(id);
+            List<CharacterizationAnketPatient> characteristics = updatesModule.getCharacterizationAnketPatientList().get(id);
 
             boolean success = questionnaireManagerModule.saveQuestionnaire(questionnaire, patient, characteristics);
 
@@ -359,8 +343,8 @@ public class QuestionRequestsList {
                         "-fx-background-radius: 5; -fx-padding: 15;" +
                         "-fx-background-color: #e8f8f5; -fx-effect: dropshadow(gaussian, rgba(39,174,96,0.3), 10, 0, 0, 2);");
 
-                // Удаляем из временного хранилища
-                tempUpdateData.remove(id);
+                updatesModule.deleteUpdate(id);
+                totalUpdates--;
 
                 // Удаляем карточку из UI через небольшую задержку
                 new Thread(() -> {
@@ -401,8 +385,8 @@ public class QuestionRequestsList {
                     "-fx-background-radius: 5; -fx-padding: 15;" +
                     "-fx-background-color: #fdedec; -fx-effect: dropshadow(gaussian, rgba(231,76,60,0.3), 10, 0, 0, 2);");
 
-            // Удаляем из временного хранилища
-            tempUpdateData.remove(id);
+            updatesModule.deleteUpdate(id);
+            totalUpdates--;
 
             // Удаляем карточку из UI через небольшую задержку
             new Thread(() -> {
@@ -423,14 +407,9 @@ public class QuestionRequestsList {
      * Подтверждение всех анкет
      */
     private void confirmAllQuestionnaires() {
-        if (tempUpdateData.isEmpty()) {
-            showNotification("Нет анкет для подтверждения", false);
-            return;
-        }
-
         Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
         alert.setTitle("Подтверждение всех анкет");
-        alert.setHeaderText("Подтвердить все анкеты (" + tempUpdateData.size() + " шт.)?");
+        alert.setHeaderText("Подтвердить все анкеты (" + totalUpdates+ " шт.)?");
         alert.setContentText("Это действие нельзя отменить.");
 
         ButtonType confirmBtn = new ButtonType("Подтвердить все", ButtonBar.ButtonData.OK_DONE);
@@ -443,34 +422,35 @@ public class QuestionRequestsList {
             QuestionnaireManagerModule questionnaireManagerModule = QuestionnaireManagerModule.getInstance();
             int successCount = 0;
 
-            for (Map.Entry<Integer, TempUpdateData> entry : new HashMap<>(tempUpdateData).entrySet()) {
-                TempUpdateData data = entry.getValue();
+            for (int id = 0; id < updatesModule.getPatientList().size(); id++) {
                 boolean success = questionnaireManagerModule.saveQuestionnaire(
-                        data.getQuestionnaire(),
-                        data.getPatient(),
-                        data.getCharacteristics()
+                        updatesModule.getQuestionnairList().get(id),
+                        updatesModule.getPatientList().get(id),
+                        updatesModule.getCharacterizationAnketPatientList().get(id)
                 );
 
                 if (success) {
                     successCount++;
-                    tempUpdateData.remove(entry.getKey());
+                    updatesModule.getQuestionnairList().remove(id);
+                    updatesModule.getPatientList().remove(id);
+                    updatesModule.getCharacterizationAnketPatientList().remove(id);
                 }
             }
 
-            showNotification("Подтверждено анкет: " + successCount + " из " + tempUpdateData.size(), true);
+            showNotification("Подтверждено анкет: " + successCount + " из " + totalUpdates, true);
 
             // Обновляем UI - удаляем все карточки
             questionnairesContainer.getChildren().clear();
-            if (tempUpdateData.isEmpty()) {
+            if (totalUpdates == 0) {
                 showEmptyMessage();
             } else {
                 // Пересоздаем оставшиеся карточки
-                for (Map.Entry<Integer, TempUpdateData> entry : tempUpdateData.entrySet()) {
+                for (int id = 0; id < updatesModule.getPatientList().size(); id++) {
                     createQuestionnaireCard(
-                            entry.getKey(),
-                            entry.getValue().getQuestionnaire(),
-                            entry.getValue().getPatient(),
-                            entry.getValue().getCharacteristics()
+                            id,
+                            updatesModule.getQuestionnairList().get(id),
+                            updatesModule.getPatientList().get(id),
+                            updatesModule.getCharacterizationAnketPatientList().get(id)
                     );
                 }
             }
@@ -482,7 +462,7 @@ public class QuestionRequestsList {
      * Обновление счетчика
      */
     private void updateCount() {
-        lblCount.setText("Найдено: " + tempUpdateData.size());
+        lblCount.setText("Найдено: " + totalUpdates);
     }
 
     /**
@@ -499,25 +479,5 @@ public class QuestionRequestsList {
         }
 
         alert.showAndWait();
-    }
-
-    /**
-     * Внутренний класс для хранения временных данных обновления
-     */
-    private static class TempUpdateData {
-        private final Patient patient;
-        private final Questionnaire questionnaire;
-        private final List<CharacterizationAnketPatient> characteristics;
-
-        public TempUpdateData(Patient patient, Questionnaire questionnaire,
-                              List<CharacterizationAnketPatient> characteristics) {
-            this.patient = patient;
-            this.questionnaire = questionnaire;
-            this.characteristics = characteristics;
-        }
-
-        public Patient getPatient() { return patient; }
-        public Questionnaire getQuestionnaire() { return questionnaire; }
-        public List<CharacterizationAnketPatient> getCharacteristics() { return characteristics; }
     }
 }

@@ -319,7 +319,7 @@ public class QuestionRequestsList {
      */
     private void viewQuestionnaire(int id) {
         MainMenuControl mainMenuControl = MainMenuControl.getInstance();
-        QuestionnaireViewUpdate.id = id;
+        QuestionnaireViewUpdateWindow.id = id;
         mainMenuControl.showViewForTab("Анкета обновления");
     }
 

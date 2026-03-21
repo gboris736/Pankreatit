@@ -1,7 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import java.lang.*?>
-<?import javafx.collections.*?>
 <?import javafx.geometry.*?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
@@ -26,6 +24,12 @@
             <Region HBox.hgrow="ALWAYS" />
             <Label fx:id="lblCount" text="Найдено: 0" style="-fx-text-fill: #7f8c8d;" />
         </children>
+    </HBox>
+
+    <!-- Индикатор загрузки -->
+    <HBox fx:id="loadingBox" alignment="CENTER" spacing="10" visible="false" managed="false">
+        <ProgressIndicator fx:id="progressIndicator" />
+        <Label fx:id="lblLoadingStatus" text="Загрузка обновлений..." />
     </HBox>
 
     <!-- Контейнер для списка анкет -->

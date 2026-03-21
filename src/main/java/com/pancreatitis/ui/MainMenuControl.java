@@ -121,7 +121,8 @@ public class MainMenuControl {
 
     private static final Set<String> NO_CACHE_TABS = Set.of(
             "Анкета",
-            "Заявки на регистрацию"
+            "Заявки на регистрацию",
+            "Анкета обновления"
     );
 
     public void showViewForTab(String tab) {

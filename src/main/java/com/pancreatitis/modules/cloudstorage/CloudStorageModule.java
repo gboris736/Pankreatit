@@ -20,9 +20,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 
 public class CloudStorageModule {
     private final String authToken = "y0__xC7koqFBxjIhTwg6O2OwBUwreWe7AeTLwUn1hxDxrN6Pp9NW10aTKlPGw";
@@ -319,6 +317,38 @@ public class CloudStorageModule {
             return new Pair<>(login, datetime);
         }
         return null;
+    }
+
+    /**
+     * Асинхронная загрузка списка файлов обновлений (без содержимого)
+     */
+    public CompletableFuture<List<String>> getUpdateFileNamesAsync() {
+        return CompletableFuture.supplyAsync(() -> {
+            try {
+                return getFileNamesInFolder(UPDATE_PATH,
+                        item -> item.getName().endsWith(".json") && item.getName().contains("_update_"));
+            } catch (Exception e) {
+                throw new CompletionException(e);
+            }
+        }, executorService);
+    }
+
+    /**
+     * Асинхронная загрузка одного обновления по имени файла
+     */
+    public CompletableFuture<Pair<Pair<String, String>, Update>> downloadUpdateAsync(String fileName) {
+        return CompletableFuture.supplyAsync(() -> {
+            try {
+                Pair<String, String> loginDate = parseUpdateFileName(fileName);
+                if (loginDate != null) {
+                    Update update = downloadAndParseJson(UPDATE_PATH + fileName, Update.class);
+                    return new Pair<>(loginDate, update);
+                }
+                return null;
+            } catch (Exception e) {
+                throw new CompletionException("Ошибка при обработке файла: " + fileName, e);
+            }
+        }, executorService);
     }
 
     public boolean uploadRegistrationRequest(RegistrationForm registrationForm) throws Exception {

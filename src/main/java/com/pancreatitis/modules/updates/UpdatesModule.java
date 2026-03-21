@@ -126,6 +126,8 @@ public class UpdatesModule {
      */
     private UpdateLoadResult processUpdate(int index, Pair<Pair<String, String>, Update> updatePair, String fileName) {
         try {
+            updatesList.add(updatePair);
+
             Update update = updatePair.getValue();
             String doctor = updatePair.getKey().getKey();
 
@@ -211,13 +213,11 @@ public class UpdatesModule {
             String doctor = pair.getKey().getKey();
             String datetime = pair.getKey().getValue();
             cloudStorageModule.deleteUpdateFile(String.format("%s_update_%s.json", doctor, datetime));
-            updatesList.remove(id);
 
-            if (id < patientList.size()) {
-                patientList.remove(id);
-                questionnairList.remove(id);
-                characterizationAnketPatientList.remove(id);
-            }
+            updatesList.remove(id);
+            patientList.remove(id);
+            questionnairList.remove(id);
+            characterizationAnketPatientList.remove(id);
         }
     }
 

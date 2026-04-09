@@ -25,8 +25,8 @@ public class User {
         return instance;
     }
 
-    public static void setInstance() {
-        instance = null;
+    public static void setInstance(User user) {
+        instance = user;
     }
 
     public SecretKey getKey() {

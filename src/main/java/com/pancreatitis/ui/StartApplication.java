@@ -2,29 +2,18 @@ package com.pancreatitis.ui;
 
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
-import javafx.scene.Scene;
-import javafx.stage.Stage;
+import javafx.scene.Parent;
 
 import java.io.IOException;
 
-public class StartApplication extends Application {
-
-
-    @Override
-    public void start(Stage stage) throws IOException {
+public class StartApplication {
+    public Parent build() throws IOException {
         FXMLLoader fxmlLoader = new FXMLLoader(StartApplication.class.getResource("fxml/panelView.fxml"));
-        Scene scene = new Scene(fxmlLoader.load(), 320, 240);
-        scene.getStylesheets().add(StartApplication.class.getResource("fxml/css/style.css").toExternalForm());
+        Parent root = fxmlLoader.load();
 
+        root.getStylesheets().add(StartApplication.class.getResource("fxml/css/style.css").toExternalForm());
 
-        stage.setTitle("Крутое Название");
+        return root;
 
-        stage.centerOnScreen();
-
-        //stage.setFullScreen(true);
-        stage.setMaximized(true);
-
-        stage.setScene(scene);
-        stage.show();
     }
 }

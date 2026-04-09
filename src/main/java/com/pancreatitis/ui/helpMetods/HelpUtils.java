@@ -1,6 +1,7 @@
-package com.pancreatitis.ui;
+package com.pancreatitis.ui.helpMetods;
 
 import javafx.scene.Node;
+import javafx.scene.control.Alert;
 import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.Tooltip;
@@ -132,5 +133,13 @@ public final class HelpUtils {
         t.setHideDelay(Duration.millis(100));
         node.setOnMouseEntered(e -> Tooltip.install(node, t));
         node.setOnMouseExited(e -> Tooltip.uninstall(node, t));
+    }
+
+    public static void showAlert(String s){
+        Alert alert = new Alert(
+                Alert.AlertType.WARNING,
+                s
+        );
+        alert.show();
     }
 }

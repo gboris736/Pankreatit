@@ -2,6 +2,7 @@ package com.pancreatitis.models;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.pancreatitis.modules.database.DatabaseModule;
 
 public class CharacterizationAnketPatient {
     private long idAnket = -1;
@@ -34,8 +35,20 @@ public class CharacterizationAnketPatient {
         return value;
     }
 
-    public void setValue(float value) {
-        this.value = value;
+    public boolean setValue(float value) {
+        DatabaseModule module = DatabaseModule.getInstance();
+        if (this.idCharacteristic == -1)    throw new IllegalStateException("Не присвоен вид характеристики");
+
+        else {
+            float min = module.getCharacteristicById(this.idCharacteristic).getMinValue();
+            float max = module.getCharacteristicById(this.idCharacteristic).getMaxValue();
+
+            if ((value >= min && value <= max) || value == -1f) {
+                this.value = value;
+                return true;
+            }
+        }
+        return false;
     }
 
     public String getCreatedAt() {

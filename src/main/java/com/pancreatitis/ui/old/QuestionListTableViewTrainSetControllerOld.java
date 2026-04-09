@@ -1,4 +1,4 @@
-package com.pancreatitis.ui;
+package com.pancreatitis.ui.old;
 
 import com.pancreatitis.models.CharacterizationAnketPatient;
 import com.pancreatitis.models.Patient;
@@ -6,6 +6,7 @@ import com.pancreatitis.models.Questionnaire;
 import com.pancreatitis.models.QuestionnaireItem;
 import com.pancreatitis.modules.database.DatabaseModule;
 import com.pancreatitis.modules.trainset.TrainSetModule;
+import com.pancreatitis.ui.helpMetods.HelpUtils;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;

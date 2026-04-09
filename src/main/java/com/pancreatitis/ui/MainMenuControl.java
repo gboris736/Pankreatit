@@ -214,4 +214,8 @@ public class MainMenuControl {
 
     }
 
+    public void setUserName( String str){
+        userNameLabel.setText(str);
+    }
+
 }

@@ -725,6 +725,7 @@ public class QuestionListTableViewTrainSetController {
     public List<CharacterizationAnketPatient> getLatestCharacterizationsForAnket(int anketId) {
         List<CharacterizationAnketPatient> list =
                 databaseModule.getCharacterizationsForAnket(anketId);
+                databaseModule.getCharacterizationsForAnket(anketId);
 
         return list.stream()
                 .collect(Collectors.toMap(

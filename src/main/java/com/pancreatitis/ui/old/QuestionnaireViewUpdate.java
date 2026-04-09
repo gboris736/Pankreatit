@@ -1,10 +1,11 @@
-package com.pancreatitis.ui;
+package com.pancreatitis.ui.old;
 
 import com.pancreatitis.models.*;
 import com.pancreatitis.modules.database.DatabaseModule;
 import com.pancreatitis.modules.prediction.PredictionModule;
 import com.pancreatitis.modules.prediction.PredictionResult;
 import com.pancreatitis.modules.updates.UpdatesModule;
+import com.pancreatitis.ui.MainMenuControl;
 import javafx.fxml.FXML;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -14,7 +15,6 @@ import javafx.scene.layout.*;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
-import java.util.stream.Collectors;
 
 public class QuestionnaireViewUpdate {
     @FXML private VBox characteristicsContainer;

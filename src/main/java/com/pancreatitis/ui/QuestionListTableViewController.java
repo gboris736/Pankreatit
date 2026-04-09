@@ -1,23 +1,17 @@
 package com.pancreatitis.ui;
 
-import com.pancreatitis.models.Doctor;
 import com.pancreatitis.models.QuestionnaireItem;
 import com.pancreatitis.modules.database.DatabaseModule;
-import com.sun.tools.javac.Main;
+import com.pancreatitis.ui.helpMetods.HelpUtils;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.beans.property.SimpleStringProperty;
-import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.input.MouseButton;
 
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Random;
 
 public class QuestionListTableViewController {
 

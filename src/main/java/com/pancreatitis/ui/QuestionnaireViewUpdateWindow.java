@@ -5,6 +5,8 @@ import com.pancreatitis.modules.database.DatabaseModule;
 import com.pancreatitis.modules.prediction.PredictionModule;
 import com.pancreatitis.modules.prediction.PredictionResult;
 import com.pancreatitis.modules.updates.UpdatesModule;
+import com.pancreatitis.ui.helpMetods.HelpUtils;
+import com.pancreatitis.ui.helpMetods.TextFormater;
 import javafx.fxml.FXML;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -274,6 +276,7 @@ public class QuestionnaireViewUpdateWindow {
             valueField.setStyle("-fx-background-color: #f5f5f5; -fx-text-fill: #555;");
         }
         HBox.setHgrow(valueField, Priority.ALWAYS);
+        TextFormater.setTextPatternForTextField(valueField, TextFormater.doublePattern);
 
         TextField dateField = new TextField(cap.getCreatedAt());
         dateField.setPromptText("Дата заполнения");
@@ -287,9 +290,16 @@ public class QuestionnaireViewUpdateWindow {
                 if (!newVal) {
                     try {
                         float val = valueField.getText().isEmpty() ? -1 : Float.parseFloat(valueField.getText());
-                        cap.setValue(val);
+                        if (!cap.setValue(val)){
+                            DatabaseModule module = DatabaseModule.getInstance();
+                            float min= module.getCharacteristicById(cap.getIdCharacteristic()).getMinValue();
+                            float max= module.getCharacteristicById(cap.getIdCharacteristic()).getMaxValue();
+                            HelpUtils.showAlert(String.format("Введенные данные должны быть в диапазоне (%f, %f)", min, max));
+                        }
+
                     } catch (NumberFormatException ex) {
                         valueField.setText(String.valueOf(cap.getValue()));
+                        HelpUtils.showAlert("Веденные данные не являются числом");
                     }
                 }
             });
@@ -383,6 +393,8 @@ public class QuestionnaireViewUpdateWindow {
 
         refreshCharacteristicValues(characteristicId);
     }
+
+
 
     private void showHintDialog(String characteristicName, String hint) {
         Dialog<Void> dialog = new Dialog<>();

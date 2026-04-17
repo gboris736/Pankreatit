@@ -6,12 +6,16 @@ import com.pancreatitis.models.Doctor;
 import com.pancreatitis.models.RegistrationForm;
 import com.pancreatitis.models.Update;
 import com.pancreatitis.models.User;
+import com.pancreatitis.modules.authorization.AuthorizationModule;
 import com.pancreatitis.modules.database.DatabaseModule;
+import com.pancreatitis.modules.safety.SafetyModule;
 import com.pancreatitis.modules.trainset.TrainingData;
 import com.pancreatitis.modules.trainset.TrainingDataParser;
 import javafx.util.Pair;
 
 import okhttp3.*;
+
+import javax.crypto.SecretKey;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URLEncoder;
@@ -22,10 +26,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.*;
 
+
 public class CloudStorageModule {
     private final String authToken = "y0__xC7koqFBxjIhTwg6O2OwBUwreWe7AeTLwUn1hxDxrN6Pp9NW10aTKlPGw";
     private static final String API_URL = "https://cloud-api.yandex.net/v1/disk/resources";
     private static CloudStorageModule instance;
+    private SafetyModule safetyModule;
+    private AuthorizationModule authorizationModule;
     private final ExecutorService executorService = Executors.newCachedThreadPool();
     private static final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy_MM_dd_HH_mm_ss");
     private final ObjectMapper objectMapper = new ObjectMapper();
@@ -61,6 +68,20 @@ public class CloudStorageModule {
             }
         }
         return instance;
+    }
+
+    private SafetyModule getSafetyModule() {
+        if (safetyModule == null) {
+            safetyModule = SafetyModule.getInstance();
+        }
+        return safetyModule;
+    }
+
+    private AuthorizationModule getAuthorizationModule() {
+        if (authorizationModule == null) {
+            authorizationModule = AuthorizationModule.getInstance();
+        }
+        return authorizationModule;
     }
 
     // ==================== УНИВЕРСАЛЬНЫЕ МЕТОДЫ ====================
@@ -228,6 +249,36 @@ public class CloudStorageModule {
     }
 
     /**
+     * Скачивает и расшифровывает обновление, используя административный ключ врача.
+     * Предполагается, что имя файла обновления содержит логин врача (извлекается через parseUpdateFileName).
+     * @param filePath полный путь к файлу обновления на облачном диске, например "/update/doctor_login_update_2026_04_17_15_30_00.json"
+     * @return десериализованный объект Update
+     * @throws Exception при ошибках скачивания, расшифровки или парсинга
+     */
+    public Update downloadAndParseEncryptedUpdate(String filePath) throws Exception {
+        // 1. Извлекаем имя файла из полного пути
+        String fileName = filePath.substring(filePath.lastIndexOf('/') + 1);
+        Pair<String, String> loginDate = parseUpdateFileName(fileName);
+        if (loginDate == null) {
+            throw new IllegalArgumentException("Invalid update file name format: " + fileName);
+        }
+        String doctor = loginDate.getKey(); // логин врача
+
+        // 2. Скачиваем зашифрованное содержимое файла
+        byte[] encryptedBytes = downloadFile(filePath);
+        String encryptedJson = new String(encryptedBytes, StandardCharsets.UTF_8);
+
+        // 3. Получаем административный ключ для данного врача
+        SecretKey keyAdmin = getAuthorizationModule().authenticateForAdmin(doctor);
+
+        // 4. Расшифровываем JSON-строку
+        String decryptedJson = getSafetyModule().decryptString(encryptedJson, keyAdmin);
+
+        // 5. Десериализуем в объект Update
+        return objectMapper.readValue(decryptedJson, Update.class);
+    }
+
+    /**
      * Универсальный метод для удаления файла
      */
     private boolean deleteFile(String path) {
@@ -341,7 +392,7 @@ public class CloudStorageModule {
             try {
                 Pair<String, String> loginDate = parseUpdateFileName(fileName);
                 if (loginDate != null) {
-                    Update update = downloadAndParseJson(UPDATE_PATH + fileName, Update.class);
+                    Update update = downloadAndParseEncryptedUpdate(UPDATE_PATH + fileName);
                     return new Pair<>(loginDate, update);
                 }
                 return null;

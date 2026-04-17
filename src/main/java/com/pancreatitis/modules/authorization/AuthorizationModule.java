@@ -8,7 +8,7 @@ import com.pancreatitis.modules.safety.SafetyModule;
 import javax.crypto.SecretKey;
 
 public class AuthorizationModule {
-    private static CloudStorageModule cloudStorageModule;
+    private CloudStorageModule cloudStorageModule;
     private static LocalStorageModule localStorageModule;
     private static SafetyModule safetyModule;
     private static AuthorizationModule instance;
@@ -24,6 +24,13 @@ public class AuthorizationModule {
             instance = new AuthorizationModule();
         }
         return instance;
+    }
+
+    private CloudStorageModule getCloudStorage() {
+        if (cloudStorageModule == null) {
+            cloudStorageModule = CloudStorageModule.getInstance();
+        }
+        return cloudStorageModule;
     }
 
     /**
@@ -54,7 +61,7 @@ public class AuthorizationModule {
      * Проверка существования пользователя
      */
     private boolean isUserExists(String login) {
-        return cloudStorageModule.isUserFolderExists(login) ||
+        return getCloudStorage().isUserFolderExists(login) ||
                 localStorageModule.isUserFolderExists(login);
     }
 
@@ -94,13 +101,13 @@ public class AuthorizationModule {
         // Загружаем ключ из облака
         byte[] key;
         if (isAdmin) {
-            key = cloudStorageModule.downloadKey(login, "admin");
+            key = getCloudStorage().downloadKey(login, "admin");
         } else {
-            key = cloudStorageModule.downloadKey(login, "user");
+            key = getCloudStorage().downloadKey(login, "user");
         }
 
         // Загружаем информацию о пользователе
-        User userInfo = cloudStorageModule.downloadUserInfo(login);
+        User userInfo = getCloudStorage().downloadUserInfo(login);
 
         // Создаем локальную папку пользователя
         localStorageModule.createUserFolder(login);

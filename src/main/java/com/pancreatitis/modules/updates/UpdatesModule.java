@@ -47,6 +47,7 @@ public class UpdatesModule {
                 // Шаг 1: Получаем список файлов обновлений
                 List<String> fileNames = cloudStorageModule.getUpdateFileNamesAsync().get();
                 int total = fileNames.size();
+                System.out.println(total);
 
                 if (total == 0) {
                     callback.onStart(0);
@@ -129,16 +130,9 @@ public class UpdatesModule {
             updatesList.add(updatePair);
 
             Update update = updatePair.getValue();
-            String doctor = updatePair.getKey().getKey();
-
-            // Аутентификация врача для получения ключа
-            SecretKey key_admin = authorizationModule.authenticateForAdmin(doctor);
 
             // 1. Обработка пациента
             Patient patient = update.getPatient();
-            if (patient != null && patient.getFio() != null) {
-                patient.setFio(safetyModule.decryptString(patient.getFio(), key_admin));
-            }
             patient.setId(-1);
             patientList.add(patient);
 

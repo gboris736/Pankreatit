@@ -11,6 +11,7 @@ import java.io.FileWriter;
 import java.nio.charset.StandardCharsets;
 import java.security.PrivateKey;
 import java.security.Signature;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -87,17 +88,23 @@ public class TrainSetModule {
 
     public boolean submit() {
         try {
-            // Загружаем данные на облако
-            boolean dataUploaded = cloudStorageModule.uploadTrainingData(trainingData);
+            LocalDateTime datetime = LocalDateTime.now();
+
+            boolean dataUploaded = cloudStorageModule.uploadTrainingData(trainingData, datetime);
             if (!dataUploaded) {
                 return false;
             }
 
-            // Подписываем и загружаем подпись
             byte[] signature = signTrainingData(trainingData);
-            boolean sigUploaded = cloudStorageModule.uploadTrainingDataSig(signature);
+            boolean sigUploaded = cloudStorageModule.uploadTrainingDataSig(signature, datetime);
+            if (!sigUploaded) {
+                return false;
+            }
 
-            return sigUploaded;
+            // Удаляем все старые файлы алгоритма, кроме только что загруженных
+            cloudStorageModule.cleanOldAlgorithmFiles(datetime);
+
+            return true;
         } catch (Exception e) {
             return false;
         }

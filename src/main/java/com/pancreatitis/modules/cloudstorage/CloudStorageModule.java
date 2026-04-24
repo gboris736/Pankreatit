@@ -435,24 +435,41 @@ public class CloudStorageModule {
         return getFileNamesInFolder(USERS_PATH, FolderItem::isDirectory);
     }
 
-    public byte[] downloadTrainingData() throws Exception {
-        return downloadFile(ALGORITHM_FILE);
-    }
-
-    public boolean uploadTrainingData(TrainingData trainingData) {
+    public boolean uploadTrainingData(TrainingData trainingData, LocalDateTime datetime) {
         try {
             String textData = TrainingDataParser.serializeToTextFormat(trainingData);
-            return uploadFile(ALGORITHM_FILE, textData.getBytes(StandardCharsets.UTF_8));
+            String datatime = datetime.format(formatter);
+            return uploadFile(String.format("%s_%s.txt", ALGORITHM_FILE, datatime), textData.getBytes(StandardCharsets.UTF_8));
         } catch (Exception e) {
             return false;
         }
     }
 
-    public boolean uploadTrainingDataSig(byte[] trainingDataSig) {
+    public boolean uploadTrainingDataSig(byte[] trainingDataSig, LocalDateTime datetime) {
         try {
-            return uploadFile(ALGORITHM_FILE+".sig", trainingDataSig);
+            String datatime = datetime.format(formatter);
+            return uploadFile(String.format("%s_%s.txt.sig", ALGORITHM_FILE, datatime), trainingDataSig);
         } catch (Exception e) {
             return false;
+        }
+    }
+
+    public void cleanOldAlgorithmFiles(LocalDateTime currentDatetime) {
+        try {
+            String currentTimestamp = currentDatetime.format(formatter);
+            // Получаем список всех файлов в корне диска
+            List<String> fileNames = getFileNamesInFolder("/",
+                    item -> item.isFile() && item.getName().startsWith("algorithm_"));
+
+            for (String fileName : fileNames) {
+                // Если имя не содержит текущую метку времени — удаляем
+                if (!fileName.contains(currentTimestamp)) {
+                    deleteFile("/" + fileName);
+                }
+            }
+        } catch (Exception e) {
+            // Здесь можно добавить логгирование ошибки
+            System.err.println("Не удалось очистить старые файлы алгоритма: " + e.getMessage());
         }
     }
 

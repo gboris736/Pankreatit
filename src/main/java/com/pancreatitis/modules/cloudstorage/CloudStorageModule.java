@@ -34,7 +34,7 @@ public class CloudStorageModule {
     private static final String USERS_PATH = "/users/";
     private static final String UPDATE_PATH = "/update/";
     private static final String REGISTRATION_PATH = "/registration_requests/";
-    private static final String ALGORITHM_FILE = "/algorithm.txt";
+    private static final String ALGORITHM_FILE = "/algorithm";
 
     private final OkHttpClient httpClient;
 

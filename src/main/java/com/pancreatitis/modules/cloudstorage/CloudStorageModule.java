@@ -448,6 +448,14 @@ public class CloudStorageModule {
         }
     }
 
+    public boolean uploadTrainingDataSig(byte[] trainingDataSig) {
+        try {
+            return uploadFile(ALGORITHM_FILE+".sig", trainingDataSig);
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
     public boolean deleteRegistrationRequest(String login) {
         return deleteFile(REGISTRATION_PATH + login + ".json");
     }

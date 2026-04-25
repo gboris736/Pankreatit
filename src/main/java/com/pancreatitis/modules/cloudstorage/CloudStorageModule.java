@@ -11,6 +11,7 @@ import com.pancreatitis.modules.safety.SafetyModule;
 import com.pancreatitis.modules.trainset.TrainingData;
 import com.pancreatitis.modules.trainset.TrainingDataParser;
 import javafx.util.Pair;
+
 import okhttp3.*;
 
 import javax.crypto.SecretKey;
@@ -39,7 +40,7 @@ public class CloudStorageModule {
     //private static final String USERS_PATH = "/users/";
     private static final String UPDATE_PATH = "/update/";
     private static final String REGISTRATION_PATH = "/registration_requests/";
-    private static final String ALGORITHM_FILE = "/algorithm.txt";
+    private static final String ALGORITHM_FILE = "/algorithm";
 
     private final OkHttpClient httpClient;
 
@@ -340,13 +341,41 @@ public class CloudStorageModule {
     }
 
     // ==================== Обуч выборка ====================
-
-    public boolean uploadTrainingData(TrainingData trainingData) {
+    public boolean uploadTrainingData(TrainingData trainingData, LocalDateTime datetime) {
         try {
             String textData = TrainingDataParser.serializeToTextFormat(trainingData);
-            return uploadFile(ALGORITHM_FILE, textData.getBytes(StandardCharsets.UTF_8));
+            String datatime = datetime.format(formatter);
+            return uploadFile(String.format("%s_%s.txt", ALGORITHM_FILE, datatime), textData.getBytes(StandardCharsets.UTF_8));
         } catch (Exception e) {
             return false;
+        }
+    }
+
+    public boolean uploadTrainingDataSig(byte[] trainingDataSig, LocalDateTime datetime) {
+        try {
+            String datatime = datetime.format(formatter);
+            return uploadFile(String.format("%s_%s.txt.sig", ALGORITHM_FILE, datatime), trainingDataSig);
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    public void cleanOldAlgorithmFiles(LocalDateTime currentDatetime) {
+        try {
+            String currentTimestamp = currentDatetime.format(formatter);
+            // Получаем список всех файлов в корне диска
+            List<String> fileNames = getFileNamesInFolder("/",
+                    item -> item.isFile() && item.getName().startsWith("algorithm_"));
+
+            for (String fileName : fileNames) {
+                // Если имя не содержит текущую метку времени — удаляем
+                if (!fileName.contains(currentTimestamp)) {
+                    deleteFile("/" + fileName);
+                }
+            }
+        } catch (Exception e) {
+            // Здесь можно добавить логгирование ошибки
+            System.err.println("Не удалось очистить старые файлы алгоритма: " + e.getMessage());
         }
     }
 

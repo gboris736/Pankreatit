@@ -9,6 +9,9 @@ import com.pancreatitis.modules.localstorage.LocalStorageModule;
 import java.io.ByteArrayInputStream;
 import java.io.FileWriter;
 import java.nio.charset.StandardCharsets;
+import java.security.PrivateKey;
+import java.security.Signature;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -85,10 +88,39 @@ public class TrainSetModule {
 
     public boolean submit() {
         try {
-            return cloudStorageModule.uploadTrainingData(trainingData);
+            LocalDateTime datetime = LocalDateTime.now();
+
+            boolean dataUploaded = cloudStorageModule.uploadTrainingData(trainingData, datetime);
+            if (!dataUploaded) {
+                return false;
+            }
+
+            byte[] signature = signTrainingData(trainingData);
+            boolean sigUploaded = cloudStorageModule.uploadTrainingDataSig(signature, datetime);
+            if (!sigUploaded) {
+                return false;
+            }
+
+            // Удаляем все старые файлы алгоритма, кроме только что загруженных
+            cloudStorageModule.cleanOldAlgorithmFiles(datetime);
+
+            return true;
         } catch (Exception e) {
             return false;
         }
+    }
+
+    private byte[] signTrainingData(TrainingData data) throws Exception {
+        PrivateKey privateKey = localStorageModule.loadEd25519PrivateKey();
+
+        Signature sig = Signature.getInstance("Ed25519");
+        sig.initSign(privateKey);
+
+        // Преобразуем данные в текстовый формат и подписываем именно его
+        String textData = TrainingDataParser.serializeToTextFormat(data);
+        sig.update(textData.getBytes(StandardCharsets.UTF_8));
+
+        return sig.sign();
     }
 
     public boolean addQuestionnaire(Questionnaire questionnaire, List<CharacterizationAnketPatient> characterizationAnketPatientLists) {

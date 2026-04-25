@@ -7,6 +7,9 @@ import com.pancreatitis.models.Doctor;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
+import java.security.*;
+import java.security.spec.PKCS8EncodedKeySpec;
+import java.security.spec.X509EncodedKeySpec;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -29,6 +32,9 @@ public class LocalStorageModule {
     // Константы для имен ключей
     private static final String USER_KEY_FILE = "key_user.enc";
     private static final String ADMIN_KEY_FILE = "key_admin.enc";
+
+    private static final String ED25519_PRIVATE_KEY_FILE = "ed25519_private.key";
+    private static final String ED25519_PUBLIC_KEY_FILE = "ed25519_public.key";
 
     private LocalStorageModule() {
         diskStorageControl = DiskStorageControl.getInstance();
@@ -121,6 +127,42 @@ public class LocalStorageModule {
         };
 
         return executorService.submit(task).get();
+    }
+
+    // ==================== МЕТОДЫ ДЛЯ РАБОТЫ С КЛЮЧАМИ ED25519 ====================
+
+    // Сохранение приватного ключа
+    public boolean saveEd25519PrivateKey(byte[] keyBytes) throws Exception {
+        File keyFile = new File(getStorageBaseDir(), ED25519_PRIVATE_KEY_FILE);
+        return writeFile(keyFile, keyBytes);
+    }
+
+    // Сохранение публичного ключа
+    public boolean saveEd25519PublicKey(byte[] keyBytes) throws Exception {
+        File keyFile = new File(getStorageBaseDir(), ED25519_PUBLIC_KEY_FILE);
+        return writeFile(keyFile, keyBytes);
+    }
+
+    // Загрузка приватного ключа
+    public PrivateKey loadEd25519PrivateKey() throws Exception {
+        File keyFile = new File(getStorageBaseDir(), ED25519_PRIVATE_KEY_FILE);
+        if (!keyFile.exists()) {
+            throw new FileNotFoundException("Ed25519 private key not found");
+        }
+        byte[] keyBytes = readFileAsBytes(keyFile);
+        KeyFactory keyFactory = KeyFactory.getInstance("Ed25519");
+        return keyFactory.generatePrivate(new PKCS8EncodedKeySpec(keyBytes));
+    }
+
+    // Загрузка публичного ключа
+    public PublicKey loadEd25519PublicKey() throws Exception {
+        File keyFile = new File(getStorageBaseDir(), ED25519_PUBLIC_KEY_FILE);
+        if (!keyFile.exists()) {
+            throw new FileNotFoundException("Ed25519 public key not found");
+        }
+        byte[] keyBytes = readFileAsBytes(keyFile);
+        KeyFactory keyFactory = KeyFactory.getInstance("Ed25519");
+        return keyFactory.generatePublic(new X509EncodedKeySpec(keyBytes));
     }
 
     // ==================== МЕТОДЫ ДЛЯ РАБОТЫ С КЛЮЧАМИ ====================

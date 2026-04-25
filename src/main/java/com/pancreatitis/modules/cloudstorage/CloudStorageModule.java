@@ -30,7 +30,7 @@ public class CloudStorageModule {
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     // Константы для путей
-    private static final String USERS_PATH = "/users/";
+    //private static final String USERS_PATH = "/users/";
     private static final String UPDATE_PATH = "/update/";
     private static final String REGISTRATION_PATH = "/registration_requests/";
     private static final String ALGORITHM_FILE = "/algorithm.txt";
@@ -45,7 +45,6 @@ public class CloudStorageModule {
                 .build();
 
         executorService.execute(() -> {
-            createFolder(USERS_PATH);
             createFolder(UPDATE_PATH);
             createFolder(REGISTRATION_PATH);
         });
@@ -253,32 +252,6 @@ public class CloudStorageModule {
     }
 
     // ==================== СПЕЦИАЛИЗИРОВАННЫЕ МЕТОДЫ ====================
-
-    public boolean createUserFolder(String login) {
-        return createFolder("/users/" + login);
-    }
-
-    public boolean isUserFolderExists(String login) {
-        try {
-            return executorService.submit(() -> {
-                String path = USERS_PATH + login;
-                List<FolderItem> items = listFolderContents(USERS_PATH);
-                return items.stream().anyMatch(item ->
-                        item.isDirectory() && item.getName().equals(login));
-            }).get();
-        } catch (Exception e) {
-            return false;
-        }
-    }
-
-    public byte[] downloadKey(String login, String user) throws Exception {
-        return downloadFile(USERS_PATH + login + "/key_" + user + ".enc");
-    }
-
-    public boolean uploadUserKey(String login, byte[] keyBytes, String keyName) throws Exception {
-        String fileName = keyName + ".enc";
-        return uploadFile(USERS_PATH + login + "/" + fileName, keyBytes);
-    }
 
     public boolean uploadUpdate(Update update, String login) throws Exception {
         String jsonData = update.toJson();

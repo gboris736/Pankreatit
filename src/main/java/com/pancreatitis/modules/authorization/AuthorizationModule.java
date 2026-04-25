@@ -1,21 +1,16 @@
 package com.pancreatitis.modules.authorization;
 
-import com.pancreatitis.models.User;
-import com.pancreatitis.modules.cloudstorage.CloudStorageModule;
 import com.pancreatitis.modules.localstorage.LocalStorageModule;
 import com.pancreatitis.modules.safety.SafetyModule;
 
 import javax.crypto.SecretKey;
 
 public class AuthorizationModule {
-    private CloudStorageModule cloudStorageModule;
     private static LocalStorageModule localStorageModule;
     private static SafetyModule safetyModule;
     private static AuthorizationModule instance;
 
     private AuthorizationModule() {
-        cloudStorageModule = CloudStorageModule.getInstance();
-        localStorageModule = LocalStorageModule.getInstance();
         safetyModule = SafetyModule.getInstance();
     }
 
@@ -26,11 +21,11 @@ public class AuthorizationModule {
         return instance;
     }
 
-    private CloudStorageModule getCloudStorage() {
-        if (cloudStorageModule == null) {
-            cloudStorageModule = CloudStorageModule.getInstance();
+    public LocalStorageModule getLocalStorageModule() {
+        if (localStorageModule == null) {
+            localStorageModule = LocalStorageModule.getInstance();
         }
-        return cloudStorageModule;
+        return localStorageModule;
     }
 
     /**
@@ -41,7 +36,7 @@ public class AuthorizationModule {
             return null;
         }
 
-        byte[] encryptedKey = getUserKey(login);
+        byte[] encryptedKey = getLocalStorageModule().downloadUserKey(login);
         return safetyModule.decryptKey(encryptedKey, password);
     }
 
@@ -53,7 +48,7 @@ public class AuthorizationModule {
             return null;
         }
 
-        byte[] encryptedKey = getAdminKey(login);
+        byte[] encryptedKey = getLocalStorageModule().downloadAdminKey(login);
         return safetyModule.decryptKey(encryptedKey, safetyModule.getAdminPassword());
     }
 
@@ -61,67 +56,6 @@ public class AuthorizationModule {
      * Проверка существования пользователя
      */
     private boolean isUserExists(String login) {
-        return getCloudStorage().isUserFolderExists(login) ||
-                localStorageModule.isUserFolderExists(login);
-    }
-
-    /**
-     * Получение пользовательского ключа (с синхронизацией из облака при необходимости)
-     */
-    private byte[] getUserKey(String login) throws Exception {
-        // Проверяем наличие локального пользовательского ключа
-        if (localStorageModule.isUserKeyExists(login)) {
-            return localStorageModule.downloadUserKey(login);
-        }
-
-        // Если локального нет, загружаем из облака
-        return syncUserDataFromCloud(login, false);
-    }
-
-    /**
-     * Получение административного ключа (с синхронизацией из облака при необходимости)
-     */
-    private byte[] getAdminKey(String login) throws Exception {
-        // Проверяем наличие локального административного ключа
-        if (localStorageModule.isAdminKeyExists(login)) {
-            return localStorageModule.downloadAdminKey(login);
-        }
-
-        // Если локального нет, загружаем из облака
-        return syncUserDataFromCloud(login, true);
-    }
-
-    /**
-     * Синхронизация данных пользователя из облака в локальное хранилище
-     * @param login логин пользователя
-     * @param isAdmin true - загрузить административный ключ, false - пользовательский
-     * @return загруженный ключ
-     */
-    private byte[] syncUserDataFromCloud(String login, boolean isAdmin) throws Exception {
-        // Загружаем ключ из облака
-        byte[] key;
-        if (isAdmin) {
-            key = getCloudStorage().downloadKey(login, "admin");
-        } else {
-            key = getCloudStorage().downloadKey(login, "user");
-        }
-
-        // Загружаем информацию о пользователе
-        User userInfo = getCloudStorage().downloadUserInfo(login);
-
-        // Создаем локальную папку пользователя
-        localStorageModule.createUserFolder(login);
-
-        // Сохраняем ключ в локальное хранилище
-        if (isAdmin) {
-            localStorageModule.saveAdminKey(login, key);
-        } else {
-            localStorageModule.saveUserKey(login, key);
-        }
-
-        // Сохраняем информацию о пользователе
-        localStorageModule.saveUserInfo(userInfo);
-
-        return key;
+        return getLocalStorageModule().isUserFolderExists(login);
     }
 }

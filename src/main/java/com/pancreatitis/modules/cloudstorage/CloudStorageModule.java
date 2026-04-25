@@ -271,25 +271,8 @@ public class CloudStorageModule {
     }
 
     // ==================== СПЕЦИАЛИЗИРОВАННЫЕ МЕТОДЫ ====================
-
-    public boolean uploadUpdate(Update update, String login) throws Exception {
-        String jsonData = update.toJson();
-        String encryptedJson = getSafetyModule().encryptString(jsonData, adminKey);
-        byte[] encryptedBytes = encryptedJson.getBytes(StandardCharsets.UTF_8);
-
-        String uuid = UUID.randomUUID().toString();
-        String fileName = login + "_" + uuid + ".json";
-        String filePath = UPDATE_PATH + fileName;
-
-        boolean success = uploadFile(filePath, encryptedBytes);
-        return success ? uuid : null;
-    }
-
     /**
      * Скачивает и расшифровывает обновление по полному имени файла.
-     *
-     * @param fileName    полное имя файла (например, "doctor_123e4567-e89b-12d3-a456-426614174000.json")
-     * @return объект Update
      */
     public Update downloadEncryptedUpdate(String fileName, String doctorLogin) throws Exception {
         String filePath = UPDATE_PATH + fileName;
@@ -350,6 +333,10 @@ public class CloudStorageModule {
 
     private List<String> getRegistrationFormLogins() {
         return getFileNamesInFolder(REGISTRATION_PATH, item -> item.getName().endsWith(".json"));
+    }
+
+    public boolean deleteRegistrationRequest(String login) {
+        return deleteFile(REGISTRATION_PATH + login + ".json");
     }
 
     public boolean uploadTrainingData(TrainingData trainingData) {

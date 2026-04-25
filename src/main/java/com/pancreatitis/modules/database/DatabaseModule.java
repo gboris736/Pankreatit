@@ -105,9 +105,12 @@ public class DatabaseModule {
             if (rs.next()) {
                 Doctor doctor = new Doctor();
                 doctor.setId(rs.getInt("id"));
+                doctor.setLogin(rs.getString("login"));
                 doctor.setFio(rs.getString("fio"));
+                doctor.setPhone(rs.getString("phone"));
+                doctor.setEmail(rs.getString("email"));
                 doctor.setStatus(rs.getInt("status") == 1);
-                doctor.setLastModified(rs.getString("last_modified"));
+                doctor.setCreatedAt(rs.getString("created_at"));
                 return doctor;
             }
         } catch (SQLException e) {
@@ -117,14 +120,17 @@ public class DatabaseModule {
     }
 
     public long insertDoctor(Doctor doctor) {
-        String sql = "INSERT INTO doctors (fio, status, last_modified) VALUES (?, ?, ?)";
+        String sql = "INSERT INTO doctors (login, fio, phone, email, status, created_at) VALUES (?, ?, ?, ?, ?, ?)";
 
         try (Connection conn = DriverManager.getConnection(url);
              PreparedStatement pstmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 
-            pstmt.setString(1, doctor.getFio());
-            pstmt.setInt(2, doctor.getStatus() ? 1 : 0);
-            pstmt.setString(3, LocalDateTime.now().format(formatter));
+            pstmt.setString(1, doctor.getLogin());
+            pstmt.setString(2, doctor.getFio());
+            pstmt.setString(3, doctor.getPhone());
+            pstmt.setString(4, doctor.getEmail());
+            pstmt.setInt(5, doctor.getStatus() ? 1 : 0);
+            pstmt.setString(6, LocalDateTime.now().format(formatter));
 
             int affectedRows = pstmt.executeUpdate();
 
@@ -152,8 +158,38 @@ public class DatabaseModule {
             if (rs.next()) {
                 Doctor doctor = new Doctor();
                 doctor.setId(rs.getInt("id"));
+                doctor.setLogin(rs.getString("login"));
                 doctor.setFio(rs.getString("fio"));
+                doctor.setPhone(rs.getString("phone"));
+                doctor.setEmail(rs.getString("email"));
                 doctor.setStatus(rs.getInt("status") == 1);
+                doctor.setCreatedAt(rs.getString("created_at"));
+                return doctor;
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    public Doctor getDoctorByLogin(String login) {
+        String sql = "SELECT * FROM doctors WHERE login = ?";
+
+        try (Connection conn = DriverManager.getConnection(url);
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            pstmt.setString(1, login);
+            ResultSet rs = pstmt.executeQuery();
+
+            if (rs.next()) {
+                Doctor doctor = new Doctor();
+                doctor.setId(rs.getInt("id"));
+                doctor.setLogin(rs.getString("login"));
+                doctor.setFio(rs.getString("fio"));
+                doctor.setPhone(rs.getString("phone"));
+                doctor.setEmail(rs.getString("email"));
+                doctor.setStatus(rs.getInt("status") == 1);
+                doctor.setCreatedAt(rs.getString("created_at"));
                 return doctor;
             }
         } catch (SQLException e) {
@@ -173,8 +209,12 @@ public class DatabaseModule {
             while (rs.next()) {
                 Doctor doctor = new Doctor();
                 doctor.setId(rs.getInt("id"));
+                doctor.setLogin(rs.getString("login"));
                 doctor.setFio(rs.getString("fio"));
+                doctor.setPhone(rs.getString("phone"));
+                doctor.setEmail(rs.getString("email"));
                 doctor.setStatus(rs.getInt("status") == 1);
+                doctor.setCreatedAt(rs.getString("created_at"));
                 doctors.add(doctor);
             }
         } catch (SQLException e) {
@@ -326,8 +366,13 @@ public class DatabaseModule {
 
     public List<QuestionnaireItem> getAllQuestionnaireItems() {
         List<QuestionnaireItem> items = new ArrayList<>();
-        String sql = "SELECT ankets.id as idQuestionnaire, patients.id as idPatient, patients.fio as fioPatient, ankets.diagnosis as diagnosis, ankets.date_of_completion as dateOfCompletion " +
-                "FROM ankets JOIN patients ON ankets.id_patient = patients.id " +
+        String sql = "SELECT ankets.id AS idQuestionnaire, " +
+                "patients.id AS idPatient, patients.fio AS fioPatient, " +
+                "ankets.diagnosis AS diagnosis, ankets.date_of_completion AS dateOfCompletion, " +
+                "ankets.id_doctor AS idDoctor, doctors.fio AS fioDoctor " +
+                "FROM ankets " +
+                "JOIN patients ON ankets.id_patient = patients.id " +
+                "LEFT JOIN doctors ON ankets.id_doctor = doctors.id " +
                 "ORDER BY patients.fio";
 
         try (Connection conn = DriverManager.getConnection(url);
@@ -341,6 +386,9 @@ public class DatabaseModule {
                 item.setFioPatient(rs.getString("fioPatient"));
                 item.setDiagnosis(rs.getString("diagnosis"));
                 item.setDateOfCompletion(rs.getString("dateOfCompletion"));
+                item.setIdDoctor(rs.getInt("idDoctor"));
+                item.setFioDoctor(rs.getString("fioDoctor")); // вернёт null, если врача нет
+
                 items.add(item);
             }
         } catch (SQLException e) {
@@ -348,6 +396,7 @@ public class DatabaseModule {
         }
         return items;
     }
+
 
     private List<Questionnaire> getQuestionnairesForPatient(int patientId) {
         List<Questionnaire> questionnaires = new ArrayList<>();

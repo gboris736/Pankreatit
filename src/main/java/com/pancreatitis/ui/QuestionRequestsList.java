@@ -114,6 +114,7 @@ public class QuestionRequestsList {
                                 result.getIndex(),
                                 result.getQuestionnaire(),
                                 result.getPatient(),
+                                result.getDoctor(),
                                 result.getCharacteristics()
                         );
                     } else {
@@ -189,7 +190,7 @@ public class QuestionRequestsList {
     /**
      * Создание карточки анкеты
      */
-    private void createQuestionnaireCard(int id, Questionnaire questionnaire, Patient patient,
+    private void createQuestionnaireCard(int id, Questionnaire questionnaire, Patient patient, Doctor doctor,
                                          List<CharacterizationAnketPatient> characteristics) {
         // Основной блок карточки
         VBox cardBox = new VBox(10);
@@ -237,9 +238,8 @@ public class QuestionRequestsList {
         // Диагноз
         addInfoRow(infoGrid, 2, "Диагноз:", questionnaire.getTextDiagnosis());
 
-        // Количество заполненных характеристик
-        int characteristicsCount = characteristics != null ? characteristics.size() : 0;
-        addInfoRow(infoGrid, 3, "Заполнено характеристик:", String.valueOf(characteristicsCount));
+        // Врач
+        addInfoRow(infoGrid, 3, "Ответственный врач:", doctor != null ? doctor.getFio() : "Не указан");
 
         // Кнопки верификации
         HBox actionBox = new HBox(10);
@@ -445,6 +445,7 @@ public class QuestionRequestsList {
                             id,
                             updatesModule.getQuestionnairList().get(id),
                             updatesModule.getPatientList().get(id),
+                            updatesModule.getDoctors().get(id),
                             updatesModule.getCharacterizationAnketPatientList().get(id)
                     );
                 }

@@ -7,17 +7,19 @@ public class UpdateLoadResult {
     private final int index;
     private final Patient patient;
     private final Questionnaire questionnaire;
+    private final Doctor doctor;
     private final List<CharacterizationAnketPatient> characteristics;
     private final boolean success;
     private final String errorMessage;
     private final String fileName;
 
-    public UpdateLoadResult(int index, Patient patient, Questionnaire questionnaire,
+    public UpdateLoadResult(int index, Patient patient, Questionnaire questionnaire, Doctor doctor,
                             List<CharacterizationAnketPatient> characteristics,
                             boolean success, String errorMessage, String fileName) {
         this.index = index;
         this.patient = patient;
         this.questionnaire = questionnaire;
+        this.doctor = doctor;
         this.characteristics = characteristics;
         this.success = success;
         this.errorMessage = errorMessage;
@@ -28,6 +30,7 @@ public class UpdateLoadResult {
     public int getIndex() { return index; }
     public Patient getPatient() { return patient; }
     public Questionnaire getQuestionnaire() { return questionnaire; }
+    public Doctor getDoctor() {return doctor;}
     public List<CharacterizationAnketPatient> getCharacteristics() { return characteristics; }
     public boolean isSuccess() { return success; }
     public String getErrorMessage() { return errorMessage; }

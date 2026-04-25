@@ -71,6 +71,7 @@ public class QuestionnaireViewUpdate {
         UpdatesModule updatesModule = UpdatesModule.getInstance();
         questionnaire = updatesModule.getQuestionnairList().get(id);
         patient = updatesModule.getPatientList().get(id);
+        doctor = updatesModule.getDoctors().get(id);
         allValues = updatesModule.getCharacterizationAnketPatientList().get(id);
 
         DatabaseModule databaseModule = DatabaseModule.getInstance();
@@ -172,6 +173,8 @@ public class QuestionnaireViewUpdate {
         String diagText = (questionnaire.getTextDiagnosis() != null && !"-".equals(questionnaire.getTextDiagnosis()))
                 ? questionnaire.getTextDiagnosis() : "Нет данных";
         diagnosisCombo.setValue(diagText);
+
+        fioDoctor.setText(doctor != null ? doctor.getFio() : "");
 
         // Блоки характеристик
         for (Characteristic c : allCharacteristics) {

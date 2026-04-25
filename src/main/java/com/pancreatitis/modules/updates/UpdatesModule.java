@@ -4,6 +4,7 @@ package com.pancreatitis.modules.updates;
 import com.pancreatitis.models.*;
 import com.pancreatitis.modules.authorization.AuthorizationModule;
 import com.pancreatitis.modules.cloudstorage.CloudStorageModule;
+import com.pancreatitis.modules.database.DatabaseModule;
 import com.pancreatitis.modules.localstorage.LocalStorageModule;
 import com.pancreatitis.modules.safety.SafetyModule;
 import javafx.util.Pair;
@@ -22,6 +23,7 @@ public class UpdatesModule {
 
     private List<Patient> patientList = new ArrayList<>();
     private List<Questionnaire> questionnairList = new ArrayList<>();
+    private List<Doctor> doctors = new ArrayList<>();
     private List<List<CharacterizationAnketPatient>> characterizationAnketPatientList = new ArrayList<>();
     private List<Pair<Pair<String, String>, Update>> updatesList = new ArrayList<>();
     private List<String> updateUuids = new ArrayList<>();
@@ -91,7 +93,7 @@ public class UpdatesModule {
                                         Update update = getCloudStorageModule().downloadEncryptedUpdate(fileName, login);
                                         return processUpdate(index, fileName, update);
                                     } catch (Exception e) {
-                                        return new UpdateLoadResult(index, null, null, null, false,
+                                        return new UpdateLoadResult(index, null, null, null, null, false,
                                                 e.getMessage(), fileName);
                                     }
                                 }, processingExecutor)
@@ -161,6 +163,7 @@ public class UpdatesModule {
                     updatesList.add(null);
                     patientList.add(null);
                     updateUuids.add(null);
+                    doctors.add(null);
                     questionnairList.add(null);
                     characterizationAnketPatientList.add(null);
                 }
@@ -178,13 +181,16 @@ public class UpdatesModule {
             questionnaire.setIdPatient(-1);
             questionnairList.set(index, questionnaire);
 
+            Doctor doctor = DatabaseModule.getInstance().getDoctorByLogin(login);
+            doctors.set(index, doctor);
+
             List<CharacterizationAnketPatient> characteristics = dto.getCharacteristicValues();
             characterizationAnketPatientList.set(index, characteristics);
 
-            return new UpdateLoadResult(index, patient, questionnaire, characteristics,
+            return new UpdateLoadResult(index, patient, questionnaire, doctor, characteristics,
                     true, null, fileName);
         } catch (Exception ex) {
-            return new UpdateLoadResult(index, null, null, null, false,
+            return new UpdateLoadResult(index, null, null, null, null,false,
                     ex.getMessage(), fileName);
         }
     }
@@ -192,6 +198,7 @@ public class UpdatesModule {
     private void clearTempData() {
         patientList.clear();
         questionnairList.clear();
+        doctors.clear();
         characterizationAnketPatientList.clear();
         updatesList.clear();
     }
@@ -210,9 +217,12 @@ public class UpdatesModule {
             updateUuids.remove(id);
             patientList.remove(id);
             questionnairList.remove(id);
+            doctors.remove(id);
             characterizationAnketPatientList.remove(id);
         }
     }
+
+    public List<Doctor> getDoctors() {return doctors;}
 
     public List<Patient> getPatientList() {
         return patientList;

@@ -4,6 +4,7 @@ package com.pancreatitis.modules.updates;
 import com.pancreatitis.models.*;
 import com.pancreatitis.modules.authorization.AuthorizationModule;
 import com.pancreatitis.modules.cloudstorage.CloudStorageModule;
+import com.pancreatitis.modules.localstorage.LocalStorageModule;
 import com.pancreatitis.modules.safety.SafetyModule;
 import javafx.util.Pair;
 
@@ -16,9 +17,8 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class UpdatesModule {
-    private static CloudStorageModule cloudStorageModule = CloudStorageModule.getInstance();
-    private static AuthorizationModule authorizationModule = AuthorizationModule.getInstance();
-    private static SafetyModule safetyModule = SafetyModule.getInstance();
+    private static CloudStorageModule cloudStorageModule;
+    private static LocalStorageModule localStorageModule;
 
     private List<Patient> patientList = new ArrayList<>();
     private List<Questionnaire> questionnairList = new ArrayList<>();
@@ -41,6 +41,20 @@ public class UpdatesModule {
         return instance;
     }
 
+    public LocalStorageModule getLocalStorageModule() {
+        if (localStorageModule == null) {
+            localStorageModule = LocalStorageModule.getInstance();
+        }
+        return localStorageModule;
+    }
+
+    public CloudStorageModule getCloudStorageModule() {
+        if (cloudStorageModule == null) {
+            cloudStorageModule = CloudStorageModule.getInstance();
+        }
+        return cloudStorageModule;
+    }
+
     /**
      * Асинхронная загрузка с callback
      */
@@ -49,7 +63,7 @@ public class UpdatesModule {
         CompletableFuture.runAsync(() -> {
             try {
                 // Шаг 1: Получаем список файлов обновлений
-                List<String> fileNames = cloudStorageModule.getUpdateFileNamesAsync().get();
+                List<String> fileNames = getCloudStorageModule().getUpdateFileNamesAsync().get();
                 int total = fileNames.size();
 
                 if (total == 0) {
@@ -65,31 +79,32 @@ public class UpdatesModule {
                 List<CompletableFuture<UpdateLoadResult>> futures = new ArrayList<>();
                 AtomicInteger loadedCount = new AtomicInteger(0);
 
+                List<String> allLogins = getLocalStorageModule().getAllUserLogins();
                 for (int i = 0; i < total; i++) {
                     final int index = i;
                     final String fileName = fileNames.get(i);
+                    String login = extractLoginFromFileName(fileName);
+                    if (allLogins.contains(login)) {
+                        CompletableFuture<UpdateLoadResult> future = CompletableFuture
+                                .supplyAsync(() -> {
+                                    try {
+                                        Update update = getCloudStorageModule().downloadEncryptedUpdate(fileName, login);
+                                        return processUpdate(index, fileName, update);
+                                    } catch (Exception e) {
+                                        return new UpdateLoadResult(index, null, null, null, false,
+                                                e.getMessage(), fileName);
+                                    }
+                                }, processingExecutor)
+                                .thenApply(result -> {
+                                    // Обновляем прогресс
+                                    int loaded = loadedCount.incrementAndGet();
+                                    callback.onProgress(loaded, total);
+                                    callback.onUpdateLoaded(result);
+                                    return result;
+                                });
 
-                    CompletableFuture<UpdateLoadResult> future = CompletableFuture
-                            .supplyAsync(() -> {
-                                try {
-                                    // Извлекаем логин из имени файла (до первого '_')
-                                    String login = extractLoginFromFileName(fileName);
-                                    Update update = cloudStorageModule.downloadEncryptedUpdate(fileName, login);
-                                    return processUpdate(index, fileName, update);
-                                } catch (Exception e) {
-                                    return new UpdateLoadResult(index, null, null, null, false,
-                                            e.getMessage(), fileName);
-                                }
-                            }, processingExecutor)
-                            .thenApply(result -> {
-                                // Обновляем прогресс
-                                int loaded = loadedCount.incrementAndGet();
-                                callback.onProgress(loaded, total);
-                                callback.onUpdateLoaded(result);
-                                return result;
-                            });
-
-                    futures.add(future);
+                        futures.add(future);
+                    }
                 }
 
                 CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
@@ -105,22 +120,6 @@ public class UpdatesModule {
                 callback.onError("Ошибка загрузки обновлений: " + ex.getMessage());
             }
         });
-    }
-
-    private String encodeToSha256(String base) {
-        try {
-            MessageDigest digest = MessageDigest.getInstance("SHA-256");
-            byte[] hash = digest.digest(base.getBytes(StandardCharsets.UTF_8));
-            StringBuilder hexString = new StringBuilder();
-            for (byte b : hash) {
-                String hex = Integer.toHexString(0xff & b);
-                if (hex.length() == 1) hexString.append('0');
-                hexString.append(hex);
-            }
-            return hexString.toString();
-        } catch (NoSuchAlgorithmException e) {
-            throw new RuntimeException(e);
-        }
     }
 
     /**
@@ -205,7 +204,7 @@ public class UpdatesModule {
             Pair<Pair<String, String>, Update> pair = updatesList.get(id);
             String doctor = pair.getKey().getKey();
             String uuid = updateUuids.get(id);
-            cloudStorageModule.deleteUpdateFile(String.format("%s_%s.json", doctor, uuid));
+            getCloudStorageModule().deleteUpdateFile(String.format("%s_%s.json", doctor, uuid));
 
             updatesList.remove(id);
             updateUuids.remove(id);

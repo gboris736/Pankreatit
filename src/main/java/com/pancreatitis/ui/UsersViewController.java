@@ -1,7 +1,9 @@
 package com.pancreatitis.ui;
 
-import com.pancreatitis.models.User;
+import com.pancreatitis.models.Doctor;
 import com.pancreatitis.modules.cloudstorage.CloudStorageModule;
+import com.pancreatitis.modules.database.DatabaseModule;
+import com.pancreatitis.modules.localstorage.LocalStorageModule;
 import javafx.beans.property.*;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -97,12 +99,14 @@ public class UsersViewController implements Initializable {
      */
     private void loadUsersData() {
         try {
-            CloudStorageModule cloudStorageModule = CloudStorageModule.getInstance();
-            List<User> allUsers = cloudStorageModule.getAllUsers();
+            LocalStorageModule localStorageModule = LocalStorageModule.getInstance();
+            DatabaseModule databaseModule = DatabaseModule.getInstance();
+            List<String> allLogins = localStorageModule.getAllUserLogins();
             List<UserUI> users = new ArrayList<>();
 
-            for (User user : allUsers) {
-                users.add(new UserUI(user));
+            for (String login : allLogins) {
+                Doctor doctor = databaseModule.getDoctorByLogin(login);
+                if (doctor != null) users.add(new UserUI(doctor));
             }
 
             usersData.setAll(users);
@@ -155,14 +159,12 @@ public class UsersViewController implements Initializable {
             this.expert = new SimpleBooleanProperty(expert);
         }
 
-        public UserUI(User user) {
+        public UserUI(Doctor user) {
             this.login = new SimpleStringProperty(user.getLogin());
-            this.fullName = new SimpleStringProperty(user.getFullName());
+            this.fullName = new SimpleStringProperty(user.getFio());
             this.email = new SimpleStringProperty(user.getEmail());
             this.phone = new SimpleStringProperty(user.getPhone());
-            this.expert = new SimpleBooleanProperty(
-                    user.getDoctor() != null ? user.getDoctor().getStatus() : false
-            );
+            this.expert = new SimpleBooleanProperty(user.getStatus());
         }
 
         // Getters and property getters for JavaFX binding

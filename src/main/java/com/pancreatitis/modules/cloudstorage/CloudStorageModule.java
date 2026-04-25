@@ -5,12 +5,15 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.pancreatitis.models.Doctor;
 import com.pancreatitis.models.RegistrationForm;
 import com.pancreatitis.models.Update;
+import com.pancreatitis.modules.authorization.AuthorizationModule;
 import com.pancreatitis.modules.database.DatabaseModule;
+import com.pancreatitis.modules.safety.SafetyModule;
 import com.pancreatitis.modules.trainset.TrainingData;
 import com.pancreatitis.modules.trainset.TrainingDataParser;
 import javafx.util.Pair;
-
 import okhttp3.*;
+
+import javax.crypto.SecretKey;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URLEncoder;
@@ -19,12 +22,15 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.*;
 
 public class CloudStorageModule {
     private final String authToken = "y0__xC7koqFBxjIhTwg6O2OwBUwreWe7AeTLwUn1hxDxrN6Pp9NW10aTKlPGw";
     private static final String API_URL = "https://cloud-api.yandex.net/v1/disk/resources";
     private static CloudStorageModule instance;
+    private SafetyModule safetyModule;
+    private AuthorizationModule authorizationModule;
     private final ExecutorService executorService = Executors.newCachedThreadPool();
     private static final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy_MM_dd_HH_mm_ss");
     private final ObjectMapper objectMapper = new ObjectMapper();
@@ -61,6 +67,20 @@ public class CloudStorageModule {
         return instance;
     }
 
+    private SafetyModule getSafetyModule() {
+        if (safetyModule == null) {
+            safetyModule = SafetyModule.getInstance();
+        }
+        return safetyModule;
+    }
+
+    private AuthorizationModule getAuthorizationModule() {
+        if (authorizationModule == null) {
+            authorizationModule = AuthorizationModule.getInstance();
+        }
+        return authorizationModule;
+    }
+
     // ==================== УНИВЕРСАЛЬНЫЕ МЕТОДЫ ====================
 
     /**
@@ -82,7 +102,7 @@ public class CloudStorageModule {
 
             Request request = new Request.Builder()
                     .url(url)
-                    .put(RequestBody.create(new byte[0], null)) // пустое тело
+                    .put(RequestBody.create(new byte[0], null))
                     .addHeader("Authorization", "OAuth " + authToken)
                     .build();
 
@@ -181,7 +201,6 @@ public class CloudStorageModule {
                 JsonNode rootNode = objectMapper.readTree(response.body().byteStream());
                 JsonNode itemsNode = rootNode.get("_embedded").get("items");
 
-                // Добавлена недостающая логика обработки
                 if (itemsNode != null && itemsNode.isArray()) {
                     for (JsonNode item : itemsNode) {
                         items.add(new FolderItem(
@@ -255,73 +274,56 @@ public class CloudStorageModule {
 
     public boolean uploadUpdate(Update update, String login) throws Exception {
         String jsonData = update.toJson();
-        String datetime = LocalDateTime.now().format(formatter);
-        String fileName = login + "_update_" + datetime + ".json";
-        return uploadFile(UPDATE_PATH + fileName, jsonData.getBytes(StandardCharsets.UTF_8));
-    }
+        String encryptedJson = getSafetyModule().encryptString(jsonData, adminKey);
+        byte[] encryptedBytes = encryptedJson.getBytes(StandardCharsets.UTF_8);
 
-    public List<Pair<Pair<String, String>, Update>> downloadAllUpdates() throws Exception {
-        return executorService.submit(() -> {
-            List<Pair<Pair<String, String>, Update>> updatesList = new ArrayList<>();
-            List<String> updateFiles = getFileNamesInFolder(UPDATE_PATH,
-                    item -> item.getName().endsWith(".json") && item.getName().contains("_update_"));
+        String uuid = UUID.randomUUID().toString();
+        String fileName = login + "_" + uuid + ".json";
+        String filePath = UPDATE_PATH + fileName;
 
-            for (String fileName : updateFiles) {
-                try {
-                    Pair<String, String> loginDate = parseUpdateFileName(fileName);
-                    if (loginDate != null) {
-                        Update update = downloadAndParseJson(UPDATE_PATH + fileName, Update.class);
-                        updatesList.add(new Pair<>(loginDate, update));
-                    }
-                } catch (Exception e) {
-                    System.err.println("Ошибка при обработке файла: " + fileName + " - " + e.getMessage());
-                }
-            }
-            return updatesList;
-        }).get();
-    }
-
-    private Pair<String, String> parseUpdateFileName(String fileName) {
-        String[] parts = fileName.split("_update_");
-        if (parts.length == 2) {
-            String login = parts[0];
-            String datetime = parts[1].replace(".json", "");
-            return new Pair<>(login, datetime);
-        }
-        return null;
+        boolean success = uploadFile(filePath, encryptedBytes);
+        return success ? uuid : null;
     }
 
     /**
-     * Асинхронная загрузка списка файлов обновлений (без содержимого)
+     * Скачивает и расшифровывает обновление по полному имени файла.
+     *
+     * @param fileName    полное имя файла (например, "doctor_123e4567-e89b-12d3-a456-426614174000.json")
+     * @return объект Update
+     */
+    public Update downloadEncryptedUpdate(String fileName, String doctorLogin) throws Exception {
+        String filePath = UPDATE_PATH + fileName;
+        byte[] encryptedBytes = downloadFile(filePath);
+        String encryptedJson = new String(encryptedBytes, StandardCharsets.UTF_8);
+
+        SecretKey keyAdmin = getAuthorizationModule().authenticateForAdmin(doctorLogin);
+        String decryptedJson = getSafetyModule().decryptString(encryptedJson, keyAdmin);
+
+        return objectMapper.readValue(decryptedJson, Update.class);
+    }
+    /**
+     * Возвращает список имён файлов обновлений (с расширением .json)
+     */
+    public List<String> getUpdateFileNames() {
+        return getFileNamesInFolder(UPDATE_PATH,
+                item -> item.getName().endsWith(".json") && item.getName().contains("_"));
+    }
+
+    /**
+     * Асинхронно получает список имён файлов обновлений
      */
     public CompletableFuture<List<String>> getUpdateFileNamesAsync() {
-        return CompletableFuture.supplyAsync(() -> {
-            try {
-                return getFileNamesInFolder(UPDATE_PATH,
-                        item -> item.getName().endsWith(".json") && item.getName().contains("_update_"));
-            } catch (Exception e) {
-                throw new CompletionException(e);
-            }
-        }, executorService);
+        return CompletableFuture.supplyAsync(this::getUpdateFileNames, executorService);
     }
 
     /**
-     * Асинхронная загрузка одного обновления по имени файла
+     * Удаляет файл обновления по его имени
      */
-    public CompletableFuture<Pair<Pair<String, String>, Update>> downloadUpdateAsync(String fileName) {
-        return CompletableFuture.supplyAsync(() -> {
-            try {
-                Pair<String, String> loginDate = parseUpdateFileName(fileName);
-                if (loginDate != null) {
-                    Update update = downloadAndParseJson(UPDATE_PATH + fileName, Update.class);
-                    return new Pair<>(loginDate, update);
-                }
-                return null;
-            } catch (Exception e) {
-                throw new CompletionException("Ошибка при обработке файла: " + fileName, e);
-            }
-        }, executorService);
+    public boolean deleteUpdateFile(String fileName) {
+        return deleteFile(UPDATE_PATH + fileName);
     }
+
+    // ==================== МЕТОДЫ ДЛЯ РЕГИСТРАЦИИ ====================
 
     public boolean uploadRegistrationRequest(RegistrationForm registrationForm) throws Exception {
         String jsonData = registrationForm.toJson();
@@ -331,7 +333,7 @@ public class CloudStorageModule {
 
     public RegistrationForm downloadRegistrationForm(String login) {
         try {
-            return downloadAndParseJson(REGISTRATION_PATH + login, RegistrationForm.class);
+            return downloadAndParseJson(REGISTRATION_PATH + login + ".json", RegistrationForm.class);
         } catch (Exception e) {
             throw new RuntimeException("Failed to download registration form for login: " + login, e);
         }
@@ -359,13 +361,7 @@ public class CloudStorageModule {
         }
     }
 
-    public boolean deleteRegistrationRequest(String login) {
-        return deleteFile(REGISTRATION_PATH + login + ".json");
-    }
-
-    public boolean deleteUpdateFile(String fileName) {
-        return deleteFile(UPDATE_PATH + fileName);
-    }
+    // ==================== ВСПОМОГАТЕЛЬНЫЕ МЕТОДЫ ====================
 
     private String extractHrefFromJson(String json) {
         int hrefIndex = json.indexOf("\"href\":\"");

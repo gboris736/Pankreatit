@@ -2,25 +2,29 @@
 package com.pancreatitis.modules.updates;
 
 import com.pancreatitis.models.*;
-//import com.pancreatitis.modules.authorization.AuthorizationModule;
+import com.pancreatitis.modules.authorization.AuthorizationModule;
 import com.pancreatitis.modules.cloudstorage.CloudStorageModule;
 import com.pancreatitis.modules.safety.SafetyModule;
 import javafx.util.Pair;
 
 import javax.crypto.SecretKey;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class UpdatesModule {
     private static CloudStorageModule cloudStorageModule = CloudStorageModule.getInstance();
-    //private static AuthorizationModule authorizationModule = AuthorizationModule.getInstance();
+    private static AuthorizationModule authorizationModule = AuthorizationModule.getInstance();
     private static SafetyModule safetyModule = SafetyModule.getInstance();
 
     private List<Patient> patientList = new ArrayList<>();
     private List<Questionnaire> questionnairList = new ArrayList<>();
     private List<List<CharacterizationAnketPatient>> characterizationAnketPatientList = new ArrayList<>();
     private List<Pair<Pair<String, String>, Update>> updatesList = new ArrayList<>();
+    private List<String> updateUuids = new ArrayList<>();
     private static UpdatesModule instance;
 
     private ExecutorService processingExecutor;
@@ -68,18 +72,10 @@ public class UpdatesModule {
                     CompletableFuture<UpdateLoadResult> future = CompletableFuture
                             .supplyAsync(() -> {
                                 try {
-                                    // Загружаем обновление
-                                    Pair<Pair<String, String>, Update> updatePair =
-                                            cloudStorageModule.downloadUpdateAsync(fileName).get();
-
-                                    if (updatePair == null) {
-                                        return new UpdateLoadResult(index, null, null, null, false,
-                                                "Не удалось распарсить файл", fileName);
-                                    }
-
-                                    // Обрабатываем загруженное обновление
-                                    return processUpdate(index, updatePair, fileName);
-
+                                    // Извлекаем логин из имени файла (до первого '_')
+                                    String login = extractLoginFromFileName(fileName);
+                                    Update update = cloudStorageModule.downloadEncryptedUpdate(fileName, login);
+                                    return processUpdate(index, fileName, update);
                                 } catch (Exception e) {
                                     return new UpdateLoadResult(index, null, null, null, false,
                                             e.getMessage(), fileName);
@@ -96,23 +92,13 @@ public class UpdatesModule {
                     futures.add(future);
                 }
 
-                // Шаг 3: Ждем завершения всех задач
                 CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
 
-                // Шаг 4: Подсчитываем результаты
-                int successCount = 0;
-                int failCount = 0;
-
+                int successCount = 0, failCount = 0;
                 for (CompletableFuture<UpdateLoadResult> future : futures) {
-                    UpdateLoadResult result = future.get();
-                    if (result.isSuccess()) {
-                        successCount++;
-                    } else {
-                        failCount++;
-                    }
+                    if (future.get().isSuccess()) successCount++;
+                    else failCount++;
                 }
-
-                // Шаг 5: Завершаем загрузку
                 callback.onComplete(successCount, failCount);
 
             } catch (Exception ex) {
@@ -121,41 +107,83 @@ public class UpdatesModule {
         });
     }
 
+    private String encodeToSha256(String base) {
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            byte[] hash = digest.digest(base.getBytes(StandardCharsets.UTF_8));
+            StringBuilder hexString = new StringBuilder();
+            for (byte b : hash) {
+                String hex = Integer.toHexString(0xff & b);
+                if (hex.length() == 1) hexString.append('0');
+                hexString.append(hex);
+            }
+            return hexString.toString();
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    /**
+     * Извлекает логин из имени файла формата login_uuid.json
+     */
+    private String extractLoginFromFileName(String fileName) {
+        int underscoreIndex = fileName.lastIndexOf('_');
+        if (underscoreIndex > 0) {
+            return fileName.substring(0, underscoreIndex);
+        }
+        throw new IllegalArgumentException("Invalid file name format: " + fileName);
+    }
+
+    /**
+     * Извлекает uuid из имени файла формата login_uuid.json
+     */
+    private String extractUUIDFromFileName(String fileName) {
+        int lastUnderscoreIndex = fileName.lastIndexOf('_');
+        int dotIndex = fileName.lastIndexOf('.');
+        if (lastUnderscoreIndex > 0 && dotIndex > lastUnderscoreIndex) {
+            return fileName.substring(lastUnderscoreIndex + 1, dotIndex);
+        }
+        throw new IllegalArgumentException("Invalid file name format: " + fileName);
+    }
+
     /**
      * Обработка одного обновления
      */
-    private UpdateLoadResult processUpdate(int index, Pair<Pair<String, String>, Update> updatePair, String fileName) {
+    private UpdateLoadResult processUpdate(int index, String fileName, Update update) {
         try {
-            updatesList.add(updatePair);
+            String login = update.getLogin();
+            String dateUpload = update.getDateUpload();
+            String uuid = extractUUIDFromFileName(fileName);
+            Pair<String, String> loginDatePair = new Pair<>(login, dateUpload);
+            Pair<Pair<String, String>, Update> entry = new Pair<>(loginDatePair, update);
 
-            Update update = updatePair.getValue();
-            String doctor = updatePair.getKey().getKey();
-
-            // Аутентификация врача для получения ключа
-            //SecretKey key_admin = authorizationModule.authenticateForAdmin(doctor);
-
-            // 1. Обработка пациента
-            Patient patient = update.getPatient();
-            if (patient != null && patient.getFio() != null) {
-                //patient.setFio(safetyModule.decryptString(patient.getFio(), key_admin));
+            synchronized (this) {
+                while (updatesList.size() <= index) {
+                    updatesList.add(null);
+                    patientList.add(null);
+                    updateUuids.add(null);
+                    questionnairList.add(null);
+                    characterizationAnketPatientList.add(null);
+                }
+                updatesList.set(index, entry);
+                updateUuids.set(index, uuid);
             }
-            patient.setId(-1);
-            patientList.add(patient);
 
-            // 2. Обработка анкеты
+            Patient patient = update.getPatient();
+            patient.setId(-1);
+            patientList.set(index, patient);
+
             QuestionnaireDTO dto = update.getQuestionnaireDTO();
             Questionnaire questionnaire = new Questionnaire(dto);
             questionnaire.setId(-1);
             questionnaire.setIdPatient(-1);
-            questionnairList.add(questionnaire);
+            questionnairList.set(index, questionnaire);
 
-            // 3. Получение характеристик
             List<CharacterizationAnketPatient> characteristics = dto.getCharacteristicValues();
-            characterizationAnketPatientList.add(characteristics);
+            characterizationAnketPatientList.set(index, characteristics);
 
             return new UpdateLoadResult(index, patient, questionnaire, characteristics,
                     true, null, fileName);
-
         } catch (Exception ex) {
             return new UpdateLoadResult(index, null, null, null, false,
                     ex.getMessage(), fileName);
@@ -169,15 +197,18 @@ public class UpdatesModule {
         updatesList.clear();
     }
 
+    /**
+     * Удаление обновления по индексу (теперь используется UUID)
+     */
     public void deleteUpdate(int id) {
         if (id >= 0 && id < updatesList.size()) {
             Pair<Pair<String, String>, Update> pair = updatesList.get(id);
-            Update update = pair.getValue();
             String doctor = pair.getKey().getKey();
-            String datetime = pair.getKey().getValue();
-            cloudStorageModule.deleteUpdateFile(String.format("%s_update_%s.json", doctor, datetime));
+            String uuid = updateUuids.get(id);
+            cloudStorageModule.deleteUpdateFile(String.format("%s_%s.json", doctor, uuid));
 
             updatesList.remove(id);
+            updateUuids.remove(id);
             patientList.remove(id);
             questionnairList.remove(id);
             characterizationAnketPatientList.remove(id);

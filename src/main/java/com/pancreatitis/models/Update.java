@@ -6,6 +6,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 public class Update {
     private Patient patient;
     private QuestionnaireDTO questionnaireDTO;
+    private String login;
+    private String dateUpload;
 
     public Patient getPatient() {
         return patient;
@@ -13,6 +15,22 @@ public class Update {
 
     public void setPatient(Patient patient) {
         this.patient = patient;
+    }
+
+    public String getLogin() {
+        return login;
+    }
+
+    public void setLogin(String login) {
+        this.login = login;
+    }
+
+    public String getDateUpload() {
+        return dateUpload;
+    }
+
+    public void setDateUpload(String dateUpload) {
+        this.dateUpload = dateUpload;
     }
 
     public QuestionnaireDTO getQuestionnaireDTO() {

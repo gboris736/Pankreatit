@@ -1,5 +1,6 @@
 package com.pancreatitis.ui;
 
+import com.pancreatitis.models.Doctor;
 import com.pancreatitis.models.Patient;
 import com.pancreatitis.models.Questionnaire;
 import javafx.application.Platform;
@@ -35,8 +36,10 @@ public class MainMenuControl {
 
     static int idCurrentPatient;
     static int idCurrentQuestionnaire;
+    static int idCurrentDoctor;
     static Patient currentPatient;
     static Questionnaire currentQuestionnaire;
+    static Doctor currentDoctor;
 
 
 
@@ -98,8 +101,10 @@ public class MainMenuControl {
 
         idCurrentPatient = -1;
         idCurrentQuestionnaire = -1;
+        idCurrentDoctor = -1;
         currentPatient = new Patient();
         currentQuestionnaire = new Questionnaire();
+        currentDoctor = new Doctor();
 
         instance = this;
         tabsListView.setItems(FXCollections.observableArrayList("Список анкет", "Список пользователей", "Обучающая выборка", "Заявки на регистрацию", "Анкеты на верификацию", "Анкета"));

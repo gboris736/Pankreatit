@@ -5,7 +5,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.pancreatitis.models.Doctor;
 import com.pancreatitis.models.RegistrationForm;
 import com.pancreatitis.models.Update;
-import com.pancreatitis.models.User;
 import com.pancreatitis.modules.database.DatabaseModule;
 import com.pancreatitis.modules.trainset.TrainingData;
 import com.pancreatitis.modules.trainset.TrainingDataParser;
@@ -365,46 +364,6 @@ public class CloudStorageModule {
         }
     }
 
-    public User downloadUserInfo(String login) {
-        try {
-            String filePath = USERS_PATH + login + "/user_info.json";
-            byte[] jsonBytes = downloadFile(filePath);
-            String json = new String(jsonBytes, StandardCharsets.UTF_8);
-            return parseUserFromJson(json, login);
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to download user info for login: " + login, e);
-        }
-    }
-
-    public boolean uploadUserInfo(RegistrationForm registrationForm) throws Exception {
-        String login = registrationForm.getLogin();
-        if (login == null || login.isEmpty()) {
-            return false;
-        }
-        String jsonData = registrationForm.toJson();
-        return uploadFile(USERS_PATH + login + "/user_info.json", jsonData.getBytes(StandardCharsets.UTF_8));
-    }
-
-    private User parseUserFromJson(String json, String login) throws Exception {
-        JsonNode rootNode = objectMapper.readTree(json);
-        User user = new User();
-
-        if (rootNode.has("email")) {
-            user.setEmail(rootNode.get("email").asText());
-        }
-        if (rootNode.has("fullName")) {
-            Doctor doctor = new Doctor();
-            doctor.setFio(rootNode.get("fullName").asText());
-            user.setDoctor(doctor);
-        }
-        if (rootNode.has("phone")) {
-            user.setPhone(rootNode.get("phone").asText());
-        }
-        user.setLogin(login);
-
-        return user;
-    }
-
     public List<RegistrationForm> getAllRegistrationForms() {
         List<RegistrationForm> forms = new ArrayList<>();
         List<String> logins = getRegistrationFormLogins();
@@ -416,27 +375,6 @@ public class CloudStorageModule {
 
     private List<String> getRegistrationFormLogins() {
         return getFileNamesInFolder(REGISTRATION_PATH, item -> item.getName().endsWith(".json"));
-    }
-
-    public List<User> getAllUsers() {
-        List<User> users = new ArrayList<>();
-        List<String> logins = getUserLogins();
-        DatabaseModule databaseModule = DatabaseModule.getInstance();
-        for (String login : logins) {
-            User user = downloadUserInfo(login);
-            Doctor doctor = databaseModule.getDoctorByFio(user.getFullName());
-            user.setDoctor(doctor);
-            users.add(user);
-        }
-        return users;
-    }
-
-    private List<String> getUserLogins() {
-        return getFileNamesInFolder(USERS_PATH, FolderItem::isDirectory);
-    }
-
-    public byte[] downloadTrainingData() throws Exception {
-        return downloadFile(ALGORITHM_FILE);
     }
 
     public boolean uploadTrainingData(TrainingData trainingData) {

@@ -8,9 +8,11 @@ import java.util.Map;
 public class QuestionnaireItem {
     private int idQuestionnaire;
     private int idPatient;
+    private int idDoctor;
     private String fioPatient;
     private String diagnosis = "-";
     private String dateOfCompletion;
+    private String fioDoctor;
 
     public QuestionnaireItem() {}
 
@@ -34,16 +36,24 @@ public class QuestionnaireItem {
         return idPatient;
     }
 
+    public void setIdPatient(int idPatient) {
+        this.idPatient = idPatient;
+    }
+
+    public int getIdDoctor() {
+        return idDoctor;
+    }
+
+    public void setIdDoctor(int idDoctor) {
+        this.idDoctor = idDoctor;
+    }
+
     public String getDateOfCompletion() {
         return dateOfCompletion;
     }
 
     public void setDateOfCompletion(String dateOfCompletion) {
         this.dateOfCompletion = dateOfCompletion;
-    }
-
-    public void setIdPatient(int idPatient) {
-        this.idPatient = idPatient;
     }
 
     public String getFioPatient() {
@@ -60,5 +70,13 @@ public class QuestionnaireItem {
 
     public void setDiagnosis(String diagnosis) {
         this.diagnosis = diagnosis;
+    }
+
+    public String getFioDoctor() {
+        return fioDoctor;
+    }
+
+    public void setFioDoctor(String fioDoctor) {
+        this.fioDoctor = fioDoctor;
     }
 }

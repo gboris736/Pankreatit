@@ -25,24 +25,22 @@ public class QuestionListTableViewController {
     @FXML private TableColumn<QuestionnaireItem, String> colNamePerson;
     @FXML private TableColumn<QuestionnaireItem, String> colDate;
     @FXML private TableColumn<QuestionnaireItem, String> colDiagnosis;
+    @FXML private TableColumn<QuestionnaireItem, String> colDoctor;
 
     // Добавленные FXML-элементы для поиска
-    @FXML private TextField searchField;      // id="searchField" в FXML
-    @FXML private Label countLabel;          // необязательно, id="countLabel"
+    @FXML private TextField searchField;
+    @FXML private Label countLabel;
 
     // таблица отображает список анкет
     private final ObservableList<QuestionnaireItem> rows = FXCollections.observableArrayList();
     private FilteredList<QuestionnaireItem> filteredRows;
-
-    // основная коллекция пациентов — ObservableMap<id, Patient>
-    //private ObservableMap<Integer, Patient> patientMap = FXCollections.observableHashMap();
-
 
     @FXML
     private void initialize() {
         colNamePerson.setCellValueFactory(cd -> new SimpleStringProperty(cd.getValue().getFioPatient()));
         colDiagnosis.setCellValueFactory(cd -> new SimpleStringProperty(cd.getValue().getDiagnosis()));
         colDate.setCellValueFactory(cd -> new SimpleStringProperty(cd.getValue().getDateOfCompletion()));
+        colDoctor.setCellValueFactory(cd -> new SimpleStringProperty(cd.getValue().getFioDoctor()));
 
         DatabaseModule databaseModule = DatabaseModule.getInstance();
         List<QuestionnaireItem> allQuestionnaireItems = databaseModule.getAllQuestionnaireItems();
@@ -67,6 +65,7 @@ public class QuestionListTableViewController {
         HelpUtils.attachHelp(colNamePerson, "ФИО пациента");
         HelpUtils.attachHelp(colDate, "Дата создания анкеты");
         HelpUtils.attachHelp(colDiagnosis, "Поставленный в анкете");
+        HelpUtils.attachHelp(colDoctor, "Ответственный врач");
 
         // Используем FilteredList поверх rows для поиска
         filteredRows = new FilteredList<>(rows, p -> true);
@@ -122,8 +121,10 @@ public class QuestionListTableViewController {
 
             MainMenuControl.idCurrentQuestionnaire = item.getIdQuestionnaire();
             MainMenuControl.idCurrentPatient = item.getIdPatient();
+            MainMenuControl.idCurrentDoctor = item.getIdDoctor();
             MainMenuControl.currentPatient = databaseModule.getPatientById(item.getIdPatient());
             MainMenuControl.currentQuestionnaire = databaseModule.getQuestionnaireById(item.getIdQuestionnaire());
+            MainMenuControl.currentDoctor = databaseModule.getDoctorById(item.getIdDoctor());
 
             MainMenuControl mainMenuControl = MainMenuControl.getInstance();
             mainMenuControl.showViewForTab("Анкета");

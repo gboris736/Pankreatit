@@ -18,6 +18,8 @@
         </font>
     </Label>
 
+    <Separator />
+
     <!-- Поле поиска и счётчик -->
     <HBox spacing="10" alignment="CENTER_LEFT">
         <padding>
@@ -26,8 +28,6 @@
         <TextField fx:id="searchField" promptText="Поиск..." HBox.hgrow="ALWAYS"/>
         <Label fx:id="countLabel" text="Найдено: 0"/>
     </HBox>
-
-    <Separator />
 
     <TableView fx:id="tableViewQuestion" prefHeight="450" prefWidth="750" VBox.vgrow="ALWAYS">
         <columns>

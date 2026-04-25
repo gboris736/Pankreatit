@@ -14,6 +14,7 @@ import java.security.Signature;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 public class TrainSetModule {
@@ -43,17 +44,31 @@ public class TrainSetModule {
         return currentFileName;
     }
 
+    public String getLatestAlgorithmFileName() {
+        List<String> files = localStorageModule.listAlgorithmFiles();
+        if (files.isEmpty()) return null;
+
+        DateTimeFormatter fileFormatter = DateTimeFormatter.ofPattern("'algorithm_'yyyy_MM_dd_HH_mm_ss'.txt'");
+        return files.stream()
+                .max(Comparator.comparing(fname -> {
+                    try {
+                        return LocalDateTime.parse(fname, fileFormatter);
+                    } catch (Exception e) {
+                        return LocalDateTime.MIN; // некорректное имя – в конец
+                    }
+                }))
+                .orElse(null);
+    }
+
     public boolean saveOverwrite() {
         try {
-            if (currentFileName == null) {
-                return false;
+            String prevFileName = currentFileName;
+            boolean written = saveChanges();
+            boolean del = false;
+            if (written) {
+                del = localStorageModule.deleteAlgorithmFile(prevFileName);
             }
-            String content = TrainingDataParser.serializeToTextFormat(trainingData);
-            boolean written = localStorageModule.writeAlgorithmFile(
-                    currentFileName,
-                    content.getBytes(StandardCharsets.UTF_8)
-            );
-            return written;
+            return del;
         } catch (Exception e) {
             return false;
         }

@@ -303,6 +303,14 @@ public class LocalStorageModule {
         return executorService.submit(task).get();
     }
 
+    public boolean deleteAlgorithmFile(String fileName) throws Exception {
+        File file = new File(getAlgorithmDir(), fileName);
+        if (!file.exists()) {
+            throw new FileNotFoundException("Файл алгоритма не найден: " + file.getAbsolutePath());
+        }
+        return file.delete();
+    }
+
     // ==================== ВСПОМОГАТЕЛЬНЫЕ МЕТОДЫ ====================
 
     private byte[] readFileAsBytes(File file) throws IOException {

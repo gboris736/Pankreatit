@@ -33,7 +33,7 @@
 
         <!-- Правая часть: статус и кнопки -->
         <HBox spacing="10" alignment="CENTER_RIGHT">
-            <Label fx:id="lblStatus" text="" style="-fx-text-fill: #6c757d;"/>
+            <Label fx:id="lblStatus" style="-fx-text-fill: #6c757d;"/>
             <Button fx:id="btnSave" text="💾 Сохранить изменения"
                     styleClass="btn-save" onAction="#saveChangesAsync"/>
             <Button fx:id="btnSubmit" text="💾 Отправить изменения"

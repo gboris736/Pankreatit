@@ -600,8 +600,9 @@ public class QuestionListTableViewTrainSetController {
         cmbAlgorithmFile.getItems().setAll(files);
 
         // выбрать текущий файл
-        cmbAlgorithmFile.setValue(files.getFirst());
-        trainSetModule.loadFromFile(files.getFirst());
+        String first = TrainSetModule.getInstance().getLatestAlgorithmFileName();
+        cmbAlgorithmFile.setValue(first);
+        trainSetModule.loadFromFile(first);
         reloadDataFromModules();
 
         // слушатель смены версии
@@ -627,7 +628,6 @@ public class QuestionListTableViewTrainSetController {
                         loadSelectedAlgorithmFile(newVal);
                     } else {
                         // вернуть старое значение
-                        cmbAlgorithmFile.setValue(oldVal);
                     }
                 }
             } else {

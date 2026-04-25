@@ -32,12 +32,14 @@ public class QuestionListTableViewTrainSetController {
     @FXML public TableColumn<QuestionnaireItemTrainUI, String> colDiagnosisUQ;
     @FXML public TableColumn<QuestionnaireItemTrainUI, String> colDateUQ;
     @FXML public TableColumn<QuestionnaireItemTrainUI, String> colNamePersonUQ;
+    @FXML public TableColumn<QuestionnaireItemTrainUI, String> colDoctorUQ;
 
     @FXML public TableView<QuestionnaireItemTrainUI> tableViewTrainQuestion;
     @FXML public TableColumn<QuestionnaireItemTrainUI, Void> colSelectTQ;
     @FXML public TableColumn<QuestionnaireItemTrainUI, String> colNamePersonTQ;
     @FXML public TableColumn<QuestionnaireItemTrainUI, String> colDateTQ;
     @FXML public TableColumn<QuestionnaireItemTrainUI, String> colDiagnosisTQ;
+    @FXML public TableColumn<QuestionnaireItemTrainUI, String> colDoctorTQ;
 
     @FXML private TextField searchField;
     @FXML private Label countLabel;
@@ -89,6 +91,8 @@ public class QuestionListTableViewTrainSetController {
                 new SimpleStringProperty(cd.getValue().item.getDiagnosis()));
         colDateUQ.setCellValueFactory(cd ->
                 new SimpleStringProperty(cd.getValue().item.getDateOfCompletion()));
+        colDoctorUQ.setCellValueFactory(cd ->
+                new SimpleStringProperty(cd.getValue().item.getFioDoctor()));
 
         colNamePersonTQ.setCellValueFactory(cd ->
                 new SimpleStringProperty(cd.getValue().item.getFioPatient()));
@@ -96,6 +100,8 @@ public class QuestionListTableViewTrainSetController {
                 new SimpleStringProperty(cd.getValue().item.getDiagnosis()));
         colDateTQ.setCellValueFactory(cd ->
                 new SimpleStringProperty(cd.getValue().item.getDateOfCompletion()));
+        colDoctorTQ.setCellValueFactory(cd ->
+                new SimpleStringProperty(cd.getValue().item.getFioDoctor()));
 
         colSelectUQ.setCellFactory(param -> new ActionCell());
         colSelectTQ.setCellFactory(param -> new ActionCell());
@@ -106,6 +112,8 @@ public class QuestionListTableViewTrainSetController {
         colDateTQ.setSortable(true);
         colDiagnosisUQ.setSortable(true);
         colDiagnosisTQ.setSortable(true);
+        colDoctorUQ.setSortable(true);
+        colDoctorTQ.setSortable(true);
     }
 
     @FXML

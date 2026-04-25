@@ -23,7 +23,6 @@
     <!-- Search -->
     <HBox spacing="10" alignment="CENTER_LEFT">
         <TextField fx:id="searchField" promptText="Поиск по логину, ФИО, email или телефону..." HBox.hgrow="ALWAYS" />
-        <Button text="Найти" onAction="#onSearch" />
     </HBox>
 
     <TableView fx:id="usersTable" prefHeight="450" prefWidth="750" VBox.vgrow="ALWAYS">

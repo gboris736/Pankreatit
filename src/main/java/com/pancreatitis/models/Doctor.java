@@ -5,9 +5,12 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class Doctor {
     private int id = 100;
+    private String login;
     private String fio;
+    private String phone;
+    private String email;
     private Boolean status = false;
-    private String lastModified;
+    private String createdAt;
 
     // Конструкторы
     public Doctor() {}
@@ -25,8 +28,29 @@ public class Doctor {
     public Boolean getStatus() { return status; }
     public void setStatus(Boolean status) { this.status = status; }
 
-    public String getLastModified() { return lastModified; }
-    public void setLastModified(String lastModified) { this.lastModified = lastModified; }
+    public String getLogin() {
+        return login;
+    }
+    public void setLogin(String login) {
+        this.login = login;
+    }
+
+    public String getPhone() {
+        return phone;
+    }
+    public void setPhone(String phone) {
+        this.phone = phone;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+    public String getCreatedAt() { return createdAt; }
+    public void setCreatedAt(String createdAt) { this.createdAt = createdAt; }
 
     public String toJson() throws JsonProcessingException {
         ObjectMapper mapper = new ObjectMapper();

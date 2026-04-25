@@ -23,14 +23,17 @@ public class QuestionnaireController {
     @FXML private TextField fio;
     @FXML private TextField addmitedFrom;
     @FXML private TextField createdAt;
+    @FXML private TextField fioDoctor;
     @FXML private Button btnBack;
     @FXML private Button btnSave;
     @FXML private Button btnPredict;
 
     private int idQuestionnaire;
     private int idPatient;
+    private int idDoctor;
     private Questionnaire questionnaire;
     private Patient patient;
+    private Doctor doctor;
 
     // Все характеристики, упорядоченные по ID
     private final Map<Integer, Characteristic> characteristicsMap = new LinkedHashMap<>();
@@ -64,9 +67,12 @@ public class QuestionnaireController {
 
         idQuestionnaire = MainMenuControl.idCurrentQuestionnaire;
         idPatient = MainMenuControl.idCurrentPatient;
+        idDoctor = MainMenuControl.idCurrentDoctor;
         questionnaire = MainMenuControl.currentQuestionnaire;
         patient = MainMenuControl.currentPatient;
+        doctor = MainMenuControl.currentDoctor;
 
+        // Что это такое????
         if (idQuestionnaire == -1 || idPatient == -1) {
             // Новая анкета
             patient = db.getPatientById(idPatient);
@@ -150,6 +156,8 @@ public class QuestionnaireController {
             MainMenuControl.currentPatient = new Patient();
             MainMenuControl.idCurrentQuestionnaire = -1;
             MainMenuControl.currentQuestionnaire = new Questionnaire();
+            MainMenuControl.idCurrentDoctor = -1;
+            MainMenuControl.currentDoctor = new Doctor();
             mainMenuControl.showViewForTab("Список анкет");
         });
 
@@ -158,7 +166,6 @@ public class QuestionnaireController {
             List<CharacterizationAnketPatient> characterizationAnketPatients = getNewValues();
             QuestionnaireManagerModule questionnaireManagerModule = QuestionnaireManagerModule.getInstance();
             boolean result = questionnaireManagerModule.saveQuestionnaire(questionnaire, patient, characterizationAnketPatients);
-            System.out.println(result);
         });
 
         btnPredict.setOnAction(event -> {
@@ -198,6 +205,7 @@ public class QuestionnaireController {
         fio.setText(patient != null ? patient.getFio() : "");
         createdAt.setText(questionnaire != null ? questionnaire.getDateOfCompletion() : "");
         addmitedFrom.setText(questionnaire != null ? questionnaire.getAdmittedFrom() : "");
+        fioDoctor.setText(doctor != null ? doctor.getFio() : "");
 
         String diag = (questionnaire != null && questionnaire.getTextDiagnosis() != null && questionnaire.getTextDiagnosis() != "-") ? questionnaire.getTextDiagnosis() : "Нет данных";
         diagnosis.setValue(diag);

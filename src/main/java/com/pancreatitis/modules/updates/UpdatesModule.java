@@ -2,7 +2,7 @@
 package com.pancreatitis.modules.updates;
 
 import com.pancreatitis.models.*;
-import com.pancreatitis.modules.authorization.AuthorizationModule;
+//import com.pancreatitis.modules.authorization.AuthorizationModule;
 import com.pancreatitis.modules.cloudstorage.CloudStorageModule;
 import com.pancreatitis.modules.safety.SafetyModule;
 import javafx.util.Pair;
@@ -14,7 +14,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class UpdatesModule {
     private static CloudStorageModule cloudStorageModule = CloudStorageModule.getInstance();
-    private static AuthorizationModule authorizationModule = AuthorizationModule.getInstance();
+    //private static AuthorizationModule authorizationModule = AuthorizationModule.getInstance();
     private static SafetyModule safetyModule = SafetyModule.getInstance();
 
     private List<Patient> patientList = new ArrayList<>();
@@ -132,12 +132,12 @@ public class UpdatesModule {
             String doctor = updatePair.getKey().getKey();
 
             // Аутентификация врача для получения ключа
-            SecretKey key_admin = authorizationModule.authenticateForAdmin(doctor);
+            //SecretKey key_admin = authorizationModule.authenticateForAdmin(doctor);
 
             // 1. Обработка пациента
             Patient patient = update.getPatient();
             if (patient != null && patient.getFio() != null) {
-                patient.setFio(safetyModule.decryptString(patient.getFio(), key_admin));
+                //patient.setFio(safetyModule.decryptString(patient.getFio(), key_admin));
             }
             patient.setId(-1);
             patientList.add(patient);
@@ -159,43 +159,6 @@ public class UpdatesModule {
         } catch (Exception ex) {
             return new UpdateLoadResult(index, null, null, null, false,
                     ex.getMessage(), fileName);
-        }
-    }
-
-    /**
-     * Синхронная загрузка (для обратной совместимости)
-     */
-    public void load() {
-        try {
-            updatesList = new ArrayList<>();
-            questionnairList = new ArrayList<>();
-            patientList = new ArrayList<>();
-            characterizationAnketPatientList = new ArrayList<>();
-
-            updatesList = cloudStorageModule.downloadAllUpdates();
-
-            for (Pair<Pair<String, String>, Update> pair : updatesList) {
-                Update update = pair.getValue();
-                String doctor = pair.getKey().getKey();
-                SecretKey key_admin = authorizationModule.authenticateForAdmin(doctor);
-
-                Patient patient = update.getPatient();
-                if (patient != null && patient.getFio() != null) {
-                    patient.setFio(safetyModule.decryptString(patient.getFio(), key_admin));
-                }
-                patient.setId(-1);
-                patientList.add(patient);
-
-                QuestionnaireDTO dto = update.getQuestionnaireDTO();
-                Questionnaire questionnaire = new Questionnaire(dto);
-                questionnaire.setId(-1);
-                questionnairList.add(questionnaire);
-
-                List<CharacterizationAnketPatient> localCcharacterizationAnketPatientList = dto.getCharacteristicValues();
-                characterizationAnketPatientList.add(localCcharacterizationAnketPatientList);
-            }
-        } catch (Exception ex) {
-            throw new RuntimeException(ex);
         }
     }
 

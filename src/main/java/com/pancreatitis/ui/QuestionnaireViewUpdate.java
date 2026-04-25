@@ -22,6 +22,7 @@ public class QuestionnaireViewUpdate {
     @FXML private TextField fio;
     @FXML private TextField addmitedFrom;
     @FXML private TextField createdAt;
+    @FXML private TextField fioDoctor;
     @FXML private Button btnBack;
     @FXML private Button btnSave;
     @FXML private Button btnPredict;
@@ -29,6 +30,7 @@ public class QuestionnaireViewUpdate {
     // Объекты, переданные извне
     private Questionnaire questionnaire;
     private Patient patient;
+    private Doctor doctor;
     private List<CharacterizationAnketPatient> allValues;
     private List<Characteristic> allCharacteristics;            // все возможные характеристики
     private Map<Integer, List<CharacterizationValue>> referenceValues = new HashMap<>();

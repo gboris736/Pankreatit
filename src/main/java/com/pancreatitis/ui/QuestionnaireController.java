@@ -163,6 +163,8 @@ public class QuestionnaireController {
 
         btnSave.setOnAction(event -> {
             questionnaire.setDiagnosis(diagnosisToCode(getDiagnosis()));
+            questionnaire.setIdExpert(idDoctor);
+            if (questionnaire.getIdDoctor() == -1) questionnaire.setIdDoctor(idDoctor);
             List<CharacterizationAnketPatient> characterizationAnketPatients = getNewValues();
             QuestionnaireManagerModule questionnaireManagerModule = QuestionnaireManagerModule.getInstance();
             boolean result = questionnaireManagerModule.saveQuestionnaire(questionnaire, patient, characterizationAnketPatients);

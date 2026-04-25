@@ -38,16 +38,20 @@ public class RegistrationModule {
             byte[] encrypt_amdin_key = safetyModule.encryptKey(key, ADMIN_PASSWORD);
             byte[] encrypt_user_key = safetyModule.encryptKey(key, user_password);
 
-            String login = registrationForm.getLogin();
-            cloudStorageModule.createUserFolder(login);
-            cloudStorageModule.uploadUserKey(login, encrypt_user_key, "key_user");
-            cloudStorageModule.uploadUserKey(login, encrypt_amdin_key, "key_admin");
-            cloudStorageModule.uploadUserInfo(registrationForm);
+            // Заменить на локальное создание
+//            cloudStorageModule.createUserFolder(login);
+//            cloudStorageModule.uploadUserKey(login, encrypt_user_key, "key_user");
+//            cloudStorageModule.uploadUserKey(login, encrypt_amdin_key, "key_admin");
+//            cloudStorageModule.uploadUserInfo(registrationForm);
 
             Doctor doctor = new Doctor();
+            doctor.setLogin(registrationForm.getLogin());
             doctor.setFio(registrationForm.getFullName());
+            doctor.setPhone(registrationForm.getPhone());
+            doctor.setEmail(registrationForm.getEmail());
             databaseModule.insertDoctor(doctor);
 
+            String login = registrationForm.getLogin();
             cloudStorageModule.deleteRegistrationRequest(login);
 
             return true;

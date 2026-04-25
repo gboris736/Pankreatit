@@ -70,13 +70,22 @@
             <TextField fx:id="createdAt" editable="false" style="-fx-background-color: #f9f9f9; -fx-background-radius: 3; -fx-border-radius: 3; -fx-border-color: #bdc3c7; -fx-border-width: 1;" text="2026-02-19" GridPane.columnIndex="1" GridPane.rowIndex="2">
             </TextField>
 
-            <!-- Строка 3: Диагноз -->
-            <Label text="Диагноз:" textFill="#34495e" GridPane.rowIndex="3">
+            <!-- Строка 3: Фио врача -->
+            <Label text="Врач:" textFill="#34495e" GridPane.rowIndex="3">
                 <font>
                     <Font name="System Bold" size="14.0" />
                 </font>
             </Label>
-            <ComboBox fx:id="diagnosisCombo" style="-fx-background-color: #f9f9f9; -fx-background-radius: 3; -fx-border-radius: 3; -fx-border-color: #bdc3c7; -fx-border-width: 1;" GridPane.columnIndex="1" GridPane.rowIndex="3">
+            <TextField fx:id="fioDoctor" editable="false" style="-fx-background-color: #f9f9f9; -fx-background-radius: 3; -fx-border-radius: 3; -fx-border-color: #bdc3c7; -fx-border-width: 1;" text="2026-02-19" GridPane.columnIndex="1" GridPane.rowIndex="3">
+            </TextField>
+
+            <!-- Строка 4: Диагноз -->
+            <Label text="Диагноз:" textFill="#34495e" GridPane.rowIndex="4">
+                <font>
+                    <Font name="System Bold" size="14.0" />
+                </font>
+            </Label>
+            <ComboBox fx:id="diagnosisCombo" style="-fx-background-color: #f9f9f9; -fx-background-radius: 3; -fx-border-radius: 3; -fx-border-color: #bdc3c7; -fx-border-width: 1;" GridPane.columnIndex="1" GridPane.rowIndex="4">
                 <items>
                     <FXCollections fx:factory="observableArrayList">
                         <String fx:value="Нет данных" />

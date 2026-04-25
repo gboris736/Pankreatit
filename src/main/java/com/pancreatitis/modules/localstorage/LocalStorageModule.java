@@ -9,6 +9,8 @@ import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -96,6 +98,29 @@ public class LocalStorageModule {
         } catch (Exception e) {
             return false;
         }
+    }
+
+    public List<String> getAllUserLogins() throws Exception {
+        Callable<List<String>> task = () -> {
+            File usersFolder = getFolder(USERS_DIR);
+            List<String> logins = new ArrayList<>();
+
+            if (!usersFolder.exists() || !usersFolder.isDirectory()) {
+                return logins; // пустой список, если папки users нет
+            }
+
+            File[] files = usersFolder.listFiles();
+            if (files != null) {
+                for (File file : files) {
+                    if (file.isDirectory()) {
+                        logins.add(file.getName());
+                    }
+                }
+            }
+            return logins;
+        };
+
+        return executorService.submit(task).get();
     }
 
     // ==================== МЕТОДЫ ДЛЯ РАБОТЫ С КЛЮЧАМИ ====================

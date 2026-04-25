@@ -31,8 +31,9 @@ public class PredictionModule {
     public PredictionResult predict(List<CharasteristicDTO> characteristicDTOs) throws Exception {
         LocalStorageModule localStorageModule = LocalStorageModule.getInstance();
 
-        // 1. Получаем тренировочные данные из assets
-        byte[] rawTrainingData = localStorageModule.getTrainingData();
+        // 1. Получаем тренировочные данные
+        List<String> all = localStorageModule.listAlgorithmFiles();
+        byte[] rawTrainingData = localStorageModule.readAlgorithmFile(all.getLast());
 
         TrainingData trainingData = TrainingDataParser.parseFromFile(
                 new ByteArrayInputStream(rawTrainingData)

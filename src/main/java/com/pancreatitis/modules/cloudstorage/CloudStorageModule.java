@@ -341,28 +341,25 @@ public class CloudStorageModule {
     }
 
     // ==================== Обуч выборка ====================
-    public boolean uploadTrainingData(TrainingData trainingData, LocalDateTime datetime) {
+    public boolean uploadTrainingData(TrainingData trainingData, String datetime) {
         try {
             String textData = TrainingDataParser.serializeToTextFormat(trainingData);
-            String datatime = datetime.format(formatter);
-            return uploadFile(String.format("%s_%s.txt", ALGORITHM_FILE, datatime), textData.getBytes(StandardCharsets.UTF_8));
+            return uploadFile(String.format("%s_%s.txt", ALGORITHM_FILE, datetime), textData.getBytes(StandardCharsets.UTF_8));
         } catch (Exception e) {
             return false;
         }
     }
 
-    public boolean uploadTrainingDataSig(byte[] trainingDataSig, LocalDateTime datetime) {
+    public boolean uploadTrainingDataSig(byte[] trainingDataSig, String datetime) {
         try {
-            String datatime = datetime.format(formatter);
-            return uploadFile(String.format("%s_%s.txt.sig", ALGORITHM_FILE, datatime), trainingDataSig);
+            return uploadFile(String.format("%s_%s.txt.sig", ALGORITHM_FILE, datetime), trainingDataSig);
         } catch (Exception e) {
             return false;
         }
     }
 
-    public void cleanOldAlgorithmFiles(LocalDateTime currentDatetime) {
+    public void cleanOldAlgorithmFiles(String currentTimestamp) {
         try {
-            String currentTimestamp = currentDatetime.format(formatter);
             // Получаем список всех файлов в корне диска
             List<String> fileNames = getFileNamesInFolder("/",
                     item -> item.isFile() && item.getName().startsWith("algorithm_"));

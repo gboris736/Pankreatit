@@ -20,11 +20,17 @@
 
     <Separator />
 
-    <!-- 🔧 Исправленный HBox с padding через Insets -->
+    <!-- Левый блок -->
+    <HBox spacing="10" alignment="CENTER_LEFT">
+        <Label text="Файл алгоритма:" />
+        <ComboBox fx:id="cmbAlgorithmFile" prefWidth="280.0" promptText="Выберите версию" />
+    </HBox>
+
+    <!-- Растягивающийся разделитель, чтобы прижать блоки к краям -->
+    <Region HBox.hgrow="ALWAYS"/>
+
+    <!-- Правый блок -->
     <HBox spacing="10" alignment="CENTER_RIGHT">
-        <padding>
-            <Insets top="10" right="10" bottom="10" left="10"/>
-        </padding>
         <Label fx:id="lblStatus" text="" style="-fx-text-fill: #6c757d;"/>
         <Button fx:id="btnSave" text="💾 Сохранить изменения"
                 styleClass="btn-save" onAction="#saveChangesAsync"/>

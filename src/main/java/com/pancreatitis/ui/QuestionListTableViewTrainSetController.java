@@ -5,6 +5,7 @@ import com.pancreatitis.models.Patient;
 import com.pancreatitis.models.Questionnaire;
 import com.pancreatitis.models.QuestionnaireItem;
 import com.pancreatitis.modules.database.DatabaseModule;
+import com.pancreatitis.modules.localstorage.LocalStorageModule;
 import com.pancreatitis.modules.trainset.TrainSetModule;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
@@ -43,9 +44,8 @@ public class QuestionListTableViewTrainSetController {
     @FXML private Label lblStatus;
     @FXML private Button btnSave;
     @FXML private Button btnSubmit;
-    @FXML private Button btnAddToTrain;
-    @FXML private Button btnRemoveFromTrain;
     @FXML private HBox legendBox;
+    @FXML private ComboBox<String> cmbAlgorithmFile;
 
     private final ObservableList<QuestionnaireItemTrainUI> rowsUQ = FXCollections.observableArrayList();
     private final ObservableList<QuestionnaireItemTrainUI> rowsTQ = FXCollections.observableArrayList();
@@ -75,6 +75,7 @@ public class QuestionListTableViewTrainSetController {
         setupSubmitButton();
         setupWindowCloseHandler();
         setupLegend();
+        setupAlgorithmFileCombo();
         loadData();
     }
 
@@ -453,8 +454,13 @@ public class QuestionListTableViewTrainSetController {
             tableViewUsualQuestion.refresh();
             tableViewTrainQuestion.refresh();
             markAsClean();
-            btnSubmit.setDisable(false);
             showAlert(Alert.AlertType.INFORMATION, "Успех", "Изменения успешно сохранены!");
+
+            if (cmbAlgorithmFile != null) {
+                List<String> updatedFiles = LocalStorageModule.getInstance().listAlgorithmFiles();
+                cmbAlgorithmFile.getItems().setAll(updatedFiles);
+                cmbAlgorithmFile.setValue(updatedFiles.getFirst());
+            }
         });
 
         saveTask.setOnFailed(e -> {
@@ -473,7 +479,6 @@ public class QuestionListTableViewTrainSetController {
     private void setupSubmitButton() {
         if (btnSubmit != null) {
             btnSubmit.setText("💾 Отправить изменения");
-            btnSubmit.setDisable(true);
             btnSubmit.setOnAction(e -> submitChangesAsync());
         }
     }
@@ -493,7 +498,6 @@ public class QuestionListTableViewTrainSetController {
 
         saveTask.setOnSucceeded(e -> {
             showAlert(Alert.AlertType.INFORMATION, "Успех", "Новая версия успешно отправлена!");
-            btnSubmit.setDisable(true);
         });
 
         saveTask.setOnFailed(e -> {
@@ -563,9 +567,64 @@ public class QuestionListTableViewTrainSetController {
     // ─────────────────────────────────────────────────────────────
     // 8. Загрузка данных
     // ─────────────────────────────────────────────────────────────
+    private void setupAlgorithmFileCombo(){
+        if (cmbAlgorithmFile == null) return;
+
+        // заполнить список файлов
+        List<String> files = LocalStorageModule.getInstance().listAlgorithmFiles();
+        cmbAlgorithmFile.getItems().setAll(files);
+
+        // выбрать текущий файл
+        cmbAlgorithmFile.setValue(files.getFirst());
+        trainSetModule.loadFromFile(files.getFirst());
+        reloadDataFromModules();
+
+        // слушатель смены версии
+        cmbAlgorithmFile.valueProperty().addListener((obs, oldVal, newVal) -> {
+            if (newVal == null || newVal.equals(oldVal)) return;
+            if (hasUnsavedChanges) {
+                // запросить сохранение перед переключением
+                Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
+                confirm.setTitle("Несохранённые изменения");
+                confirm.setHeaderText("Есть несохранённые изменения. Сохранить перед загрузкой другой версии?");
+                confirm.setContentText("Выберите действие.");
+                ButtonType saveBtn = new ButtonType("Сохранить и загрузить");
+                ButtonType discardBtn = new ButtonType("Отменить изменения и загрузить");
+                ButtonType cancelBtn = new ButtonType("Отмена", ButtonBar.ButtonData.CANCEL_CLOSE);
+                confirm.getButtonTypes().setAll(saveBtn, discardBtn, cancelBtn);
+                Optional<ButtonType> result = confirm.showAndWait();
+                if (result.isPresent()) {
+                    if (result.get() == saveBtn) {
+                        saveChangesAsync(); // асинхронно сохраняем, затем загружаем
+                        // после завершения сохранения загрузка произойдёт в setOnSucceeded
+                    } else if (result.get() == discardBtn) {
+                        resetChanges();
+                        loadSelectedAlgorithmFile(newVal);
+                    } else {
+                        // вернуть старое значение
+                        cmbAlgorithmFile.setValue(oldVal);
+                    }
+                }
+            } else {
+                loadSelectedAlgorithmFile(newVal);
+            }
+        });
+    }
+
+    private void loadSelectedAlgorithmFile(String fileName) {
+        boolean ok = trainSetModule.loadFromFile(fileName);
+        if (ok) {
+            reloadDataFromModules();
+            lblStatus.setText("✓ Загружена версия: " + fileName);
+            lblStatus.setStyle("-fx-text-fill: #28a745;");
+        } else {
+            showAlert(Alert.AlertType.ERROR, "Ошибка", "Не удалось загрузить файл " + fileName);
+        }
+    }
+
     private void loadData() {
         allItems = databaseModule.getAllQuestionnaireItems();
-        trainSetModule.load();
+        //trainSetModule.load();
         refreshTrainSetCache();
 
         rowsUQ.clear();
@@ -592,7 +651,7 @@ public class QuestionListTableViewTrainSetController {
     }
 
     private void reloadDataFromModules() {
-        trainSetModule.load();
+        //trainSetModule.load();
         refreshTrainSetCache();
 
         for (QuestionnaireItemTrainUI ui : allItemsMap.values()) {
@@ -715,7 +774,7 @@ public class QuestionListTableViewTrainSetController {
     }
 
     private void refreshAfterChange() {
-        trainSetModule.load();
+        //trainSetModule.load();
         refreshTrainSetCache();
         tableViewTrainQuestion.refresh();
         tableViewUsualQuestion.refresh();

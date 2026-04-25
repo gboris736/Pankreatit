@@ -13,6 +13,7 @@ import java.security.spec.X509EncodedKeySpec;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
@@ -27,6 +28,7 @@ public class LocalStorageModule {
 
     // Базовый путь для хранения данных
     private File storageBaseDir;
+    private File algorithmDir;
     private static final String USERS_DIR = "users";
 
     // Константы для имен ключей
@@ -251,60 +253,54 @@ public class LocalStorageModule {
         return executorService.submit(task).get();
     }
 
-    public byte[] getTrainingData() throws Exception {
-        Callable<byte[]> task = () -> {
-            File algorithmFile = new File(getStorageBaseDir(), "algorithm.txt");
+    // ==================== МЕТОДЫ ОБУЧАЮЕЙ ВЫБОРКИ ====================
 
-            if (!algorithmFile.exists()) {
-                throw new FileNotFoundException("File not found: " + algorithmFile.getAbsolutePath());
+    private File getAlgorithmDir() {
+        if (algorithmDir == null) {
+            algorithmDir = diskStorageControl.getAlgDir().toFile();
+            if (!algorithmDir.exists()) {
+                algorithmDir.mkdirs();
             }
-
-            return readFileAsBytes(algorithmFile);
-        };
-
-        return executorService.submit(task).get();
+        }
+        return algorithmDir;
     }
 
-    public byte[] getTrainingData(String version) {
+    public List<String> listAlgorithmFiles() {
+        List<String> names = new ArrayList<>();
         try {
-            Callable<byte[]> task = () -> {
-                File algorithmFile = new File(getStorageBaseDir(), version);
-
-                if (!algorithmFile.exists()) {
-                    throw new FileNotFoundException("File not found: " + algorithmFile.getAbsolutePath());
+            Callable<List<String>> task = () -> {
+                File dir = getAlgorithmDir();
+                File[] files = dir.listFiles((d, name) -> name.matches("algorithm_\\d{4}_\\d{2}_\\d{2}_\\d{2}_\\d{2}_\\d{2}\\.txt"));
+                if (files != null) {
+                    for (File f : files) {
+                        names.add(f.getName());
+                    }
                 }
-
-                return readFileAsBytes(algorithmFile);
+                names.sort(Comparator.reverseOrder()); // свежие сверху
+                return names;
             };
-
             return executorService.submit(task).get();
-        } catch (Exception e) {
-            throw new RuntimeException(e);
+        } catch (Exception e){
+            return names;
         }
     }
 
-    public boolean isTrainingData() throws Exception {
-        Callable<Boolean> task = () -> {
-            File keyFile = new File(getStorageBaseDir(), "algorithm.txt");
-            return keyFile.exists();
+    // Чтение произвольного файла алгоритма
+    public byte[] readAlgorithmFile(String fileName) throws Exception {
+        Callable<byte[]> task = () -> {
+            File file = new File(getAlgorithmDir(), fileName);
+            if (!file.exists()) {
+                throw new FileNotFoundException("Algorithm file not found: " + file.getAbsolutePath());
+            }
+            return readFileAsBytes(file);
         };
-
         return executorService.submit(task).get();
     }
 
-    public void downloadAlgorithmFile(byte[] algorithmData) throws Exception {
-        Callable<Boolean> task = () -> {
-            File algorithmFile = new File(getStorageBaseDir(), "algorithm.txt");
-            return writeFile(algorithmFile, algorithmData);
-        };
-
-        executorService.submit(task).get();
-    }
-
-    public String getPathAlgorithmFile() {
-        File algorithmFile = new File(getStorageBaseDir(), "algorithm.txt");
-        String filePath = algorithmFile.getAbsolutePath();
-        return filePath;
+    // Запись нового файла алгоритма
+    public boolean writeAlgorithmFile(String fileName, byte[] data) throws Exception {
+        Callable<Boolean> task = () -> writeFile(new File(getAlgorithmDir(), fileName), data);
+        return executorService.submit(task).get();
     }
 
     // ==================== ВСПОМОГАТЕЛЬНЫЕ МЕТОДЫ ====================

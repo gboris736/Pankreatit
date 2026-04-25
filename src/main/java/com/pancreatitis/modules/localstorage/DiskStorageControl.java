@@ -14,7 +14,6 @@ public class DiskStorageControl {
     private final static String appDB = "dataBaseStor";
     private final static String appAlg = "appAlgStor";
     private final static String dbFileName = "pancreatitis_v7.db";
-    private final static String algFileName = "algorithm.txt";
 
     private HashMap<String, Path> pathLibrary;
     private static DiskStorageControl instance;
@@ -38,8 +37,6 @@ public class DiskStorageControl {
 
             Path appAlgDir = CrossPlatformStorage.getApplicationDataDirectory(appName, appAlg);
             pathLibrary.put("appAlgDir", appAlgDir);
-            Path appAlgPath = appAlgDir.resolve(algFileName);
-            pathLibrary.put("appAlgPath", appAlgPath);
         } catch (Exception e) {
             System.out.println(e.getMessage());
         }
@@ -53,9 +50,8 @@ public class DiskStorageControl {
     public Path getAppDir() {
         return pathLibrary.get("appDir");
     }
-
     public Path getDBPath() { return pathLibrary.get("appDBPath"); }
-    public Path getAlgPath() { return pathLibrary.get("appAlgPath"); }
+    public Path getAlgDir() { return pathLibrary.get("appAlgDir"); }
 
     public List<Path> getListFilesInPath(Path path) throws  IOException {
 

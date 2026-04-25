@@ -12,6 +12,7 @@ import java.nio.charset.StandardCharsets;
 import java.security.PrivateKey;
 import java.security.Signature;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -20,6 +21,7 @@ public class TrainSetModule {
     private static CloudStorageModule cloudStorageModule;
     private static TrainSetModule instance;
     private TrainingData trainingData;
+    private String currentFileName;
 
     private TrainSetModule() {
         localStorageModule = LocalStorageModule.getInstance();
@@ -37,34 +39,29 @@ public class TrainSetModule {
         return instance;
     }
 
-    // это для поддержки старых версий, пока забыли про это
-    private boolean load(String version) {
+    public boolean loadFromFile(String fileName) {
         try {
-            byte[] rawTrainingData = localStorageModule.getTrainingData(version);
-
-            TrainingData trainingData = TrainingDataParser.parseFromFile(
-                    new ByteArrayInputStream(rawTrainingData)
-            );
-
-            this.trainingData = trainingData;
+            currentFileName = fileName;
+            byte[] raw = localStorageModule.readAlgorithmFile(fileName);
+            TrainingData data = TrainingDataParser.parseFromFile(new ByteArrayInputStream(raw));
+            this.trainingData = data;
             return true;
         } catch (Exception e) {
             return false;
         }
     }
 
-    public boolean load() {
-        return load("algorithm.txt");
-    }
-
     public boolean saveChanges() {
         try {
-            String filePath = localStorageModule.getPathAlgorithmFile();
+            String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy_MM_dd_HH_mm_ss"));
+            String newFileName = "algorithm_" + timestamp + ".txt";
             String content = TrainingDataParser.serializeToTextFormat(trainingData);
-            try (FileWriter writer = new FileWriter(filePath, StandardCharsets.UTF_8)) {
-                writer.write(content);
+            boolean written = localStorageModule.writeAlgorithmFile(newFileName,
+                    content.getBytes(StandardCharsets.UTF_8));
+            if (written) {
+                currentFileName = newFileName;
             }
-            return true;
+            return written;
         } catch (Exception e) {
             return false;
         }
@@ -88,7 +85,10 @@ public class TrainSetModule {
 
     public boolean submit() {
         try {
-            LocalDateTime datetime = LocalDateTime.now();
+            String datetime = currentFileName.startsWith("algorithm_") && currentFileName.endsWith(".txt")
+                    ? currentFileName.substring(10, currentFileName.length()-4)
+                    : currentFileName.replaceAll("\\D+","");
+
 
             boolean dataUploaded = cloudStorageModule.uploadTrainingData(trainingData, datetime);
             if (!dataUploaded) {

@@ -39,6 +39,26 @@ public class TrainSetModule {
         return instance;
     }
 
+    public String getCurrentFileName() {
+        return currentFileName;
+    }
+
+    public boolean saveOverwrite() {
+        try {
+            if (currentFileName == null) {
+                return false;
+            }
+            String content = TrainingDataParser.serializeToTextFormat(trainingData);
+            boolean written = localStorageModule.writeAlgorithmFile(
+                    currentFileName,
+                    content.getBytes(StandardCharsets.UTF_8)
+            );
+            return written;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
     public boolean loadFromFile(String fileName) {
         try {
             currentFileName = fileName;

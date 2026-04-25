@@ -391,51 +391,31 @@ public class QuestionListTableViewTrainSetController {
         }
     }
 
-    private void saveTrainChangeInFile(List<QuestionnaireItemTrainUI> itemsList) {
-
-        Task<Boolean> task = new Task<>() {
-            @Override
-            protected Boolean call() {
-                updateMessage("Добавление в выборку...");
-
-                for (QuestionnaireItemTrainUI item : itemsList) {
-                    Questionnaire questionnaire = databaseModule.getQuestionnaireById(item.item.getIdQuestionnaire());
-
-                    if (item.isTrain) {
-                        trainSetModule.addQuestionnaire(
-                                questionnaire,
-                                getLatestCharacterizationsForAnket((int) questionnaire.getId())
-                        );
-                    }
-                    else {
-                        trainSetModule.deleteQuestionnaire(questionnaire);
-                    }
-                }
-
-                return true;
-            }
-        };
-
-        task.setOnSucceeded(e -> {
-            if (task.getValue()) {
-                markAsDirty();
-                refreshAfterChange();
-            }
-        });
-        task.setOnFailed(e ->
-                showAlert(Alert.AlertType.ERROR, "Ошибка",
-                        "Не удалось добавить анкету: " + task.getException().getMessage())
-        );
-        new Thread(task).start();
-    }
-
     @FXML
     private void saveChangesAsync() {
+        // Запрос способа сохранения
+        ButtonType choice = showSaveChoiceDialog();
+
+        if (choice.getButtonData() == ButtonBar.ButtonData.CANCEL_CLOSE) {
+            // пользователь нажал «Отмена» или закрыл диалог
+            return;
+        }
+
+        boolean overwrite = choice.getText().equals("Обновить текущий");
+
+        // Если выбран "Обновить текущий", но файл не загружен – такого не случится из-за disabled,
+        // но всё равно проверка: если вдруг null, показываем ошибку
+        if (overwrite && trainSetModule.getCurrentFileName() == null) {
+            showAlert(Alert.AlertType.ERROR, "Ошибка", "Нет загруженного файла для обновления.");
+            return;
+        }
+
         Task<Boolean> saveTask = new Task<>() {
             @Override
             protected Boolean call() {
-                updateMessage("Добавление в выборку...");
+                updateMessage("Сохранение изменений...");
 
+                // Добавление записей в обучающую выборку
                 for (QuestionnaireItem item : getAddedToTrain()) {
                     Questionnaire questionnaire = databaseModule.getQuestionnaireById(item.getIdQuestionnaire());
                     trainSetModule.addQuestionnaire(
@@ -444,17 +424,30 @@ public class QuestionListTableViewTrainSetController {
                     );
                 }
 
+                // Удаление записей из обучающей выборки
                 for (QuestionnaireItem item : getRemovedFromTrain()) {
                     Questionnaire questionnaire = databaseModule.getQuestionnaireById(item.getIdQuestionnaire());
                     trainSetModule.deleteQuestionnaire(questionnaire);
                 }
 
-                trainSetModule.saveChanges();
+                // Сохранение на диск выбранным способом
+                boolean saved;
+                if (overwrite) {
+                    saved = trainSetModule.saveOverwrite();
+                } else {
+                    saved = trainSetModule.saveChanges();
+                }
+
+                if (!saved) {
+                    throw new RuntimeException("Не удалось записать файл.");
+                }
 
                 return true;
             }
         };
+
         saveTask.setOnSucceeded(e -> {
+            // Обновление кэша и сброс флагов «изменено»
             refreshTrainSetCache();
             for (QuestionnaireItemTrainUI ui : allItemsMap.values()) {
                 ui.originalIsTrain = ui.isTrain;
@@ -462,13 +455,17 @@ public class QuestionListTableViewTrainSetController {
             tableViewUsualQuestion.refresh();
             tableViewTrainQuestion.refresh();
             markAsClean();
-            showAlert(Alert.AlertType.INFORMATION, "Успех", "Изменения успешно сохранены!");
 
+            // Обновление выпадающего списка файлов
             if (cmbAlgorithmFile != null) {
                 List<String> updatedFiles = LocalStorageModule.getInstance().listAlgorithmFiles();
                 cmbAlgorithmFile.getItems().setAll(updatedFiles);
-                cmbAlgorithmFile.setValue(updatedFiles.getFirst());
+                // После сохранения (новый или перезапись) текущий файл модуля может измениться
+                String currentFileAfterSave = trainSetModule.getCurrentFileName();
+                cmbAlgorithmFile.setValue(currentFileAfterSave);
             }
+
+            showAlert(Alert.AlertType.INFORMATION, "Успех", "Изменения успешно сохранены!");
         });
 
         saveTask.setOnFailed(e -> {
@@ -479,6 +476,26 @@ public class QuestionListTableViewTrainSetController {
         });
 
         new Thread(saveTask).start();
+    }
+
+    /**
+     * Показывает диалог выбора способа сохранения.
+     * @return Optional с нажатой кнопкой, либо пустой Optional при отмене.
+     */
+    private ButtonType showSaveChoiceDialog() {
+        Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+        alert.setTitle("Сохранение изменений");
+        alert.setHeaderText("Выберите способ сохранения:");
+        alert.setContentText("Можно обновить текущий файл или создать новый.");
+
+        ButtonType overwriteBtn = new ButtonType("Обновить текущий");
+        ButtonType newFileBtn = new ButtonType("Создать новый");
+        ButtonType cancelBtn = new ButtonType("Отмена", ButtonBar.ButtonData.CANCEL_CLOSE);
+
+        alert.getButtonTypes().setAll(overwriteBtn, newFileBtn, cancelBtn);
+
+        Optional<ButtonType> result = alert.showAndWait();
+        return result.orElse(cancelBtn);   // если закрыли окно – считаем отменой
     }
 
     // ─────────────────────────────────────────────────────────────

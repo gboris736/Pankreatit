@@ -20,25 +20,28 @@
 
     <Separator />
 
-    <!-- Левый блок -->
+    <!-- Ряд с выбором файла, статусом и кнопками – растягивается на всю ширину -->
     <HBox spacing="10" alignment="CENTER_LEFT">
-        <Label text="Файл алгоритма:" />
-        <ComboBox fx:id="cmbAlgorithmFile" prefWidth="280.0" promptText="Выберите версию" />
+        <!-- Левая часть: выбор файла -->
+        <HBox spacing="10" alignment="CENTER_LEFT">
+            <Label text="Файл алгоритма:" />
+            <ComboBox fx:id="cmbAlgorithmFile" prefWidth="280.0" promptText="Выберите версию" />
+        </HBox>
+
+        <!-- Распорка – занимает всё доступное пространство между левым и правым блоком -->
+        <Region HBox.hgrow="ALWAYS" />
+
+        <!-- Правая часть: статус и кнопки -->
+        <HBox spacing="10" alignment="CENTER_RIGHT">
+            <Label fx:id="lblStatus" text="" style="-fx-text-fill: #6c757d;"/>
+            <Button fx:id="btnSave" text="💾 Сохранить изменения"
+                    styleClass="btn-save" onAction="#saveChangesAsync"/>
+            <Button fx:id="btnSubmit" text="💾 Отправить изменения"
+                    styleClass="btn-save" onAction="#submitChangesAsync"/>
+        </HBox>
     </HBox>
 
-    <!-- Растягивающийся разделитель, чтобы прижать блоки к краям -->
-    <Region HBox.hgrow="ALWAYS"/>
-
-    <!-- Правый блок -->
-    <HBox spacing="10" alignment="CENTER_RIGHT">
-        <Label fx:id="lblStatus" text="" style="-fx-text-fill: #6c757d;"/>
-        <Button fx:id="btnSave" text="💾 Сохранить изменения"
-                styleClass="btn-save" onAction="#saveChangesAsync"/>
-        <Button fx:id="btnSubmit" text="💾 Отправить изменения"
-                styleClass="btn-save" onAction="#submitChangesAsync"/>
-    </HBox>
-
-    <!-- Поле поиска и счётчик -->
+    <!-- Поле поиска и счётчик – растягивается на всю ширину -->
     <HBox spacing="10" alignment="CENTER_LEFT">
         <padding>
             <Insets top="0" right="10" bottom="10" left="10"/>
@@ -47,9 +50,10 @@
         <Label fx:id="countLabel" text="Найдено: 0"/>
     </HBox>
 
-
-    <HBox alignment="TOP_CENTER" >
-        <TableView fx:id="tableViewUsualQuestion" prefHeight="900" prefWidth="900" VBox.vgrow="ALWAYS">
+    <!-- Главная область: две таблицы с кнопками перемещения – занимает всё оставшееся место -->
+    <HBox alignment="TOP_CENTER" spacing="10" VBox.vgrow="ALWAYS">
+        <!-- Таблица анкет не в выборке -->
+        <TableView fx:id="tableViewUsualQuestion" VBox.vgrow="ALWAYS" HBox.hgrow="ALWAYS">
             <columns>
                 <TableColumn fx:id="colSelectUQ" minWidth="25" prefWidth="30.0" text="Действие" />
                 <TableColumn fx:id="colNamePersonUQ" prefWidth="180.0" text="ФИО пациента" />
@@ -65,16 +69,18 @@
             </placeholder>
         </TableView>
 
-        <VBox alignment="CENTER" spacing="15">
+        <!-- Кнопки перемещения -->
+        <VBox alignment="CENTER" spacing="15" minWidth="40">
             <Button fx:id="btnAddToTrain" text="➡️"
                     onAction="#handleMoveToTrain"
-                    style="-fx-base: #28a745; -fx-text-fill: white;"/> <!--  В выборку -->
+                    style="-fx-base: #28a745; -fx-text-fill: white;"/>
             <Button fx:id="btnRemoveFromTrain" text="⬅️"
                     onAction="#handleMoveToUsual"
-                    style="-fx-base: #dc3545; -fx-text-fill: white;"/> <!-- Из выборки -->
+                    style="-fx-base: #dc3545; -fx-text-fill: white;"/>
         </VBox>
 
-        <TableView fx:id="tableViewTrainQuestion" prefHeight="900" prefWidth="900" VBox.vgrow="ALWAYS">
+        <!-- Таблица анкет в обучающей выборке -->
+        <TableView fx:id="tableViewTrainQuestion" VBox.vgrow="ALWAYS" HBox.hgrow="ALWAYS">
             <columns>
                 <TableColumn fx:id="colSelectTQ" minWidth="25" prefWidth="20.0" text="Действие" />
                 <TableColumn fx:id="colNamePersonTQ" prefWidth="180.0" text="ФИО пациента" />
@@ -91,6 +97,7 @@
         </TableView>
     </HBox>
 
+    <!-- Легенда цветов -->
     <HBox fx:id="legendBox" spacing="8" />
 
 </VBox>

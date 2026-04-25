@@ -339,6 +339,8 @@ public class CloudStorageModule {
         return deleteFile(REGISTRATION_PATH + login + ".json");
     }
 
+    // ==================== Обуч выборка ====================
+
     public boolean uploadTrainingData(TrainingData trainingData) {
         try {
             String textData = TrainingDataParser.serializeToTextFormat(trainingData);

@@ -48,11 +48,6 @@ public class QuestionRequestsList {
     public void initialize() {
         loadQuestionnaires();
 
-        btnBack.setOnAction(event -> {
-            MainMenuControl mainMenuControl = MainMenuControl.getInstance();
-            mainMenuControl.showViewForTab("Главное меню");
-        });
-
         btnRefresh.setOnAction(event -> {
             if (!isLoading) {
                 loadQuestionnaires();

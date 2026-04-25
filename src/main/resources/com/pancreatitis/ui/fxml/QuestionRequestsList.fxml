@@ -20,7 +20,6 @@
 
     <HBox prefWidth="600" spacing="10">
         <children>
-            <Button fx:id="btnBack" text="Назад" />
             <Region HBox.hgrow="ALWAYS" />
             <Label fx:id="lblCount" text="Найдено: 0" style="-fx-text-fill: #7f8c8d;" />
         </children>

@@ -62,52 +62,15 @@ public class TrainSetModule {
                 .orElse(null);
     }
 
-    /**
-     * Сохраняет выборку с тем же пользовательским именем (если оно было),
-     * но с новой временной меткой. Если имя файла было без пользовательского
-     * имени (только algorithm_timestamp.txt), то сохраняется новое имя без
-     * пользовательской части.
-     */
     public boolean saveOverwrite() {
-        if (currentFileName == null) {
-            // Если текущий файл не задан – создаём новый, как при первом сохранении
-            return saveNewFile("experiment"); // или можно выбросить ошибку
-        }
-
-        // 1. Разбираем текущее имя
-        //    Ищем timestamp: всегда последние 6 групп цифр, разделённых '_'.
-        Pattern pattern = Pattern.compile(
-                "algorithm_([^_]+_)?(\\d{4}_\\d{2}_\\d{2}_\\d{2}_\\d{2}_\\d{2})\\.txt$");
-        Matcher matcher = pattern.matcher(currentFileName);
-
-        String namePrefix = "";   // пользовательская часть с завершающим '_' или пусто
-        if (matcher.find()) {
-            String userPart = matcher.group(1);  // например "my_exp_" или null
-            if (userPart != null && !userPart.isEmpty()) {
-                namePrefix = userPart;           // уже с '_'
-            }
-        } else {
-            // имя не соответствует шаблону – fallback
-            return saveNewFile("updated");
-        }
-
-        // 2. Генерируем новый timestamp
-        String newTimestamp = LocalDateTime.now()
-                .format(DateTimeFormatter.ofPattern("yyyy_MM_dd_HH_mm_ss"));
-
-        // 3. Формируем новое имя файла
-        String newFileName = "algorithm_" + namePrefix + newTimestamp + ".txt";
-
-        // 4. Сериализуем и записываем
-        String content = TrainingDataParser.serializeToTextFormat(trainingData);
-
         try {
-            boolean ok = localStorageModule.writeAlgorithmFile(newFileName,
-                    content.getBytes(StandardCharsets.UTF_8));
-            if (ok) {
-                this.currentFileName = newFileName;   // переключаемся на новый файл
+            String prevFileName = currentFileName;
+            boolean written = saveChanges();
+            boolean del = false;
+            if (written) {
+                del = localStorageModule.deleteAlgorithmFile(prevFileName);
             }
-            return ok;
+            return del;
         } catch (Exception e) {
             return false;
         }
@@ -127,8 +90,28 @@ public class TrainSetModule {
 
     public boolean saveChanges() {
         try {
-            String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy_MM_dd_HH_mm_ss"));
-            String newFileName = "algorithm_" + timestamp + ".txt";
+            // 1. Разбираем текущее имя
+            //    Ищем timestamp: всегда последние 6 групп цифр, разделённых '_'.
+            Pattern pattern = Pattern.compile(
+                    "algorithm_([^_]+_)?(\\d{4}_\\d{2}_\\d{2}_\\d{2}_\\d{2}_\\d{2})\\.txt$");
+            Matcher matcher = pattern.matcher(currentFileName);
+
+            String namePrefix = "";   // пользовательская часть с завершающим '_' или пусто
+            if (matcher.find()) {
+                String userPart = matcher.group(1);  // например "my_exp_" или null
+                if (userPart != null && !userPart.isEmpty()) {
+                    namePrefix = userPart;           // уже с '_'
+                }
+            } else {
+                throw new Exception();
+            }
+
+            // 2. Генерируем новый timestamp
+            String newTimestamp = LocalDateTime.now()
+                    .format(DateTimeFormatter.ofPattern("yyyy_MM_dd_HH_mm_ss"));
+
+            // 3. Формируем новое имя файла
+            String newFileName = "algorithm_" + namePrefix + newTimestamp + ".txt";
             String content = TrainingDataParser.serializeToTextFormat(trainingData);
             boolean written = localStorageModule.writeAlgorithmFile(newFileName,
                     content.getBytes(StandardCharsets.UTF_8));
@@ -141,10 +124,7 @@ public class TrainSetModule {
         }
     }
 
-    public boolean saveNewFile(String name) {
-        String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy_MM_dd_HH_mm_ss"));
-        String filename = "algorithm_" + name + "_" + timestamp + ".txt";
-
+    public boolean saveNewFile(String filename) {
         String content = TrainingDataParser.serializeToTextFormat(trainingData);
 
         try {

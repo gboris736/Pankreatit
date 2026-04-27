@@ -425,7 +425,9 @@ public class QuestionListTableViewTrainSetController {
             // очистка имени: только допустимые символы, пробелы заменяем на _
             newFileName = nameResult.get().trim().replaceAll("[^a-zA-Z0-9_\\-]", "_");
         }
-        final String finalNewFileName = newFileName;
+        final String newFileName2 = newFileName;
+        String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy_MM_dd_HH_mm_ss"));
+        final String finalNewFileName = "algorithm_" + newFileName2 + "_" + timestamp + ".txt";
         // -----------------------------------------------------------------
 
         Task<Boolean> saveTask = new Task<>() {
@@ -479,8 +481,11 @@ public class QuestionListTableViewTrainSetController {
                 List<String> updatedFiles = LocalStorageModule.getInstance().listAlgorithmFiles();
                 cmbAlgorithmFile.getItems().setAll(updatedFiles);
                 // После сохранения (новый или перезапись) текущий файл модуля может измениться
-                String currentFileAfterSave = trainSetModule.getCurrentFileName();
-                cmbAlgorithmFile.setValue(currentFileAfterSave);
+                String filename = trainSetModule.getCurrentFileName();
+                if (newFileName2 != null) {
+                    filename = finalNewFileName;
+                }
+                cmbAlgorithmFile.setValue(filename);
             }
 
             showAlert(Alert.AlertType.INFORMATION, "Успех", "Изменения успешно сохранены!");

@@ -16,6 +16,8 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class TrainSetModule {
     private static LocalStorageModule localStorageModule;
@@ -60,15 +62,52 @@ public class TrainSetModule {
                 .orElse(null);
     }
 
+    /**
+     * Сохраняет выборку с тем же пользовательским именем (если оно было),
+     * но с новой временной меткой. Если имя файла было без пользовательского
+     * имени (только algorithm_timestamp.txt), то сохраняется новое имя без
+     * пользовательской части.
+     */
     public boolean saveOverwrite() {
-        try {
-            String prevFileName = currentFileName;
-            boolean written = saveChanges();
-            boolean del = false;
-            if (written) {
-                del = localStorageModule.deleteAlgorithmFile(prevFileName);
+        if (currentFileName == null) {
+            // Если текущий файл не задан – создаём новый, как при первом сохранении
+            return saveNewFile("experiment"); // или можно выбросить ошибку
+        }
+
+        // 1. Разбираем текущее имя
+        //    Ищем timestamp: всегда последние 6 групп цифр, разделённых '_'.
+        Pattern pattern = Pattern.compile(
+                "algorithm_([^_]+_)?(\\d{4}_\\d{2}_\\d{2}_\\d{2}_\\d{2}_\\d{2})\\.txt$");
+        Matcher matcher = pattern.matcher(currentFileName);
+
+        String namePrefix = "";   // пользовательская часть с завершающим '_' или пусто
+        if (matcher.find()) {
+            String userPart = matcher.group(1);  // например "my_exp_" или null
+            if (userPart != null && !userPart.isEmpty()) {
+                namePrefix = userPart;           // уже с '_'
             }
-            return del;
+        } else {
+            // имя не соответствует шаблону – fallback
+            return saveNewFile("updated");
+        }
+
+        // 2. Генерируем новый timestamp
+        String newTimestamp = LocalDateTime.now()
+                .format(DateTimeFormatter.ofPattern("yyyy_MM_dd_HH_mm_ss"));
+
+        // 3. Формируем новое имя файла
+        String newFileName = "algorithm_" + namePrefix + newTimestamp + ".txt";
+
+        // 4. Сериализуем и записываем
+        String content = TrainingDataParser.serializeToTextFormat(trainingData);
+
+        try {
+            boolean ok = localStorageModule.writeAlgorithmFile(newFileName,
+                    content.getBytes(StandardCharsets.UTF_8));
+            if (ok) {
+                this.currentFileName = newFileName;   // переключаемся на новый файл
+            }
+            return ok;
         } catch (Exception e) {
             return false;
         }
@@ -102,6 +141,21 @@ public class TrainSetModule {
         }
     }
 
+    public boolean saveNewFile(String name) {
+        String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy_MM_dd_HH_mm_ss"));
+        String filename = "algorithm_" + name + "_" + timestamp + ".txt";
+
+        String content = TrainingDataParser.serializeToTextFormat(trainingData);
+
+        try {
+            localStorageModule.writeAlgorithmFile(filename, content.getBytes(StandardCharsets.UTF_8));
+            this.currentFileName = filename;
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
     public List<Integer> getQuestionIdTrainList() throws TrainingDataException{
         List<Integer> ret = new ArrayList<>();
         DatabaseModule databaseModule = DatabaseModule.getInstance();
@@ -120,24 +174,32 @@ public class TrainSetModule {
 
     public boolean submit() {
         try {
-            String datetime = currentFileName.startsWith("algorithm_") && currentFileName.endsWith(".txt")
-                    ? currentFileName.substring(10, currentFileName.length()-4)
-                    : currentFileName.replaceAll("\\D+","");
+            String currentFile = getCurrentFileName();
+            // Регулярка: захватывает timestamp независимо от наличия пользовательского имени
+            Pattern pattern = Pattern.compile(
+                    "algorithm_([^_]+_)?(\\d{4}_\\d{2}_\\d{2}_\\d{2}_\\d{2}_\\d{2})\\.txt$");
+            Matcher matcher = pattern.matcher(currentFile);
+            String timestamp;
+            if (matcher.find()) {
+                timestamp = matcher.group(2);   // группа с датой/временем
+            } else {
+                timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy_MM_dd_HH_mm_ss"));
+            }
 
 
-            boolean dataUploaded = cloudStorageModule.uploadTrainingData(trainingData, datetime);
+            boolean dataUploaded = cloudStorageModule.uploadTrainingData(trainingData, timestamp);
             if (!dataUploaded) {
                 return false;
             }
 
             byte[] signature = signTrainingData(trainingData);
-            boolean sigUploaded = cloudStorageModule.uploadTrainingDataSig(signature, datetime);
+            boolean sigUploaded = cloudStorageModule.uploadTrainingDataSig(signature, timestamp);
             if (!sigUploaded) {
                 return false;
             }
 
             // Удаляем все старые файлы алгоритма, кроме только что загруженных
-            cloudStorageModule.cleanOldAlgorithmFiles(datetime);
+            cloudStorageModule.cleanOldAlgorithmFiles(timestamp);
 
             return true;
         } catch (Exception e) {

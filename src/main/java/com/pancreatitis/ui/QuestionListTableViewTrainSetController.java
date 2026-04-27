@@ -410,6 +410,24 @@ public class QuestionListTableViewTrainSetController {
             return;
         }
 
+        // ---------- НОВОЕ: запрос имени файла при создании нового ----------
+        String newFileName = null;
+        if (!overwrite) {
+            TextInputDialog nameDialog = new TextInputDialog("experiment");
+            nameDialog.setTitle("Имя файла");
+            nameDialog.setHeaderText("Введите имя для нового файла выборки");
+            nameDialog.setContentText("Допустимы латиница, цифры, _ и -:");
+
+            Optional<String> nameResult = nameDialog.showAndWait();
+            if (!nameResult.isPresent() || nameResult.get().trim().isEmpty()) {
+                return; // пользователь отказался от сохранения
+            }
+            // очистка имени: только допустимые символы, пробелы заменяем на _
+            newFileName = nameResult.get().trim().replaceAll("[^a-zA-Z0-9_\\-]", "_");
+        }
+        final String finalNewFileName = newFileName;
+        // -----------------------------------------------------------------
+
         Task<Boolean> saveTask = new Task<>() {
             @Override
             protected Boolean call() {
@@ -435,7 +453,7 @@ public class QuestionListTableViewTrainSetController {
                 if (overwrite) {
                     saved = trainSetModule.saveOverwrite();
                 } else {
-                    saved = trainSetModule.saveChanges();
+                    saved = trainSetModule.saveNewFile(finalNewFileName);
                 }
 
                 if (!saved) {

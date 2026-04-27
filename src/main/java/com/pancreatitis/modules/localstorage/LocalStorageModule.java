@@ -270,7 +270,8 @@ public class LocalStorageModule {
         try {
             Callable<List<String>> task = () -> {
                 File dir = getAlgorithmDir();
-                File[] files = dir.listFiles((d, name) -> name.matches("algorithm_\\d{4}_\\d{2}_\\d{2}_\\d{2}_\\d{2}_\\d{2}\\.txt"));
+                File[] files = dir.listFiles((d, name) -> name.matches(
+                        "algorithm_([^_]+_)?\\d{4}_\\d{2}_\\d{2}_\\d{2}_\\d{2}_\\d{2}\\.txt"));
                 if (files != null) {
                     for (File f : files) {
                         names.add(f.getName());

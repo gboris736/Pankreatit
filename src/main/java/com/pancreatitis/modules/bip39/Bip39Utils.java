@@ -1,7 +1,11 @@
 package com.pancreatitis.modules.bip39;
 
+import com.pancreatitis.modules.localstorage.DiskStorageControl;
+
 import java.io.*;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
@@ -12,24 +16,31 @@ import java.util.List;
  * Не предназначен для использования извне этого пакета.
  */
 class Bip39Utils {
-    private static final int ENTROPY_BITS = 128;       // 16 байт -> 12 слов
-    private static final int CHECKSUM_BITS = ENTROPY_BITS / 32; // 4 бита
-    private static final String WORDLIST_RESOURCE = "com/pancreatitis/modules/bip39/wordlist_en.txt";
+    private static final int ENTROPY_BITS = 256;
+    private static final int CHECKSUM_BITS = ENTROPY_BITS / 32;
     private static final List<String> WORD_LIST = loadWordList();
 
     private static List<String> loadWordList() {
         List<String> words = new ArrayList<>(2048);
-        try (InputStream is = Bip39Utils.class.getClassLoader().getResourceAsStream(WORDLIST_RESOURCE)) {
-            if (is == null)
-                throw new RuntimeException("BIP39 word list not found: " + WORDLIST_RESOURCE);
-            BufferedReader reader = new BufferedReader(new InputStreamReader(is, StandardCharsets.UTF_8));
-            String line;
-            while ((line = reader.readLine()) != null) {
-                String word = line.trim();
-                if (!word.isEmpty()) words.add(word);
+        try {
+            // Получаем корневую папку приложения
+            Path appDir = DiskStorageControl.getInstance().getAppDir();
+            Path wordListFile = appDir.resolve("wordlist_en.txt");
+
+            if (!Files.exists(wordListFile)) {
+                throw new RuntimeException("BIP39 word list file not found: " + wordListFile);
             }
-            if (words.size() != 2048)
+
+            try (BufferedReader reader = Files.newBufferedReader(wordListFile, StandardCharsets.UTF_8)) {
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    String word = line.trim();
+                    if (!word.isEmpty()) words.add(word);
+                }
+            }
+            if (words.size() != 2048) {
                 throw new RuntimeException("Invalid BIP39 word list size: " + words.size() + ", expected 2048");
+            }
         } catch (IOException e) {
             throw new RuntimeException("Failed to load BIP39 word list", e);
         }
@@ -41,7 +52,7 @@ class Bip39Utils {
      */
     static String generateMnemonic(byte[] entropy) {
         if (entropy.length != ENTROPY_BITS / 8)
-            throw new IllegalArgumentException("Entropy must be 16 bytes (128 bits)");
+            throw new IllegalArgumentException("Entropy must be 32 bytes (256 bits)");
 
         // Вычисление контрольной суммы (первые CHECKSUM_BITS бит SHA-256)
         byte[] hash = sha256(entropy);
@@ -52,7 +63,7 @@ class Bip39Utils {
         for (byte b : entropy) {
             binaryString.append(String.format("%8s", Integer.toBinaryString(b & 0xFF)).replace(' ', '0'));
         }
-        binaryString.append(String.format("%4s", Integer.toBinaryString(checksum)).replace(' ', '0')
+        binaryString.append(String.format("%8s", Integer.toBinaryString(checksum)).replace(' ', '0')
                 .substring(0, CHECKSUM_BITS));
 
         // Разбиение на группы по 11 бит и подбор слов
@@ -72,8 +83,8 @@ class Bip39Utils {
      */
     static byte[] recoverEntropy(String mnemonic) {
         String[] words = mnemonic.trim().split("\\s+");
-        if (words.length != 12)
-            throw new IllegalArgumentException("Invalid mnemonic: must be 12 words");
+        if (words.length != 24)
+            throw new IllegalArgumentException("Invalid mnemonic: must be 24 words");
 
         StringBuilder binaryString = new StringBuilder();
         for (String word : words) {

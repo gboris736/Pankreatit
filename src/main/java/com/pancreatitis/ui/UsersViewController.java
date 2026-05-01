@@ -1,6 +1,7 @@
 package com.pancreatitis.ui;
 
 import com.pancreatitis.models.Doctor;
+import com.pancreatitis.modules.bip39.Bip39Encoder;
 import com.pancreatitis.modules.cloudstorage.CloudStorageModule;
 import com.pancreatitis.modules.database.DatabaseModule;
 import com.pancreatitis.modules.localstorage.LocalStorageModule;
@@ -31,6 +32,7 @@ public class UsersViewController implements Initializable {
     @FXML private TableColumn<UserUI, String> colEmail;
     @FXML private TableColumn<UserUI, String> colPhoneNumber;
     @FXML private TableColumn<UserUI, Boolean> colRole;
+    @FXML private TableColumn<UserUI, Void> colPhrase;
     @FXML private TextField searchField;
     @FXML private Label statusLabel;
 
@@ -83,6 +85,30 @@ public class UsersViewController implements Initializable {
             });
         });
 
+        // Настройка столбца с кнопкой "Фраза"
+        colPhrase.setCellFactory(column -> new TableCell<>() {
+            private final Button phraseButton = new Button("Фраза");
+
+            {
+                phraseButton.setOnAction(event -> {
+                    UserUI user = getTableView().getItems().get(getIndex());
+                    if (user != null) {
+                        onPhraseClicked(user.getLogin());
+                    }
+                });
+            }
+
+            @Override
+            protected void updateItem(Void item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty) {
+                    setGraphic(null);
+                } else {
+                    setGraphic(phraseButton);
+                }
+            }
+        });
+
         // Wrap FilteredList in SortedList and bind to comparator
         SortedList<UserUI> sortedData = new SortedList<>(filteredData);
         sortedData.comparatorProperty().bind(usersTable.comparatorProperty());
@@ -92,6 +118,20 @@ public class UsersViewController implements Initializable {
 
         // Load data
         loadUsersData();
+    }
+
+    private void onPhraseClicked(String login) {
+        try {
+            byte[] encrypt_user_key = LocalStorageModule.getInstance().downloadUserKey(login);
+            String mnemonic = Bip39Encoder.toMnemonic(encrypt_user_key);
+            Alert alert = new Alert(Alert.AlertType.WARNING);
+            alert.setTitle("Фраза");
+            alert.setHeaderText(null);
+            alert.setContentText(mnemonic);
+            alert.showAndWait();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
     /**

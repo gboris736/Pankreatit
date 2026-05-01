@@ -317,7 +317,7 @@ public class CloudStorageModule {
 
     public RegistrationForm downloadRegistrationForm(String login) {
         try {
-            return downloadAndParseJson(REGISTRATION_PATH + login + ".json", RegistrationForm.class);
+            return downloadAndParseJson(REGISTRATION_PATH + login, RegistrationForm.class);
         } catch (Exception e) {
             throw new RuntimeException("Failed to download registration form for login: " + login, e);
         }

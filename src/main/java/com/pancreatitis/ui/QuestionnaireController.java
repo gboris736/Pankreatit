@@ -192,7 +192,7 @@ public class QuestionnaireController {
         List<CharasteristicDTO> charasteristicDTOS = new ArrayList<>();
         List<Characteristic> characteristics = characteristicsMap.values().stream().toList();
         for(CharacterizationAnketPatient characterizationAnketPatient: characterizationAnketPatients){
-            CharasteristicDTO charasteristicDTO = new CharasteristicDTO(characteristics.get(characterizationAnketPatient.getIdCharacteristic()));
+            CharasteristicDTO charasteristicDTO = new CharasteristicDTO(characteristics.get(characterizationAnketPatient.getIdCharacteristic() - 1));
             if (optionTexts.containsKey(characterizationAnketPatient.getIdCharacteristic())) {
                 charasteristicDTO.setValue(characterizationAnketPatient.getIdValue());
             } else {

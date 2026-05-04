@@ -179,8 +179,15 @@ public class QuestionnaireController {
 
                 Alert alert = new Alert(Alert.AlertType.INFORMATION );
                 alert.setTitle("Прогноз");
-                alert.setHeaderText( patient.getFio() );
-                alert.setContentText( codeToDiagnosis( predict_result.getPredictedClass() ) );
+                alert.setHeaderText( codeToDiagnosis(predict_result.getPredictedClass()) );
+                alert.setContentText(String.format(
+                        "Отечный панкреатит: %.3f%%\n" +
+                        "Панкреонекроз среднетяжелое течение: %.3f%%\n" +
+                        "Панкреонекроз тяжелое течение: %.3f%%",
+                        predict_result.getProbabilities().get(1)*100,
+                        predict_result.getProbabilities().get(5)*100,
+                        predict_result.getProbabilities().get(6)*100)
+                );
                 alert.show();
             } catch (Exception e) {
                 throw new RuntimeException(e);

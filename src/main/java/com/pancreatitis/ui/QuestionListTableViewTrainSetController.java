@@ -393,46 +393,15 @@ public class QuestionListTableViewTrainSetController {
 
     @FXML
     private void saveChangesAsync() {
-        // Запрос способа сохранения
-        ButtonType choice = showSaveChoiceDialog();
-
-        if (choice.getButtonData() == ButtonBar.ButtonData.CANCEL_CLOSE) {
-            // пользователь нажал «Отмена» или закрыл диалог
-            return;
-        }
-
-        boolean overwrite = choice.getText().equals("Обновить текущий");
-
-        // Если выбран "Обновить текущий", но файл не загружен – такого не случится из-за disabled,
-        // но всё равно проверка: если вдруг null, показываем ошибку
-        if (overwrite && trainSetModule.getCurrentFileName() == null) {
-            showAlert(Alert.AlertType.ERROR, "Ошибка", "Нет загруженного файла для обновления.");
-            return;
-        }
-
-        // ---------- НОВОЕ: запрос имени файла при создании нового ----------
-        String newFileName = null;
-        if (!overwrite) {
-            TextInputDialog nameDialog = new TextInputDialog("experiment");
-            nameDialog.setTitle("Имя файла");
-            nameDialog.setHeaderText("Введите имя для нового файла выборки");
-            nameDialog.setContentText("Допустимы латиница, цифры, _ и -:");
-
-            Optional<String> nameResult = nameDialog.showAndWait();
-            if (!nameResult.isPresent() || nameResult.get().trim().isEmpty()) {
-                return; // пользователь отказался от сохранения
-            }
-            // очистка имени: только допустимые символы, пробелы заменяем на _
-            newFileName = nameResult.get().trim().replaceAll("[^a-zA-Z0-9_\\-]", "_");
-        }
-        final String newFileName2 = newFileName;
-        String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy_MM_dd_HH_mm_ss"));
-        final String finalNewFileName = "algorithm_" + newFileName2 + "_" + timestamp + ".txt";
-        // -----------------------------------------------------------------
+        // CHANGE: больше не спрашиваем способ сохранения – всегда новый файл
+        // Генерируем имя с текущей меткой времени
+        String timestamp = LocalDateTime.now()
+                .format(DateTimeFormatter.ofPattern("yyyy_MM_dd_HH_mm_ss"));
+        final String newFileName = "algorithm_" + timestamp + ".txt";
 
         Task<Boolean> saveTask = new Task<>() {
             @Override
-            protected Boolean call() {
+            protected Boolean call() throws Exception {
                 updateMessage("Сохранение изменений...");
 
                 // Добавление записей в обучающую выборку
@@ -450,24 +419,20 @@ public class QuestionListTableViewTrainSetController {
                     trainSetModule.deleteQuestionnaire(questionnaire);
                 }
 
-                // Сохранение на диск выбранным способом
-                boolean saved;
-                if (overwrite) {
-                    saved = trainSetModule.saveOverwrite();
-                } else {
-                    saved = trainSetModule.saveNewFile(finalNewFileName);
-                }
-
+                // Сохраняем новый файл
+                boolean saved = trainSetModule.saveChanges();   // теперь без аргументов
                 if (!saved) {
                     throw new RuntimeException("Не удалось записать файл.");
                 }
+
+                // Ограничиваем количество файлов (5)
+                trainSetModule.enforceMaxFiles(5);
 
                 return true;
             }
         };
 
         saveTask.setOnSucceeded(e -> {
-            // Обновление кэша и сброс флагов «изменено»
             refreshTrainSetCache();
             for (QuestionnaireItemTrainUI ui : allItemsMap.values()) {
                 ui.originalIsTrain = ui.isTrain;
@@ -480,12 +445,9 @@ public class QuestionListTableViewTrainSetController {
             if (cmbAlgorithmFile != null) {
                 List<String> updatedFiles = LocalStorageModule.getInstance().listAlgorithmFiles();
                 cmbAlgorithmFile.getItems().setAll(updatedFiles);
-                // После сохранения (новый или перезапись) текущий файл модуля может измениться
-                String filename = trainSetModule.getCurrentFileName();
-                if (newFileName2 != null) {
-                    filename = finalNewFileName;
-                }
-                cmbAlgorithmFile.setValue(filename);
+                // Устанавливаем текущее имя файла (то, которое только что создали)
+                String currentName = trainSetModule.getCurrentFileName();
+                cmbAlgorithmFile.setValue(newFileName);
             }
 
             showAlert(Alert.AlertType.INFORMATION, "Успех", "Изменения успешно сохранены!");
@@ -499,26 +461,6 @@ public class QuestionListTableViewTrainSetController {
         });
 
         new Thread(saveTask).start();
-    }
-
-    /**
-     * Показывает диалог выбора способа сохранения.
-     * @return Optional с нажатой кнопкой, либо пустой Optional при отмене.
-     */
-    private ButtonType showSaveChoiceDialog() {
-        Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
-        alert.setTitle("Сохранение изменений");
-        alert.setHeaderText("Выберите способ сохранения:");
-        alert.setContentText("Можно обновить текущий файл или создать новый.");
-
-        ButtonType overwriteBtn = new ButtonType("Обновить текущий");
-        ButtonType newFileBtn = new ButtonType("Создать новый");
-        ButtonType cancelBtn = new ButtonType("Отмена", ButtonBar.ButtonData.CANCEL_CLOSE);
-
-        alert.getButtonTypes().setAll(overwriteBtn, newFileBtn, cancelBtn);
-
-        Optional<ButtonType> result = alert.showAndWait();
-        return result.orElse(cancelBtn);   // если закрыли окно – считаем отменой
     }
 
     // ─────────────────────────────────────────────────────────────
@@ -568,35 +510,6 @@ public class QuestionListTableViewTrainSetController {
         // }
     }
 
-    private void onWindowCloseRequest(WindowEvent event) {
-        if (hasUnsavedChanges) {
-            event.consume();
-            showConfirmSaveDialog();
-        }
-    }
-
-    private void showConfirmSaveDialog() {
-        Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
-        alert.setTitle("Несохраненные изменения");
-        alert.setHeaderText("Есть несохраненные изменения в выборке");
-        alert.setContentText("Что вы хотите сделать?");
-
-        ButtonType btnDiscard = new ButtonType("Отменить изменения", ButtonBar.ButtonData.NO);
-        ButtonType btnDiscardAndClose = new ButtonType("Не сохранять и выйти", ButtonBar.ButtonData.NO);
-        ButtonType btnCancel = new ButtonType("Остаться", ButtonBar.ButtonData.CANCEL_CLOSE);
-
-        alert.getButtonTypes().setAll(btnDiscard, btnDiscardAndClose, btnCancel);
-
-        alert.showAndWait().ifPresent(response -> {
-            if (response == btnDiscard) {
-                resetChanges();
-                closeWindow();
-            } else if (response == btnDiscardAndClose) {
-                closeWindow();
-            }
-        });
-    }
-
     private void resetChanges() {
         for (QuestionnaireItemTrainUI ui : allItemsMap.values()) {
             ui.isTrain = ui.originalIsTrain;
@@ -606,51 +519,38 @@ public class QuestionListTableViewTrainSetController {
         markAsClean();
     }
 
-    private void closeWindow() {
-        // if (tableViewUsualQuestion != null && tableViewUsualQuestion.getScene() != null) {
-        //     tableViewUsualQuestion.getScene().getWindow().hide();
-        // }
-    }
-
     // ─────────────────────────────────────────────────────────────
     // 8. Загрузка данных
     // ─────────────────────────────────────────────────────────────
-    private void setupAlgorithmFileCombo(){
+    private void setupAlgorithmFileCombo() {
         if (cmbAlgorithmFile == null) return;
 
-        // заполнить список файлов
         List<String> files = LocalStorageModule.getInstance().listAlgorithmFiles();
         cmbAlgorithmFile.getItems().setAll(files);
 
-        // выбрать текущий файл
         String first = TrainSetModule.getInstance().getLatestAlgorithmFileName();
         cmbAlgorithmFile.setValue(first);
         trainSetModule.loadFromFile(first);
         reloadDataFromModules();
 
-        // слушатель смены версии
         cmbAlgorithmFile.valueProperty().addListener((obs, oldVal, newVal) -> {
             if (newVal == null || newVal.equals(oldVal)) return;
+
             if (hasUnsavedChanges) {
                 // запросить сохранение перед переключением
                 Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
                 confirm.setTitle("Несохранённые изменения");
                 confirm.setHeaderText("Есть несохранённые изменения. Сохранить перед загрузкой другой версии?");
                 confirm.setContentText("Выберите действие.");
-                ButtonType saveBtn = new ButtonType("Сохранить и загрузить");
+
                 ButtonType discardBtn = new ButtonType("Отменить изменения и загрузить");
                 ButtonType cancelBtn = new ButtonType("Отмена", ButtonBar.ButtonData.CANCEL_CLOSE);
-                confirm.getButtonTypes().setAll(saveBtn, discardBtn, cancelBtn);
+                confirm.getButtonTypes().setAll(discardBtn, cancelBtn);
                 Optional<ButtonType> result = confirm.showAndWait();
                 if (result.isPresent()) {
-                    if (result.get() == saveBtn) {
-                        saveChangesAsync(); // асинхронно сохраняем, затем загружаем
-                        // после завершения сохранения загрузка произойдёт в setOnSucceeded
-                    } else if (result.get() == discardBtn) {
+                    if (result.get() == discardBtn) {
                         resetChanges();
                         loadSelectedAlgorithmFile(newVal);
-                    } else {
-                        // вернуть старое значение
                     }
                 }
             } else {

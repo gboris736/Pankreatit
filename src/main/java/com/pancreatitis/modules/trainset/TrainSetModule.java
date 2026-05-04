@@ -56,23 +56,30 @@ public class TrainSetModule {
                     try {
                         return LocalDateTime.parse(fname, fileFormatter);
                     } catch (Exception e) {
-                        return LocalDateTime.MIN; // некорректное имя – в конец
+                        return LocalDateTime.MIN;
                     }
                 }))
                 .orElse(null);
     }
 
-    public boolean saveOverwrite() {
-        try {
-            String prevFileName = currentFileName;
-            boolean written = saveChanges();
-            boolean del = false;
-            if (written) {
-                del = localStorageModule.deleteAlgorithmFile(prevFileName);
+    // CHANGE: метод для удержания не более maxFiles файлов (удаляет самые старые)
+    public void enforceMaxFiles(int maxFiles) throws Exception {
+        List<String> files = localStorageModule.listAlgorithmFiles();
+        if (files.size() <= maxFiles) return;
+
+        DateTimeFormatter fileFormatter = DateTimeFormatter.ofPattern("'algorithm_'yyyy_MM_dd_HH_mm_ss'.txt'");
+        // сортируем по времени (от старых к новым), удаляем лишние старые
+        files.sort(Comparator.comparing(fname -> {
+            try {
+                return LocalDateTime.parse(fname, fileFormatter);
+            } catch (Exception e) {
+                return LocalDateTime.MIN;
             }
-            return del;
-        } catch (Exception e) {
-            return false;
+        }));
+
+        int toDelete = files.size() - maxFiles;
+        for (int i = 0; i < toDelete; i++) {
+            localStorageModule.deleteAlgorithmFile(files.get(i));
         }
     }
 
@@ -90,28 +97,9 @@ public class TrainSetModule {
 
     public boolean saveChanges() {
         try {
-            // 1. Разбираем текущее имя
-            //    Ищем timestamp: всегда последние 6 групп цифр, разделённых '_'.
-            Pattern pattern = Pattern.compile(
-                    "algorithm_([^_]+_)?(\\d{4}_\\d{2}_\\d{2}_\\d{2}_\\d{2}_\\d{2})\\.txt$");
-            Matcher matcher = pattern.matcher(currentFileName);
-
-            String namePrefix = "";   // пользовательская часть с завершающим '_' или пусто
-            if (matcher.find()) {
-                String userPart = matcher.group(1);  // например "my_exp_" или null
-                if (userPart != null && !userPart.isEmpty()) {
-                    namePrefix = userPart;           // уже с '_'
-                }
-            } else {
-                throw new Exception();
-            }
-
-            // 2. Генерируем новый timestamp
             String newTimestamp = LocalDateTime.now()
                     .format(DateTimeFormatter.ofPattern("yyyy_MM_dd_HH_mm_ss"));
-
-            // 3. Формируем новое имя файла
-            String newFileName = "algorithm_" + namePrefix + newTimestamp + ".txt";
+            String newFileName = "algorithm_" + newTimestamp + ".txt";
             String content = TrainingDataParser.serializeToTextFormat(trainingData);
             boolean written = localStorageModule.writeAlgorithmFile(newFileName,
                     content.getBytes(StandardCharsets.UTF_8));
@@ -124,48 +112,33 @@ public class TrainSetModule {
         }
     }
 
-    public boolean saveNewFile(String filename) {
-        String content = TrainingDataParser.serializeToTextFormat(trainingData);
-
-        try {
-            localStorageModule.writeAlgorithmFile(filename, content.getBytes(StandardCharsets.UTF_8));
-            this.currentFileName = filename;
-            return true;
-        } catch (Exception e) {
-            return false;
-        }
-    }
-
-    public List<Integer> getQuestionIdTrainList() throws TrainingDataException{
+    public List<Integer> getQuestionIdTrainList() throws TrainingDataException {
         List<Integer> ret = new ArrayList<>();
         DatabaseModule databaseModule = DatabaseModule.getInstance();
-        for ( float[] record : trainingData.getTrainingRecords() ){
+        for (float[] record : trainingData.getTrainingRecords()) {
             int id = (int) record[0];
             if (databaseModule.containsQuestion(id)) {
-                ret.add( id );
-            }
-            else {
-                throw new TrainingDataException( String.format("Not found this questionnaire in data base, %d", id) );
+                ret.add(id);
+            } else {
+                throw new TrainingDataException(
+                        String.format("Not found this questionnaire in data base, %d", id));
             }
         }
-
         return ret;
     }
 
     public boolean submit() {
         try {
             String currentFile = getCurrentFileName();
-            // Регулярка: захватывает timestamp независимо от наличия пользовательского имени
             Pattern pattern = Pattern.compile(
                     "algorithm_([^_]+_)?(\\d{4}_\\d{2}_\\d{2}_\\d{2}_\\d{2}_\\d{2})\\.txt$");
             Matcher matcher = pattern.matcher(currentFile);
             String timestamp;
             if (matcher.find()) {
-                timestamp = matcher.group(2);   // группа с датой/временем
+                timestamp = matcher.group(2);
             } else {
                 timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy_MM_dd_HH_mm_ss"));
             }
-
 
             boolean dataUploaded = cloudStorageModule.uploadTrainingData(trainingData, timestamp);
             if (!dataUploaded) {
@@ -178,9 +151,7 @@ public class TrainSetModule {
                 return false;
             }
 
-            // Удаляем все старые файлы алгоритма, кроме только что загруженных
             cloudStorageModule.cleanOldAlgorithmFiles(timestamp);
-
             return true;
         } catch (Exception e) {
             return false;
@@ -189,14 +160,10 @@ public class TrainSetModule {
 
     private byte[] signTrainingData(TrainingData data) throws Exception {
         PrivateKey privateKey = localStorageModule.loadEd25519PrivateKey();
-
         Signature sig = Signature.getInstance("Ed25519");
         sig.initSign(privateKey);
-
-        // Преобразуем данные в текстовый формат и подписываем именно его
         String textData = TrainingDataParser.serializeToTextFormat(data);
         sig.update(textData.getBytes(StandardCharsets.UTF_8));
-
         return sig.sign();
     }
 
@@ -206,12 +173,12 @@ public class TrainSetModule {
             long idQuestionnaire = questionnaire.getId();
             float[] records = new float[characterizationAnketPatientLists.size() + 2];
             records[0] = idQuestionnaire;
-            for(int i = 0; i < characterizationAnketPatientLists.size(); i++) {
+            for (int i = 0; i < characterizationAnketPatientLists.size(); i++) {
                 CharacterizationAnketPatient characterizationAnketPatient = characterizationAnketPatientLists.get(i);
                 if (characterizationAnketPatient.getValue() != -1) {
-                    records[i+1] = characterizationAnketPatient.getValue();
+                    records[i + 1] = characterizationAnketPatient.getValue();
                 } else {
-                    records[i+1] = characterizationAnketPatient.getIdValue();
+                    records[i + 1] = characterizationAnketPatient.getIdValue();
                 }
             }
             records[characterizationAnketPatientLists.size() + 1] = codeDiagnosis;

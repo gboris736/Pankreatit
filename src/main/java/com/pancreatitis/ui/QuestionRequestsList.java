@@ -393,17 +393,17 @@ public class QuestionRequestsList {
                 totalUpdates--;
 
                 // Удаляем карточку из UI через небольшую задержку
-//                new Thread(() -> {
-//                    try {
-//                        Thread.sleep(1000);
-//                        Platform.runLater(() -> {
-//                            questionnairesContainer.getChildren().remove(cardBox);
-//                            updateCount();
-//                        });
-//                    } catch (InterruptedException e) {
-//                        e.printStackTrace();
-//                    }
-//                }).start();
+                new Thread(() -> {
+                    try {
+                        Thread.sleep(500);
+                        Platform.runLater(() -> {
+                            questionnairesContainer.getChildren().remove(cardBox);
+                            updateCount();
+                        });
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }).start();
             } else {
                 showNotification("Ошибка при подтверждении анкеты", false);
             }
@@ -448,62 +448,6 @@ public class QuestionRequestsList {
             }).start();
         }
     }
-
-    /**
-     * Подтверждение всех анкет
-     */
-//    private void confirmAllQuestionnaires() {
-//        Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
-//        alert.setTitle("Подтверждение всех анкет");
-//        alert.setHeaderText("Подтвердить все анкеты (" + totalUpdates+ " шт.)?");
-//        alert.setContentText("Это действие нельзя отменить.");
-//
-//        ButtonType confirmBtn = new ButtonType("Подтвердить все", ButtonBar.ButtonData.OK_DONE);
-//        ButtonType cancelBtn = new ButtonType("Отмена", ButtonBar.ButtonData.CANCEL_CLOSE);
-//        alert.getButtonTypes().setAll(confirmBtn, cancelBtn);
-//
-//        Optional<ButtonType> result = alert.showAndWait();
-//
-//        if (result.isPresent() && result.get() == confirmBtn) {
-//            QuestionnaireManagerModule questionnaireManagerModule = QuestionnaireManagerModule.getInstance();
-//            int successCount = 0;
-//
-//            for (int id = 0; id < updatesModule.getPatientList().size(); id++) {
-//                boolean success = questionnaireManagerModule.saveQuestionnaire(
-//                        updatesModule.getQuestionnairList().get(id),
-//                        updatesModule.getPatientList().get(id),
-//                        updatesModule.getCharacterizationAnketPatientList().get(id)
-//                );
-//
-//                if (success) {
-//                    successCount++;
-//                    updatesModule.getQuestionnairList().remove(id);
-//                    updatesModule.getPatientList().remove(id);
-//                    updatesModule.getCharacterizationAnketPatientList().remove(id);
-//                }
-//            }
-//
-//            showNotification("Подтверждено анкет: " + successCount + " из " + totalUpdates, true);
-//
-//            // Обновляем UI - удаляем все карточки
-//            questionnairesContainer.getChildren().clear();
-//            if (totalUpdates == 0) {
-//                showEmptyMessage();
-//            } else {
-//                // Пересоздаем оставшиеся карточки
-//                for (int id = 0; id < updatesModule.getPatientList().size(); id++) {
-//                    createQuestionnaireCard(
-//                            id,
-//                            updatesModule.getQuestionnairList().get(id),
-//                            updatesModule.getPatientList().get(id),
-//                            updatesModule.getDoctors().get(id),
-//                            updatesModule.getCharacterizationAnketPatientList().get(id)
-//                    );
-//                }
-//            }
-//            updateCount();
-//        }
-//    }
 
     /**
      * Обновление счетчика

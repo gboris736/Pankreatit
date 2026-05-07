@@ -175,14 +175,15 @@ public class UpdatesModule {
             patient.setId(-1);
             patientList.set(index, patient);
 
+            Doctor doctor = DatabaseModule.getInstance().getDoctorByLogin(login);
+            doctors.set(index, doctor);
+
             QuestionnaireDTO dto = update.getQuestionnaireDTO();
             Questionnaire questionnaire = new Questionnaire(dto);
             questionnaire.setId(-1);
             questionnaire.setIdPatient(-1);
+            questionnaire.setIdDoctor(doctor.getId());
             questionnairList.set(index, questionnaire);
-
-            Doctor doctor = DatabaseModule.getInstance().getDoctorByLogin(login);
-            doctors.set(index, doctor);
 
             List<CharacterizationAnketPatient> characteristics = dto.getCharacteristicValues();
             characterizationAnketPatientList.set(index, characteristics);

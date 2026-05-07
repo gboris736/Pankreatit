@@ -16,6 +16,7 @@ import javafx.stage.Stage;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 public class QuestionRequestsList {
 
@@ -54,7 +55,7 @@ public class QuestionRequestsList {
             }
         });
 
-        btnConfirmAll.setOnAction(event -> confirmAllQuestionnaires());
+        //btnConfirmAll.setOnAction(event -> confirmAllQuestionnaires());
     }
 
     /**
@@ -109,16 +110,30 @@ public class QuestionRequestsList {
             public void onUpdateLoaded(UpdateLoadResult result) {
                 Platform.runLater(() -> {
                     if (result.isSuccess()) {
-                        // Создаем карточку
+                        Questionnaire questionnaire = result.getQuestionnaire();
+                        Patient patient = result.getPatient();
+                        Doctor doctor = result.getDoctor();
+                        List<CharacterizationAnketPatient> characteristics = result.getCharacteristics();
+
+                        // Проверка существования анкеты в БД
+                        boolean isExisting = false;
+                        DatabaseModule db = DatabaseModule.getInstance();
+                        int doctorId = (doctor != null) ? doctor.getId() : -1;
+                        String completionDate = questionnaire.getDateOfCompletion();
+
+                        if (completionDate != null) {
+                            Questionnaire existingQ = db.findQuestionnaireByKey(doctorId, completionDate);
+                            isExisting = (existingQ != null);
+                        }
+
                         createQuestionnaireCard(
                                 result.getIndex(),
-                                result.getQuestionnaire(),
-                                result.getPatient(),
-                                result.getDoctor(),
-                                result.getCharacteristics()
+                                questionnaire,
+                                patient,
+                                doctor,
+                                isExisting
                         );
                     } else {
-                        // Показываем ошибку, но продолжаем
                         showNotification("Ошибка загрузки обновления: " + result.getErrorMessage(), false);
                     }
                 });
@@ -190,8 +205,7 @@ public class QuestionRequestsList {
     /**
      * Создание карточки анкеты
      */
-    private void createQuestionnaireCard(int id, Questionnaire questionnaire, Patient patient, Doctor doctor,
-                                         List<CharacterizationAnketPatient> characteristics) {
+    private void createQuestionnaireCard(int id, Questionnaire questionnaire, Patient patient, Doctor doctor, boolean isExisting) {
         // Основной блок карточки
         VBox cardBox = new VBox(10);
         cardBox.setStyle("-fx-border-color: #e0e0e0; -fx-border-radius: 5; " +
@@ -212,9 +226,13 @@ public class QuestionRequestsList {
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
 
-        Label statusLabel = new Label("На проверке");
-        statusLabel.setStyle("-fx-font-size: 12px; -fx-text-fill: #f39c12; " +
-                "-fx-background-color: #fef5e7; " +
+        String statusText = isExisting ? "Существующая анкета" : "Новая анкета";
+        String statusColor = isExisting ? "#27ae60" : "#2980b9";
+        String bgColor = isExisting ? "#e8f8f5" : "#eaf2f8";
+
+        Label statusLabel = new Label(statusText);
+        statusLabel.setStyle("-fx-font-size: 12px; -fx-text-fill: " + statusColor + "; " +
+                "-fx-background-color: " + bgColor + "; " +
                 "-fx-padding: 5 10 5 10; -fx-background-radius: 10;");
 
         headerBox.getChildren().addAll(idLabel, dateLabel, spacer, statusLabel);
@@ -328,9 +346,42 @@ public class QuestionRequestsList {
 
             Questionnaire questionnaire = updatesModule.getQuestionnairList().get(id);
             Patient patient = updatesModule.getPatientList().get(id);
+            Doctor doctor = updatesModule.getDoctors().get(id);
             List<CharacterizationAnketPatient> characteristics = updatesModule.getCharacterizationAnketPatientList().get(id);
 
-            boolean success = questionnaireManagerModule.saveQuestionnaire(questionnaire, patient, characteristics);
+            boolean isExisting = false;
+            Questionnaire existingQ = null;
+            DatabaseModule db = DatabaseModule.getInstance();
+            int doctorId = (doctor != null) ? doctor.getId() : -1;
+            String completionDate = questionnaire.getDateOfCompletion();
+
+            if (completionDate != null) {
+                existingQ = db.findQuestionnaireByKey(doctorId, completionDate);
+                isExisting = (existingQ != null);
+            }
+
+            boolean success = false;
+            if (isExisting) {
+                List<CharacterizationAnketPatient> baseCharacterizationAnketPatientList = DatabaseModule.getInstance().getCharacterizationsForAnket((int)existingQ.getId());
+
+                // Неправильное удаление - херь
+                record Key(int idCharacteristic, int idValue, float value, String createdAt) {}
+
+                Set<Key> keys = baseCharacterizationAnketPatientList.stream()
+                        .map(p -> new Key(p.getIdCharacteristic(), p.getIdValue(), p.getValue(), p.getCreatedAt()))
+                        .collect(Collectors.toSet());
+
+                List<CharacterizationAnketPatient> resultChar = characteristics.stream()
+                        .filter(p -> !keys.contains(new Key(p.getIdCharacteristic(), p.getIdValue(), p.getValue(), p.getCreatedAt())))
+                        .collect(Collectors.toList());
+
+
+                Patient our_patient = DatabaseModule.getInstance().getPatientById((int)existingQ.getIdPatient());
+
+                success = questionnaireManagerModule.saveQuestionnaire(existingQ, our_patient, resultChar);
+            } else {
+                success = questionnaireManagerModule.saveQuestionnaire(questionnaire, patient, characteristics);
+            }
 
             if (success) {
                 showNotification("Анкета #" + (id + 1) + " подтверждена", true);
@@ -342,17 +393,17 @@ public class QuestionRequestsList {
                 totalUpdates--;
 
                 // Удаляем карточку из UI через небольшую задержку
-                new Thread(() -> {
-                    try {
-                        Thread.sleep(1000);
-                        Platform.runLater(() -> {
-                            questionnairesContainer.getChildren().remove(cardBox);
-                            updateCount();
-                        });
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
-                }).start();
+//                new Thread(() -> {
+//                    try {
+//                        Thread.sleep(1000);
+//                        Platform.runLater(() -> {
+//                            questionnairesContainer.getChildren().remove(cardBox);
+//                            updateCount();
+//                        });
+//                    } catch (InterruptedException e) {
+//                        e.printStackTrace();
+//                    }
+//                }).start();
             } else {
                 showNotification("Ошибка при подтверждении анкеты", false);
             }
@@ -401,58 +452,58 @@ public class QuestionRequestsList {
     /**
      * Подтверждение всех анкет
      */
-    private void confirmAllQuestionnaires() {
-        Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
-        alert.setTitle("Подтверждение всех анкет");
-        alert.setHeaderText("Подтвердить все анкеты (" + totalUpdates+ " шт.)?");
-        alert.setContentText("Это действие нельзя отменить.");
-
-        ButtonType confirmBtn = new ButtonType("Подтвердить все", ButtonBar.ButtonData.OK_DONE);
-        ButtonType cancelBtn = new ButtonType("Отмена", ButtonBar.ButtonData.CANCEL_CLOSE);
-        alert.getButtonTypes().setAll(confirmBtn, cancelBtn);
-
-        Optional<ButtonType> result = alert.showAndWait();
-
-        if (result.isPresent() && result.get() == confirmBtn) {
-            QuestionnaireManagerModule questionnaireManagerModule = QuestionnaireManagerModule.getInstance();
-            int successCount = 0;
-
-            for (int id = 0; id < updatesModule.getPatientList().size(); id++) {
-                boolean success = questionnaireManagerModule.saveQuestionnaire(
-                        updatesModule.getQuestionnairList().get(id),
-                        updatesModule.getPatientList().get(id),
-                        updatesModule.getCharacterizationAnketPatientList().get(id)
-                );
-
-                if (success) {
-                    successCount++;
-                    updatesModule.getQuestionnairList().remove(id);
-                    updatesModule.getPatientList().remove(id);
-                    updatesModule.getCharacterizationAnketPatientList().remove(id);
-                }
-            }
-
-            showNotification("Подтверждено анкет: " + successCount + " из " + totalUpdates, true);
-
-            // Обновляем UI - удаляем все карточки
-            questionnairesContainer.getChildren().clear();
-            if (totalUpdates == 0) {
-                showEmptyMessage();
-            } else {
-                // Пересоздаем оставшиеся карточки
-                for (int id = 0; id < updatesModule.getPatientList().size(); id++) {
-                    createQuestionnaireCard(
-                            id,
-                            updatesModule.getQuestionnairList().get(id),
-                            updatesModule.getPatientList().get(id),
-                            updatesModule.getDoctors().get(id),
-                            updatesModule.getCharacterizationAnketPatientList().get(id)
-                    );
-                }
-            }
-            updateCount();
-        }
-    }
+//    private void confirmAllQuestionnaires() {
+//        Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+//        alert.setTitle("Подтверждение всех анкет");
+//        alert.setHeaderText("Подтвердить все анкеты (" + totalUpdates+ " шт.)?");
+//        alert.setContentText("Это действие нельзя отменить.");
+//
+//        ButtonType confirmBtn = new ButtonType("Подтвердить все", ButtonBar.ButtonData.OK_DONE);
+//        ButtonType cancelBtn = new ButtonType("Отмена", ButtonBar.ButtonData.CANCEL_CLOSE);
+//        alert.getButtonTypes().setAll(confirmBtn, cancelBtn);
+//
+//        Optional<ButtonType> result = alert.showAndWait();
+//
+//        if (result.isPresent() && result.get() == confirmBtn) {
+//            QuestionnaireManagerModule questionnaireManagerModule = QuestionnaireManagerModule.getInstance();
+//            int successCount = 0;
+//
+//            for (int id = 0; id < updatesModule.getPatientList().size(); id++) {
+//                boolean success = questionnaireManagerModule.saveQuestionnaire(
+//                        updatesModule.getQuestionnairList().get(id),
+//                        updatesModule.getPatientList().get(id),
+//                        updatesModule.getCharacterizationAnketPatientList().get(id)
+//                );
+//
+//                if (success) {
+//                    successCount++;
+//                    updatesModule.getQuestionnairList().remove(id);
+//                    updatesModule.getPatientList().remove(id);
+//                    updatesModule.getCharacterizationAnketPatientList().remove(id);
+//                }
+//            }
+//
+//            showNotification("Подтверждено анкет: " + successCount + " из " + totalUpdates, true);
+//
+//            // Обновляем UI - удаляем все карточки
+//            questionnairesContainer.getChildren().clear();
+//            if (totalUpdates == 0) {
+//                showEmptyMessage();
+//            } else {
+//                // Пересоздаем оставшиеся карточки
+//                for (int id = 0; id < updatesModule.getPatientList().size(); id++) {
+//                    createQuestionnaireCard(
+//                            id,
+//                            updatesModule.getQuestionnairList().get(id),
+//                            updatesModule.getPatientList().get(id),
+//                            updatesModule.getDoctors().get(id),
+//                            updatesModule.getCharacterizationAnketPatientList().get(id)
+//                    );
+//                }
+//            }
+//            updateCount();
+//        }
+//    }
 
     /**
      * Обновление счетчика

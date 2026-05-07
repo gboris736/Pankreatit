@@ -9,6 +9,7 @@ import java.sql.*;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class DatabaseModule {
     private Path dbPath;
@@ -302,7 +303,7 @@ public class DatabaseModule {
             pstmt.setInt(3, questionnaire.getIdExpert());
             pstmt.setString(4, questionnaire.getDiagnosis());
             pstmt.setString(5, questionnaire.getAdmittedFrom());
-            pstmt.setString(6, LocalDateTime.now().format(formatter));
+            pstmt.setString(6, questionnaire.getDateOfCompletion() != null ? questionnaire.getDateOfCompletion() : LocalDateTime.now().format(formatter));
             pstmt.setString(7, LocalDateTime.now().format(formatter));
 
             int affectedRows = pstmt.executeUpdate();
@@ -357,6 +358,31 @@ public class DatabaseModule {
                 questionnaire.setDateOfCompletion(rs.getString("date_of_completion"));
                 questionnaire.setLastModified(rs.getString("last_modified"));
                 return questionnaire;
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    public Questionnaire findQuestionnaireByKey(int idDoctor, String dateOfCompletion) {
+        String sql = "SELECT * FROM ankets WHERE id_doctor = ? AND date_of_completion = ? LIMIT 1";
+        try (Connection conn = DriverManager.getConnection(url);
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setInt(1, idDoctor);
+            pstmt.setString(2, dateOfCompletion);
+            ResultSet rs = pstmt.executeQuery();
+            if (rs.next()) {
+                Questionnaire q = new Questionnaire();
+                q.setId(rs.getInt("id"));
+                q.setIdPatient(rs.getInt("id_patient"));
+                q.setIdDoctor(rs.getInt("id_doctor"));
+                q.setIdExpert(rs.getInt("id_expert"));
+                q.setDiagnosis(rs.getString("diagnosis"));
+                q.setAdmittedFrom(rs.getString("admitted_from"));
+                q.setDateOfCompletion(rs.getString("date_of_completion"));
+                q.setLastModified(rs.getString("last_modified"));
+                return q;
             }
         } catch (SQLException e) {
             e.printStackTrace();
@@ -501,25 +527,6 @@ public class DatabaseModule {
             e.printStackTrace();
         }
         return -1;
-    }
-
-    public int updateCharacterizationAnketPatient(CharacterizationAnketPatient characterization) {
-        String sql = "UPDATE characterization_anket_patient SET id_value = ?, value = ?, last_modified = ? WHERE id_anket = ? AND id_characteristic = ?";
-
-        try (Connection conn = DriverManager.getConnection(url);
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
-
-            pstmt.setInt(1, characterization.getIdValue());
-            pstmt.setFloat(2, characterization.getValue());
-            pstmt.setString(3, LocalDateTime.now().format(formatter));
-            pstmt.setInt(4, (int)characterization.getIdAnket());
-            pstmt.setInt(5, characterization.getIdCharacteristic());
-
-            return pstmt.executeUpdate();
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        return 0;
     }
 
     public List<CharacterizationAnketPatient> getCharacterizationsForAnket(int anketId) {

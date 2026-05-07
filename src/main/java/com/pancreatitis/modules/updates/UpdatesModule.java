@@ -1,4 +1,4 @@
-// UpdatesModule.java (обновленная асинхронная версия)
+// UpdatesModule.java
 package com.pancreatitis.modules.updates;
 
 import com.pancreatitis.models.*;
@@ -32,7 +32,6 @@ public class UpdatesModule {
     private ExecutorService processingExecutor;
 
     private UpdatesModule() {
-        // Создаем пул для обработки с 3 потоками
         processingExecutor = Executors.newFixedThreadPool(3);
     }
 
@@ -61,7 +60,6 @@ public class UpdatesModule {
      * Асинхронная загрузка с callback
      */
     public void loadAsync(UpdateLoadCallback callback) {
-        // Запускаем загрузку в отдельном потоке
         CompletableFuture.runAsync(() -> {
             try {
                 // Шаг 1: Получаем список файлов обновлений
@@ -82,19 +80,34 @@ public class UpdatesModule {
                 AtomicInteger loadedCount = new AtomicInteger(0);
 
                 List<String> allLogins = getLocalStorageModule().getAllUserLogins();
+
                 for (int i = 0; i < total; i++) {
                     final int index = i;
                     final String fileName = fileNames.get(i);
                     String login = extractLoginFromFileName(fileName);
+
                     if (allLogins.contains(login)) {
                         CompletableFuture<UpdateLoadResult> future = CompletableFuture
                                 .supplyAsync(() -> {
                                     try {
-                                        Update update = getCloudStorageModule().downloadEncryptedUpdate(fileName, login);
-                                        return processUpdate(index, fileName, update);
+                                        // Определяем формат файла
+                                        String filePath = "/update/" + fileName;
+                                        byte[] content = getCloudStorageModule().downloadFileBytes(filePath);
+
+                                        if (isEncryptedFormat(content)) {
+                                            // Новый формат - полностью зашифрованный файл
+                                            Update update = getCloudStorageModule()
+                                                    .downloadEncryptedUpdate(fileName, login);
+                                            return processUpdate(index, fileName, update);
+                                        } else {
+                                            // Старый формат - открытый JSON с зашифрованным ФИО
+                                            Pair<Pair<String, String>, Update> legacyPair =
+                                                    getCloudStorageModule().downloadLegacyUpdate(fileName);
+                                            return processLegacyUpdate(index, fileName, legacyPair);
+                                        }
                                     } catch (Exception e) {
-                                        return new UpdateLoadResult(index, null, null, null, null, false,
-                                                e.getMessage(), fileName);
+                                        return new UpdateLoadResult(index, null, null, null, null,
+                                                false, e.getMessage(), fileName);
                                     }
                                 }, processingExecutor)
                                 .thenApply(result -> {
@@ -125,6 +138,14 @@ public class UpdatesModule {
     }
 
     /**
+     * Проверяет, является ли файл зашифрованным (новый формат) или открытым JSON (старый формат)
+     */
+    private boolean isEncryptedFormat(byte[] content) {
+        // Старый формат начинается с '{' (JSON), новый - с зашифрованной строки
+        return content.length > 0 && content[0] != '{';
+    }
+
+    /**
      * Извлекает логин из имени файла формата login_uuid.json
      */
     private String extractLoginFromFileName(String fileName) {
@@ -148,7 +169,7 @@ public class UpdatesModule {
     }
 
     /**
-     * Обработка одного обновления
+     * Обработка одного обновления в новом формате (полностью зашифрованный файл)
      */
     private UpdateLoadResult processUpdate(int index, String fileName, Update update) {
         try {
@@ -191,7 +212,68 @@ public class UpdatesModule {
             return new UpdateLoadResult(index, patient, questionnaire, doctor, characteristics,
                     true, null, fileName);
         } catch (Exception ex) {
-            return new UpdateLoadResult(index, null, null, null, null,false,
+            return new UpdateLoadResult(index, null, null, null, null, false,
+                    ex.getMessage(), fileName);
+        }
+    }
+
+    /**
+     * Обработка одного обновления в старом формате (открытый JSON с зашифрованным ФИО)
+     */
+    private UpdateLoadResult processLegacyUpdate(int index, String fileName,
+                                                 Pair<Pair<String, String>, Update> legacyPair) {
+        try {
+            Update update = legacyPair.getValue();
+            String doctorLogin = legacyPair.getKey().getKey();
+            String dateUpload = legacyPair.getKey().getValue();
+
+            // Генерируем UUID для старого формата на основе имени файла
+            String uuid = UUID.nameUUIDFromBytes(fileName.getBytes(StandardCharsets.UTF_8)).toString();
+
+            Pair<Pair<String, String>, Update> entry = new Pair<>(
+                    new Pair<>(doctorLogin, dateUpload), update);
+
+            synchronized (this) {
+                while (updatesList.size() <= index) {
+                    updatesList.add(null);
+                    patientList.add(null);
+                    updateUuids.add(null);
+                    doctors.add(null);
+                    questionnairList.add(null);
+                    characterizationAnketPatientList.add(null);
+                }
+                updatesList.set(index, entry);
+                updateUuids.set(index, uuid);
+            }
+
+            // Расшифровка ФИО пациента
+            SecretKey keyAdmin = AuthorizationModule.getInstance().authenticateForAdmin(doctorLogin);
+            SafetyModule safetyModule = SafetyModule.getInstance();
+
+            Patient patient = update.getPatient();
+            if (patient != null && patient.getFio() != null) {
+                patient.setFio(safetyModule.decryptString(patient.getFio(), keyAdmin));
+            }
+            patient.setId(-1);
+            patientList.set(index, patient);
+
+            Doctor doctor = DatabaseModule.getInstance().getDoctorByLogin(doctorLogin);
+            doctors.set(index, doctor);
+
+            QuestionnaireDTO dto = update.getQuestionnaireDTO();
+            Questionnaire questionnaire = new Questionnaire(dto);
+            questionnaire.setId(-1);
+            questionnaire.setIdPatient(-1);
+            questionnaire.setIdDoctor(doctor.getId());
+            questionnairList.set(index, questionnaire);
+
+            List<CharacterizationAnketPatient> characteristics = dto.getCharacteristicValues();
+            characterizationAnketPatientList.set(index, characteristics);
+
+            return new UpdateLoadResult(index, patient, questionnaire, doctor, characteristics,
+                    true, null, fileName);
+        } catch (Exception ex) {
+            return new UpdateLoadResult(index, null, null, null, null, false,
                     ex.getMessage(), fileName);
         }
     }
@@ -202,10 +284,11 @@ public class UpdatesModule {
         doctors.clear();
         characterizationAnketPatientList.clear();
         updatesList.clear();
+        updateUuids.clear();
     }
 
     /**
-     * Удаление обновления по индексу (теперь используется UUID)
+     * Удаление обновления по индексу
      */
     public void deleteUpdate(int id) {
         if (id >= 0 && id < updatesList.size()) {
@@ -223,7 +306,10 @@ public class UpdatesModule {
         }
     }
 
-    public List<Doctor> getDoctors() {return doctors;}
+    // Геттеры
+    public List<Doctor> getDoctors() {
+        return doctors;
+    }
 
     public List<Patient> getPatientList() {
         return patientList;
@@ -235,5 +321,18 @@ public class UpdatesModule {
 
     public List<List<CharacterizationAnketPatient>> getCharacterizationAnketPatientList() {
         return characterizationAnketPatientList;
+    }
+
+    public List<String> getUpdateUuids() {
+        return updateUuids;
+    }
+
+    /**
+     * Завершение работы модуля
+     */
+    public void shutdown() {
+        if (processingExecutor != null && !processingExecutor.isShutdown()) {
+            processingExecutor.shutdown();
+        }
     }
 }

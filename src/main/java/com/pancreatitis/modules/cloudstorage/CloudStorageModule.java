@@ -271,6 +271,30 @@ public class CloudStorageModule {
         }
     }
 
+    /**
+     * Публичный метод для скачивания содержимого файла в байтах
+     */
+    public byte[] downloadFileBytes(String path) throws Exception {
+        return downloadFile(path);
+    }
+
+    /**
+     * Скачивает обновление в старом формате (открытый JSON с зашифрованным ФИО)
+     */
+    public Pair<Pair<String, String>, Update> downloadLegacyUpdate(String fileName) throws Exception {
+        String filePath = UPDATE_PATH + fileName;
+        byte[] jsonBytes = downloadFile(filePath);
+        String json = new String(jsonBytes, StandardCharsets.UTF_8);
+
+        // Парсим старый формат: {"key":{"key":"doctor","value":"datetime"},"value":{...}}
+        JsonNode rootNode = objectMapper.readTree(json);
+        String doctor = rootNode.get("key").get("key").asText();
+        String datetime = rootNode.get("key").get("value").asText();
+        Update update = objectMapper.treeToValue(rootNode.get("value"), Update.class);
+
+        return new Pair<>(new Pair<>(doctor, datetime), update);
+    }
+
     // ==================== СПЕЦИАЛИЗИРОВАННЫЕ МЕТОДЫ ====================
     /**
      * Скачивает и расшифровывает обновление по полному имени файла.

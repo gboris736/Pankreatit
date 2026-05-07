@@ -181,6 +181,47 @@ public class QuestionRequestsList {
     }
 
     /**
+     * Перестраивает UI из уже загруженных данных (без запросов к облаку).
+     * Пересчитывает статус isExisting для каждой анкеты.
+     */
+    private void refreshFromExistingData() {
+        // Очищаем текущий UI
+        questionnairesContainer.getChildren().clear();
+
+        List<Questionnaire> qList = updatesModule.getQuestionnairList();
+        List<Patient> pList = updatesModule.getPatientList();
+        List<Doctor> dList = updatesModule.getDoctors();
+        List<List<CharacterizationAnketPatient>> cList = updatesModule.getCharacterizationAnketPatientList();
+
+        totalUpdates = qList.size();
+        lblCount.setText("Найдено: " + totalUpdates);
+
+        if (totalUpdates == 0) {
+            showEmptyMessage();
+            return;
+        }
+
+        DatabaseModule db = DatabaseModule.getInstance();
+
+        for (int i = 0; i < qList.size(); i++) {
+            Questionnaire q = qList.get(i);
+            Patient p = pList.get(i);
+            Doctor d = dList.get(i);
+
+            // Пересчитываем isExisting
+            boolean isExisting = false;
+            int doctorId = (d != null) ? d.getId() : -1;
+            String completionDate = q.getDateOfCompletion();
+            if (completionDate != null) {
+                Questionnaire existingQ = db.findQuestionnaireByKey(doctorId, completionDate);
+                isExisting = (existingQ != null);
+            }
+
+            createQuestionnaireCard(i, q, p, d, isExisting);
+        }
+    }
+
+    /**
      * Показ пустого сообщения
      */
     private void showEmptyMessage() {
@@ -391,19 +432,23 @@ public class QuestionRequestsList {
 
                 updatesModule.deleteUpdate(id);
                 totalUpdates--;
+                questionnairesContainer.getChildren().remove(cardBox);
 
-                // Удаляем карточку из UI через небольшую задержку
-                new Thread(() -> {
-                    try {
-                        Thread.sleep(500);
-                        Platform.runLater(() -> {
-                            questionnairesContainer.getChildren().remove(cardBox);
-                            updateCount();
-                        });
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
-                }).start();
+//                // Удаляем карточку из UI через небольшую задержку
+//                new Thread(() -> {
+//                    try {
+//                        Thread.sleep(500);
+//                        Platform.runLater(() -> {
+//                            questionnairesContainer.getChildren().remove(cardBox);
+//                            updateCount();
+//                        });
+//                    } catch (InterruptedException e) {
+//                        e.printStackTrace();
+//                    }
+//                }).start();
+
+                // Перестраиваем UI с актуальными данными и пересчитанными статусами
+                refreshFromExistingData();
             } else {
                 showNotification("Ошибка при подтверждении анкеты", false);
             }
@@ -433,19 +478,23 @@ public class QuestionRequestsList {
 
             updatesModule.deleteUpdate(id);
             totalUpdates--;
+            questionnairesContainer.getChildren().remove(cardBox);
 
-            // Удаляем карточку из UI через небольшую задержку
-            new Thread(() -> {
-                try {
-                    Thread.sleep(1000);
-                    Platform.runLater(() -> {
-                        questionnairesContainer.getChildren().remove(cardBox);
-                        updateCount();
-                    });
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-            }).start();
+//            // Удаляем карточку из UI через небольшую задержку
+//            new Thread(() -> {
+//                try {
+//                    Thread.sleep(1000);
+//                    Platform.runLater(() -> {
+//                        questionnairesContainer.getChildren().remove(cardBox);
+//                        updateCount();
+//                    });
+//                } catch (InterruptedException e) {
+//                    e.printStackTrace();
+//                }
+//            }).start();
+
+            // Перестраиваем UI с актуальными данными и пересчитанными статусами
+            refreshFromExistingData();
         }
     }
 

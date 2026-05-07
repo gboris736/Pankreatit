@@ -289,8 +289,6 @@ public class CloudStorageModule {
         int timeStart = s.length() - "yyyy_MM_dd_HH_mm_ss".length(); // 19
         String login = s.substring(0, timeStart - 1); // убираем "_" перед временем
         String time = s.substring(timeStart);
-        System.out.println(login); // user_with_underscores
-        System.out.println(time);
 
         byte[] jsonBytes = downloadFile(filePath);
         String json = new String(jsonBytes, StandardCharsets.UTF_8);

@@ -102,7 +102,7 @@ public class UpdatesModule {
                                             return processUpdate(index, fileName, update);
                                         } else {
                                             // Старый формат - открытый JSON с зашифрованным ФИО
-                                            Pair<Pair<String, String>, Update> legacyPair =
+                                            Pair<Pair<String, String>, UpdateOld> legacyPair =
                                                     getCloudStorageModule().downloadLegacyUpdate(fileName);
                                             return processLegacyUpdate(index, fileName, legacyPair);
                                         }
@@ -222,9 +222,9 @@ public class UpdatesModule {
      * Обработка одного обновления в старом формате (открытый JSON с зашифрованным ФИО)
      */
     private UpdateLoadResult processLegacyUpdate(int index, String fileName,
-                                                 Pair<Pair<String, String>, Update> legacyPair) {
+                                                 Pair<Pair<String, String>, UpdateOld> legacyPair) {
         try {
-            Update update = legacyPair.getValue();
+            UpdateOld update = legacyPair.getValue();
             String doctorLogin = legacyPair.getKey().getKey();
             String dateUpload = legacyPair.getKey().getValue();
 
@@ -232,7 +232,7 @@ public class UpdatesModule {
             String uuid = UUID.nameUUIDFromBytes(fileName.getBytes(StandardCharsets.UTF_8)).toString();
 
             Pair<Pair<String, String>, Update> entry = new Pair<>(
-                    new Pair<>(doctorLogin, dateUpload), update);
+                    new Pair<>(doctorLogin, dateUpload), new Update(update));
 
             synchronized (this) {
                 while (updatesList.size() <= index) {

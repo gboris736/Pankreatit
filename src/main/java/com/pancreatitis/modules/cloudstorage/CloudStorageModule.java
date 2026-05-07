@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.pancreatitis.models.Doctor;
 import com.pancreatitis.models.RegistrationForm;
 import com.pancreatitis.models.Update;
+import com.pancreatitis.models.UpdateOld;
 import com.pancreatitis.modules.authorization.AuthorizationModule;
 import com.pancreatitis.modules.database.DatabaseModule;
 import com.pancreatitis.modules.safety.SafetyModule;
@@ -281,18 +282,22 @@ public class CloudStorageModule {
     /**
      * Скачивает обновление в старом формате (открытый JSON с зашифрованным ФИО)
      */
-    public Pair<Pair<String, String>, Update> downloadLegacyUpdate(String fileName) throws Exception {
+    public Pair<Pair<String, String>, UpdateOld> downloadLegacyUpdate(String fileName) throws Exception {
         String filePath = UPDATE_PATH + fileName;
+
+        String s = fileName.replaceFirst("(?i)\\.json$", "");
+        int timeStart = s.length() - "yyyy_MM_dd_HH_mm_ss".length(); // 19
+        String login = s.substring(0, timeStart - 1); // убираем "_" перед временем
+        String time = s.substring(timeStart);
+        System.out.println(login); // user_with_underscores
+        System.out.println(time);
+
         byte[] jsonBytes = downloadFile(filePath);
         String json = new String(jsonBytes, StandardCharsets.UTF_8);
 
-        // Парсим старый формат: {"key":{"key":"doctor","value":"datetime"},"value":{...}}
-        JsonNode rootNode = objectMapper.readTree(json);
-        String doctor = rootNode.get("key").get("key").asText();
-        String datetime = rootNode.get("key").get("value").asText();
-        Update update = objectMapper.treeToValue(rootNode.get("value"), Update.class);
+        UpdateOld update = objectMapper.readValue(json, UpdateOld.class);
 
-        return new Pair<>(new Pair<>(doctor, datetime), update);
+        return new Pair<>(new Pair<>(login, time), update);
     }
 
     // ==================== СПЕЦИАЛИЗИРОВАННЫЕ МЕТОДЫ ====================

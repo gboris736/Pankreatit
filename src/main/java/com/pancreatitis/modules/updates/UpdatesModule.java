@@ -84,7 +84,8 @@ public class UpdatesModule {
                 for (int i = 0; i < total; i++) {
                     final int index = i;
                     final String fileName = fileNames.get(i);
-                    String login = extractLoginFromFileName(fileName);
+                    //String login = extractLoginFromFileName(fileName);
+                    String login = "dr_roman";
 
                     if (allLogins.contains(login)) {
                         CompletableFuture<UpdateLoadResult> future = CompletableFuture

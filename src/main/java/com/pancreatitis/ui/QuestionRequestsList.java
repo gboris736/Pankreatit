@@ -22,8 +22,8 @@ public class QuestionRequestsList {
 
     @FXML
     private Button btnBack;
-    @FXML
-    private Button btnConfirmAll;
+//    @FXML
+//    private Button btnConfirmAll;
     @FXML
     private Button btnRefresh;
     @FXML
@@ -78,7 +78,7 @@ public class QuestionRequestsList {
 
         // Блокируем кнопки во время загрузки
         btnRefresh.setDisable(true);
-        btnConfirmAll.setDisable(true);
+        //btnConfirmAll.setDisable(true);
 
         // Запускаем асинхронную загрузку
         updatesModule.loadAsync(new UpdateLoadCallback() {
@@ -92,7 +92,7 @@ public class QuestionRequestsList {
                         showEmptyMessage();
                         isLoading = false;
                         btnRefresh.setDisable(false);
-                        btnConfirmAll.setDisable(false);
+                        //btnConfirmAll.setDisable(false);
                     }
                 });
             }
@@ -154,7 +154,7 @@ public class QuestionRequestsList {
 
                     // Разблокируем кнопки
                     btnRefresh.setDisable(false);
-                    btnConfirmAll.setDisable(false);
+                    //btnConfirmAll.setDisable(false);
 
                     // Показываем итоговое сообщение
                     if (failCount > 0) {
@@ -173,7 +173,7 @@ public class QuestionRequestsList {
                     showLoading(false, "");
                     showNotification(error, false);
                     btnRefresh.setDisable(false);
-                    btnConfirmAll.setDisable(false);
+                    //btnConfirmAll.setDisable(false);
                     showEmptyMessage();
                 });
             }

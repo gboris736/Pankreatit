@@ -116,6 +116,13 @@ public class QuestionListTableViewTrainSetController {
         colDoctorTQ.setSortable(true);
     }
 
+    private Comparator<QuestionnaireItemTrainUI> getModifiedFirstComparator() {
+        return Comparator
+                .comparing((QuestionnaireItemTrainUI i) -> !i.isModified()) // false (изменённые) идут первыми
+                .thenComparing(i -> i.item.getDateOfCompletion(),
+                        Comparator.nullsLast(Comparator.reverseOrder()));
+    }
+
     @FXML
     private void handleMoveToTrain() {
         moveSelectedItems(rowsUQ, rowsTQ, true);
@@ -147,14 +154,11 @@ public class QuestionListTableViewTrainSetController {
             allItemsMap.put(item.item.getIdQuestionnaire(), item);
         }
 
-        toList.sort(Comparator.comparing(
-                (QuestionnaireItemTrainUI i) -> i.item.getDateOfCompletion(),
-                Comparator.nullsLast(Comparator.reverseOrder())
-        ));
+        // CHANGE: Сортируем с приоритетом изменённых
+        FXCollections.sort(toList, getModifiedFirstComparator());
 
         markAsDirty();
         refreshTables();
-        System.out.println("✅ Перемещено: " + selected.size() + " элементов");
     }
 
     private void refreshTables() {
@@ -293,10 +297,15 @@ public class QuestionListTableViewTrainSetController {
         tableViewUsualQuestion.setItems(filteredRowsUQ);
         tableViewTrainQuestion.setItems(filteredRowsTQ);
 
+        // CHANGE: Используем компаратор с приоритетом изменённых
         colDateTQ.setSortType(TableColumn.SortType.DESCENDING);
         colDateUQ.setSortType(TableColumn.SortType.DESCENDING);
         tableViewTrainQuestion.getSortOrder().add(colDateTQ);
         tableViewUsualQuestion.getSortOrder().add(colDateUQ);
+
+        // Сортируем данные с новым компаратором
+        FXCollections.sort(rowsUQ, getModifiedFirstComparator());
+        FXCollections.sort(rowsTQ, getModifiedFirstComparator());
 
         if (searchField != null) {
             searchField.setPromptText("Поиск: ФИО пациента или диагноз...");
@@ -572,7 +581,6 @@ public class QuestionListTableViewTrainSetController {
 
     private void loadData() {
         allItems = databaseModule.getAllQuestionnaireItems();
-        //trainSetModule.load();
         refreshTrainSetCache();
 
         rowsUQ.clear();
@@ -592,6 +600,10 @@ public class QuestionListTableViewTrainSetController {
             }
         }
 
+        // CHANGE: Сортируем оба списка
+        FXCollections.sort(rowsUQ, getModifiedFirstComparator());
+        FXCollections.sort(rowsTQ, getModifiedFirstComparator());
+
         tableViewTrainQuestion.refresh();
         tableViewUsualQuestion.refresh();
         updateCountLabel();
@@ -599,7 +611,6 @@ public class QuestionListTableViewTrainSetController {
     }
 
     private void reloadDataFromModules() {
-        //trainSetModule.load();
         refreshTrainSetCache();
 
         for (QuestionnaireItemTrainUI ui : allItemsMap.values()) {
@@ -615,6 +626,10 @@ public class QuestionListTableViewTrainSetController {
             if (ui.isTrain) rowsTQ.add(ui);
             else rowsUQ.add(ui);
         }
+
+        // CHANGE: Сортируем оба списка
+        FXCollections.sort(rowsUQ, getModifiedFirstComparator());
+        FXCollections.sort(rowsTQ, getModifiedFirstComparator());
 
         refreshTables();
     }

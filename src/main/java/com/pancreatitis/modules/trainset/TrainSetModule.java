@@ -13,9 +13,7 @@ import java.security.PrivateKey;
 import java.security.Signature;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -171,17 +169,40 @@ public class TrainSetModule {
         try {
             int codeDiagnosis = Integer.parseInt(questionnaire.getDiagnosis());
             long idQuestionnaire = questionnaire.getId();
-            float[] records = new float[characterizationAnketPatientLists.size() + 2];
+
+            // Максимальное количество характеристик в записи
+            final int MAX_CHARACTERISTICS = 45;
+            float[] records = new float[MAX_CHARACTERISTICS + 2]; // +1 для id, +1 для диагноза
+
+            // Индекс 0 - ID анкеты
             records[0] = idQuestionnaire;
-            for (int i = 0; i < characterizationAnketPatientLists.size(); i++) {
-                CharacterizationAnketPatient characterizationAnketPatient = characterizationAnketPatientLists.get(i);
-                if (characterizationAnketPatient.getValue() != -1) {
-                    records[i + 1] = characterizationAnketPatient.getValue();
+
+            // Создаем Map для быстрого поиска характеристик по ID
+            Map<Integer, CharacterizationAnketPatient> characterizationMap = new HashMap<>();
+            for (CharacterizationAnketPatient characterization : characterizationAnketPatientLists) {
+                characterizationMap.put(characterization.getIdCharacteristic(), characterization);
+            }
+
+            // Заполняем записи для характеристик с ID от 1 до MAX_CHARACTERISTICS
+            for (int i = 1; i <= MAX_CHARACTERISTICS; i++) {
+                CharacterizationAnketPatient characterization = characterizationMap.get(i);
+
+                if (characterization != null) {
+                    // Характеристика существует
+                    if (characterization.getValue() != -1) {
+                        records[i] = characterization.getValue();
+                    } else {
+                        records[i] = characterization.getIdValue();
+                    }
                 } else {
-                    records[i + 1] = characterizationAnketPatient.getIdValue();
+                    // Характеристика отсутствует
+                    records[i] = -1;
                 }
             }
-            records[characterizationAnketPatientLists.size() + 1] = codeDiagnosis;
+
+            // Последний индекс - код диагноза
+            records[MAX_CHARACTERISTICS + 1] = codeDiagnosis;
+
             return trainingData.addRecord(records, codeDiagnosis);
         } catch (Exception e) {
             return false;

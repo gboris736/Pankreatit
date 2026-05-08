@@ -148,10 +148,6 @@ public class QuestionRequestsList {
                     // Обновляем финальный счетчик
                     lblCount.setText("Найдено: " + successCount);
 
-                    if (successCount == 0) {
-                        showEmptyMessage();
-                    }
-
                     // Разблокируем кнопки
                     btnRefresh.setDisable(false);
                     //btnConfirmAll.setDisable(false);

@@ -402,15 +402,9 @@ public class QuestionListTableViewTrainSetController {
 
     @FXML
     private void saveChangesAsync() {
-        // CHANGE: больше не спрашиваем способ сохранения – всегда новый файл
-        // Генерируем имя с текущей меткой времени
-        String timestamp = LocalDateTime.now()
-                .format(DateTimeFormatter.ofPattern("yyyy_MM_dd_HH_mm_ss"));
-        final String newFileName = "algorithm_" + timestamp + ".txt";
-
-        Task<Boolean> saveTask = new Task<>() {
+        Task<String> saveTask = new Task<>() {
             @Override
-            protected Boolean call() throws Exception {
+            protected String call() throws Exception {
                 updateMessage("Сохранение изменений...");
 
                 // Добавление записей в обучающую выборку
@@ -429,7 +423,7 @@ public class QuestionListTableViewTrainSetController {
                 }
 
                 // Сохраняем новый файл
-                boolean saved = trainSetModule.saveChanges();   // теперь без аргументов
+                boolean saved = trainSetModule.saveChanges();
                 if (!saved) {
                     throw new RuntimeException("Не удалось записать файл.");
                 }
@@ -437,11 +431,14 @@ public class QuestionListTableViewTrainSetController {
                 // Ограничиваем количество файлов (5)
                 trainSetModule.enforceMaxFiles(5);
 
-                return true;
+                // Возвращаем актуальное имя файла
+                return trainSetModule.getCurrentFileName();
             }
         };
 
         saveTask.setOnSucceeded(e -> {
+            String actualFileName = saveTask.getValue();
+
             refreshTrainSetCache();
             for (QuestionnaireItemTrainUI ui : allItemsMap.values()) {
                 ui.originalIsTrain = ui.isTrain;
@@ -454,9 +451,9 @@ public class QuestionListTableViewTrainSetController {
             if (cmbAlgorithmFile != null) {
                 List<String> updatedFiles = LocalStorageModule.getInstance().listAlgorithmFiles();
                 cmbAlgorithmFile.getItems().setAll(updatedFiles);
-                // Устанавливаем текущее имя файла (то, которое только что создали)
-                String currentName = trainSetModule.getCurrentFileName();
-                cmbAlgorithmFile.setValue(newFileName);
+                if (actualFileName != null) {
+                    cmbAlgorithmFile.setValue(actualFileName);
+                }
             }
 
             showAlert(Alert.AlertType.INFORMATION, "Успех", "Изменения успешно сохранены!");

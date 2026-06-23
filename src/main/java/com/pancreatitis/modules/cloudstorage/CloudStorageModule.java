@@ -287,7 +287,8 @@ public class CloudStorageModule {
 
         String s = fileName.replaceFirst("(?i)\\.json$", "");
         int timeStart = s.length() - "yyyy_MM_dd_HH_mm_ss".length(); // 19
-        String login = s.substring(0, timeStart - 1); // убираем "_" перед временем
+        //String login = s.substring(0, timeStart - 1); // убираем "_" перед временем
+        String login = "dr_roman";
         String time = s.substring(timeStart);
 
         byte[] jsonBytes = downloadFile(filePath);

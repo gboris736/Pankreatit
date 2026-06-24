@@ -42,6 +42,7 @@ public class CloudStorageModule {
     private static final String UPDATE_PATH = "/update/";
     private static final String REGISTRATION_PATH = "/registration_requests/";
     private static final String ALGORITHM_FILE = "/algorithm";
+    private static final String USERS_PATH = "/users/";
 
     private final OkHttpClient httpClient;
 
@@ -55,6 +56,7 @@ public class CloudStorageModule {
         executorService.execute(() -> {
             createFolder(UPDATE_PATH);
             createFolder(REGISTRATION_PATH);
+            createFolder(USERS_PATH);
         });
     }
 
@@ -272,11 +274,21 @@ public class CloudStorageModule {
         }
     }
 
-    /**
-     * Публичный метод для скачивания содержимого файла в байтах
-     */
-    public byte[] downloadFileBytes(String path) throws Exception {
-        return downloadFile(path);
+    public boolean uploadUserWords(String login, String words) throws Exception {
+        return uploadFile(USERS_PATH + login + ".txt", words.getBytes(StandardCharsets.UTF_8));
+    }
+
+    public boolean deleteUserWords(String login) {
+        return deleteFile(USERS_PATH + login + ".txt");
+    }
+
+    public boolean checkUserWordsExists(String login) {
+        try {
+            downloadFile(USERS_PATH + login + ".txt");
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
     }
 
     /**

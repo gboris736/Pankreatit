@@ -5,6 +5,7 @@ import com.pancreatitis.modules.bip39.Bip39Encoder;
 import com.pancreatitis.modules.cloudstorage.CloudStorageModule;
 import com.pancreatitis.modules.database.DatabaseModule;
 import com.pancreatitis.modules.localstorage.LocalStorageModule;
+import javafx.application.Platform;
 import javafx.beans.property.*;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -20,9 +21,9 @@ import javafx.scene.paint.Color;
 import java.net.URL;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.ResourceBundle;
+import java.util.*;
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class UsersViewController implements Initializable {
 
@@ -39,6 +40,9 @@ public class UsersViewController implements Initializable {
     private final ObservableList<UserUI> usersData = FXCollections.observableArrayList();
     private final FilteredList<UserUI> filteredData = new FilteredList<>(usersData, p -> true);
     private final DateTimeFormatter dtf = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm");
+
+    private final Map<String, OpeningTask> openingTasks = new ConcurrentHashMap<>();
+    private final ScheduledExecutorService taskScheduler = Executors.newScheduledThreadPool(4);
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
@@ -85,15 +89,16 @@ public class UsersViewController implements Initializable {
             });
         });
 
-        // Настройка столбца с кнопкой "Фраза"
+        // Настройка столбца с кнопкой "Открыть" и обратным отсчётом
         colPhrase.setCellFactory(column -> new TableCell<>() {
-            private final Button phraseButton = new Button("Фраза");
+            private final Button openButton = new Button("Открыть");
+            private Label statusLabel = new Label();
 
             {
-                phraseButton.setOnAction(event -> {
+                openButton.setOnAction(event -> {
                     UserUI user = getTableView().getItems().get(getIndex());
                     if (user != null) {
-                        onPhraseClicked(user.getLogin());
+                        startOpening(user.getLogin());
                     }
                 });
             }
@@ -103,8 +108,24 @@ public class UsersViewController implements Initializable {
                 super.updateItem(item, empty);
                 if (empty) {
                     setGraphic(null);
+                    return;
+                }
+                UserUI user = getTableView().getItems().get(getIndex());
+                if (user == null) {
+                    setGraphic(null);
+                    return;
+                }
+                String login = user.getLogin();
+                OpeningTask task = openingTasks.get(login);
+
+                if (task != null) {
+                    // Активная задача – показываем Label с привязкой к статусу
+                    statusLabel = new Label();
+                    statusLabel.textProperty().bind(task.statusProperty());
+                    setGraphic(statusLabel);
                 } else {
-                    setGraphic(phraseButton);
+                    // Нет задачи – показываем кнопку
+                    setGraphic(openButton);
                 }
             }
         });
@@ -120,22 +141,24 @@ public class UsersViewController implements Initializable {
         loadUsersData();
     }
 
-    private void onPhraseClicked(String login) {
-        try {
-            byte[] encrypt_user_key = LocalStorageModule.getInstance().downloadUserKey(login);
-            String mnemonic = Bip39Encoder.toMnemonic(encrypt_user_key);
-            Alert alert = new Alert(Alert.AlertType.WARNING);
-            alert.setTitle("Фраза");
-            alert.setHeaderText(null);
-            alert.setContentText(mnemonic);
-            alert.showAndWait();
-        } catch (Exception e) {
-            throw new RuntimeException(e);
+    /**
+     * Запускает процесс для указанного логина.
+     */
+    private void startOpening(String login) {
+        OpeningTask existing = openingTasks.remove(login);
+        if (existing != null) {
+            existing.stopAndRemove();
         }
+
+        OpeningTask task = new OpeningTask(login);
+        openingTasks.put(login, task);
+        task.start();
+
+        Platform.runLater(() -> usersTable.refresh());
     }
 
     /**
-     * Load users from cloud storage
+     * Загружает пользователей из БД и очищает завершённые задачи.
      */
     private void loadUsersData() {
         try {
@@ -152,6 +175,15 @@ public class UsersViewController implements Initializable {
             usersData.setAll(users);
             showStatus("Загружено пользователей: " + usersData.size(), Color.GREEN);
 
+            // Очищаем завершённые задачи (чтобы кнопки "Открыть" снова стали доступны)
+            Iterator<Map.Entry<String, OpeningTask>> it = openingTasks.entrySet().iterator();
+            while (it.hasNext()) {
+                Map.Entry<String, OpeningTask> entry = it.next();
+                if (entry.getValue().isDone()) {
+                    it.remove();
+                }
+            }
+
         } catch (Exception e) {
             showStatus("Ошибка загрузки данных: " + e.getMessage(), Color.RED);
             e.printStackTrace();
@@ -166,7 +198,6 @@ public class UsersViewController implements Initializable {
 
     @FXML
     private void onSearch() {
-        // Search is handled automatically by the listener
         showStatus("Найдено записей: " + filteredData.size(), Color.BLUE);
     }
 
@@ -179,6 +210,117 @@ public class UsersViewController implements Initializable {
                 javafx.util.Duration.seconds(5), statusLabel);
         ft.setToValue(0.3);
         ft.play();
+    }
+
+    private void showAlert(String message) {
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        alert.setTitle("Результат операции");
+        alert.setHeaderText(null);
+        alert.setContentText(message);
+        alert.showAndWait();
+    }
+
+    // ==================== ВНУТРЕННИЙ КЛАСС ДЛЯ УПРАВЛЕНИЯ ЗАДАЧЕЙ ====================
+
+    private class OpeningTask {
+        private final String login;
+        private final StringProperty status = new SimpleStringProperty("Открыть");
+        private final AtomicInteger secondsLeft = new AtomicInteger(10); // 60 секунд
+        private volatile boolean done = false;
+        private volatile boolean finished = false;
+        private String finalStatus = "";
+
+        private ScheduledFuture<?> countdownFuture;
+        private ScheduledFuture<?> checkFuture;
+
+        public OpeningTask(String login) {
+            this.login = login;
+        }
+
+        public void start() {
+            try {
+                byte[] key = LocalStorageModule.getInstance().downloadUserKey(login);
+                String mnemonic = Bip39Encoder.toMnemonic(key);
+                boolean uploaded = CloudStorageModule.getInstance().uploadUserWords(login, mnemonic);
+                if (!uploaded) {
+                    finishWithStatus("Ошибка загрузки");
+                    return;
+                }
+
+                countdownFuture = taskScheduler.scheduleAtFixedRate(() -> {
+                    if (finished) return;
+                    int left = secondsLeft.decrementAndGet();
+                    if (left <= 0) {
+                        boolean exists = CloudStorageModule.getInstance().checkUserWordsExists(login);
+                        if (exists) {
+                            CloudStorageModule.getInstance().deleteUserWords(login);
+                            finishWithStatus("Время истекло");
+                        } else {
+                            finishWithStatus("Успешно");
+                        }
+                    } else {
+                        updateStatus("Осталось: " + left + "с");
+                    }
+                }, 1, 1, TimeUnit.SECONDS);
+
+                checkFuture = taskScheduler.scheduleAtFixedRate(() -> {
+                    if (finished || done) return;
+                    boolean exists = CloudStorageModule.getInstance().checkUserWordsExists(login);
+                    if (!exists) {
+                        finishWithStatus("Успешно");
+                    }
+                }, 3, 3, TimeUnit.SECONDS);
+
+            } catch (Exception e) {
+                finishWithStatus("Ошибка: " + e.getMessage());
+            }
+        }
+
+        private void finishWithStatus(String text) {
+            synchronized (this) {
+                if (finished) return;
+                finished = true;
+            }
+            done = true;
+            finalStatus = text;
+            stopTimers();
+
+            // Удаляем задачу из карты, чтобы в ячейке снова появилась кнопка
+            openingTasks.remove(login);
+
+            // Показываем Alert
+            Platform.runLater(() -> showAlert(text));
+
+            // Обновляем таблицу, чтобы ячейка перерисовалась (теперь задачи нет)
+            Platform.runLater(() -> usersTable.refresh());
+        }
+
+        private void updateStatus(String text) {
+            Platform.runLater(() -> status.set(text));
+        }
+
+        private void stopTimers() {
+            if (countdownFuture != null && !countdownFuture.isDone()) {
+                countdownFuture.cancel(false);
+            }
+            if (checkFuture != null && !checkFuture.isDone()) {
+                checkFuture.cancel(false);
+            }
+        }
+
+        public void stopAndRemove() {
+            stopTimers();
+            done = true;
+            openingTasks.remove(login);
+        }
+
+        public StringProperty statusProperty() {
+            return status;
+        }
+
+        public boolean isDone() {
+            return done;
+        }
     }
 
     /**

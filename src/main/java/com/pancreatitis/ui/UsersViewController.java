@@ -225,7 +225,7 @@ public class UsersViewController implements Initializable {
     private class OpeningTask {
         private final String login;
         private final StringProperty status = new SimpleStringProperty("Открыть");
-        private final AtomicInteger secondsLeft = new AtomicInteger(10); // 60 секунд
+        private final AtomicInteger secondsLeft = new AtomicInteger(60); // 60 секунд
         private volatile boolean done = false;
         private volatile boolean finished = false;
         private String finalStatus = "";

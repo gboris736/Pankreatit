@@ -3,6 +3,7 @@ package com.pancreatitis.modules.questionnairemanager;
 import com.pancreatitis.models.CharacterizationAnketPatient;
 import com.pancreatitis.models.Patient;
 import com.pancreatitis.models.Questionnaire;
+import com.pancreatitis.models.User;
 import com.pancreatitis.modules.database.DatabaseModule;
 
 import java.util.List;
@@ -26,10 +27,12 @@ public class QuestionnaireManagerModule {
         return instance;
     }
 
-    // переделать
     public boolean saveQuestionnaire(Questionnaire questionnaire, Patient patient, List<CharacterizationAnketPatient> characterizationAnketPatients) {
         try {
             databaseModule.beginTransaction();
+
+            questionnaire.setIdExpert(User.getInstance().getId());
+            if (questionnaire.getIdDoctor() == -1) questionnaire.setIdDoctor(User.getInstance().getId());
 
             long idPatient = questionnaire.getIdPatient();
             if (idPatient == -1) {

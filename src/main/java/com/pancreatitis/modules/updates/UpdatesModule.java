@@ -218,6 +218,7 @@ public class UpdatesModule {
             questionnaire.setId(-1);
             questionnaire.setIdPatient(-1);
             questionnaire.setIdDoctor(doctor.getId());
+            questionnaire.setIdExpert(User.getInstance().getId());
             questionnairList.set(index, questionnaire);
 
             List<CharacterizationAnketPatient> characteristics = dto.getCharacteristicValues();
@@ -279,6 +280,7 @@ public class UpdatesModule {
             questionnaire.setId(-1);
             questionnaire.setIdPatient(-1);
             questionnaire.setIdDoctor(doctor.getId());
+            questionnaire.setIdExpert(User.getInstance().getId());
             questionnairList.set(index, questionnaire);
 
             List<CharacterizationAnketPatient> characteristics = dto.getCharacteristicValues();

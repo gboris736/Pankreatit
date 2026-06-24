@@ -120,6 +120,45 @@ public class DatabaseModule {
         return null;
     }
 
+    // ========== Delete doctor with all related data ==========
+    public void deleteDoctor(int doctorId) throws SQLException {
+        String deleteCharSql = "DELETE FROM characterization_anket_patient WHERE id_anket IN (SELECT id FROM ankets WHERE id_doctor = ? OR id_expert = ?)";
+        String deleteAnketsSql = "DELETE FROM ankets WHERE id_doctor = ?";
+        String updateAnketsExpertSql = "UPDATE ankets SET id_expert = NULL WHERE id_expert = ?";
+        String deleteDoctorSql = "DELETE FROM doctors WHERE id = ?";
+
+        try (Connection conn = DriverManager.getConnection(url)) {
+            conn.setAutoCommit(false);
+            try (PreparedStatement pstmt1 = conn.prepareStatement(deleteCharSql);
+                 PreparedStatement pstmt2 = conn.prepareStatement(deleteAnketsSql);
+                 PreparedStatement pstmt3 = conn.prepareStatement(updateAnketsExpertSql);
+                 PreparedStatement pstmt4 = conn.prepareStatement(deleteDoctorSql)) {
+
+                // 1. Удалить все characterization для анкет, где доктор фигурирует как врач или эксперт
+                pstmt1.setInt(1, doctorId);
+                pstmt1.setInt(2, doctorId);
+                pstmt1.executeUpdate();
+
+                // 2. Удалить анкеты, где доктор является лечащим врачом
+                pstmt2.setInt(1, doctorId);
+                pstmt2.executeUpdate();
+
+                // 3. Обнулить эксперта в анкетах, где доктор был экспертом
+                pstmt3.setInt(1, doctorId);
+                pstmt3.executeUpdate();
+
+                // 4. Удалить запись о докторе
+                pstmt4.setInt(1, doctorId);
+                pstmt4.executeUpdate();
+
+                conn.commit();
+            } catch (SQLException e) {
+                conn.rollback();
+                throw e;
+            }
+        }
+    }
+
     public long insertDoctor(Doctor doctor) {
         String sql = "INSERT INTO doctors (login, fio, phone, email, status, created_at) VALUES (?, ?, ?, ?, ?, ?)";
 

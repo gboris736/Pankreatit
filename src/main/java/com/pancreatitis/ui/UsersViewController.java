@@ -13,16 +13,23 @@ import javafx.collections.transformation.FilteredList;
 import javafx.collections.transformation.SortedList;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
+import javafx.geometry.Pos;
+import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.control.cell.TextFieldTableCell;
+import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
+import javafx.stage.Modality;
+import javafx.stage.Stage;
+import javafx.util.Duration;
 
 import java.net.URL;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class UsersViewController implements Initializable {
@@ -34,6 +41,7 @@ public class UsersViewController implements Initializable {
     @FXML private TableColumn<UserUI, String> colPhoneNumber;
     @FXML private TableColumn<UserUI, Boolean> colRole;
     @FXML private TableColumn<UserUI, Void> colPhrase;
+    @FXML private TableColumn<UserUI, Void> colDelete; // новая колонка
     @FXML private TextField searchField;
     @FXML private Label statusLabel;
 
@@ -43,6 +51,7 @@ public class UsersViewController implements Initializable {
 
     private final Map<String, OpeningTask> openingTasks = new ConcurrentHashMap<>();
     private final ScheduledExecutorService taskScheduler = Executors.newScheduledThreadPool(4);
+    private final ExecutorService deleteExecutor = Executors.newSingleThreadExecutor(); // для удаления
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
@@ -119,13 +128,44 @@ public class UsersViewController implements Initializable {
                 OpeningTask task = openingTasks.get(login);
 
                 if (task != null) {
-                    // Активная задача – показываем Label с привязкой к статусу
                     statusLabel = new Label();
                     statusLabel.textProperty().bind(task.statusProperty());
                     setGraphic(statusLabel);
                 } else {
-                    // Нет задачи – показываем кнопку
                     setGraphic(openButton);
+                }
+            }
+        });
+
+        // Настройка столбца "Удалить"
+        colDelete.setCellFactory(column -> new TableCell<>() {
+            private final Button deleteButton = new Button("Удалить");
+
+            {
+                deleteButton.setOnAction(event -> {
+                    UserUI user = getTableView().getItems().get(getIndex());
+                    if (user != null) {
+                        // Показываем диалог подтверждения с обратным отсчётом
+                        boolean confirmed = confirmDeleteWithCountdown(
+                                "Удалить пользователя " + user.getLogin() + "?",
+                                10 // секунд
+                        );
+                        if (confirmed) {
+                            deleteUser(user);
+                        }
+                    }
+                });
+                // Стиль кнопки (красный)
+                deleteButton.setStyle("-fx-background-color: #dc3545; -fx-text-fill: white;");
+            }
+
+            @Override
+            protected void updateItem(Void item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty) {
+                    setGraphic(null);
+                } else {
+                    setGraphic(deleteButton);
                 }
             }
         });
@@ -139,6 +179,80 @@ public class UsersViewController implements Initializable {
 
         // Load data
         loadUsersData();
+
+        // Регистрируем shutdown для executor'ов
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            deleteExecutor.shutdownNow();
+            taskScheduler.shutdownNow();
+        }));
+    }
+
+    /**
+     * Универсальный диалог подтверждения с обратным отсчётом.
+     * Блокирует весь интерфейс (модальный).
+     *
+     * @param message  сообщение
+     * @param seconds  количество секунд до автоматического подтверждения
+     * @return true, если подтверждено (таймер дошёл до нуля), false при отмене
+     */
+    private boolean confirmDeleteWithCountdown(String message, int seconds) {
+        AtomicBoolean confirmed = new AtomicBoolean(false);
+        Stage dialogStage = new Stage();
+        dialogStage.initModality(Modality.APPLICATION_MODAL);
+        dialogStage.setTitle("Подтверждение удаления");
+        dialogStage.setResizable(false);
+
+        VBox root = new VBox(15);
+        root.setAlignment(Pos.CENTER);
+        root.setStyle("-fx-padding: 20; -fx-background-color: #f0f0f0;");
+
+        Label messageLabel = new Label(message);
+        messageLabel.setStyle("-fx-font-size: 14px; -fx-font-weight: bold;");
+
+        Label countdownLabel = new Label("Осталось: " + seconds + " с");
+        countdownLabel.setStyle("-fx-font-size: 18px; -fx-text-fill: #d9534f;");
+
+        Button cancelButton = new Button("Отменить");
+        cancelButton.setStyle("-fx-background-color: #6c757d; -fx-text-fill: white; -fx-font-size: 14px;");
+        cancelButton.setPrefWidth(120);
+
+        root.getChildren().addAll(messageLabel, countdownLabel, cancelButton);
+
+        Scene scene = new Scene(root, 400, 200);
+        dialogStage.setScene(scene);
+
+        // Таймер
+        AtomicInteger remaining = new AtomicInteger(seconds);
+        javafx.animation.Timeline timeline = new javafx.animation.Timeline(
+                new javafx.animation.KeyFrame(Duration.seconds(1), event -> {
+                    int left = remaining.decrementAndGet();
+                    if (left <= 0) {
+                        // Время вышло — закрываем диалог и подтверждаем
+                        dialogStage.close();
+                        confirmed.set(true);
+                    } else {
+                        countdownLabel.setText("Осталось: " + left + " с");
+                    }
+                })
+        );
+        timeline.setCycleCount(seconds); // количество кадров
+        timeline.play();
+
+        // Обработчик отмены
+        cancelButton.setOnAction(e -> {
+            timeline.stop();
+            dialogStage.close();
+            confirmed.set(false);
+        });
+
+        // Если пользователь закрыл окно крестиком — считаем отменой
+        dialogStage.setOnCloseRequest(e -> {
+            timeline.stop();
+            confirmed.set(false);
+        });
+
+        dialogStage.showAndWait();
+        return confirmed.get();
     }
 
     /**
@@ -218,6 +332,40 @@ public class UsersViewController implements Initializable {
         alert.setHeaderText(null);
         alert.setContentText(message);
         alert.showAndWait();
+    }
+
+    /**
+     * Удаление пользователя (выполняется в фоновом потоке).
+     */
+    private void deleteUser(UserUI user) {
+        String login = user.getLogin();
+        deleteExecutor.submit(() -> {
+            try {
+                DatabaseModule db = DatabaseModule.getInstance();
+                Doctor doctor = db.getDoctorByLogin(login);
+                if (doctor == null) {
+                    Platform.runLater(() -> showStatus("Пользователь не найден", Color.RED));
+                    return;
+                }
+                int doctorId = doctor.getId();
+
+                // Удаление из БД (анкеты, обнуление эксперта, сам доктор)
+                db.deleteDoctor(doctorId);
+
+                // Удаление локальной папки пользователя
+                LocalStorageModule.getInstance().deleteUserData(login);
+
+                Platform.runLater(() -> {
+                    loadUsersData(); // обновить таблицу
+                    showStatus("Пользователь " + login + " успешно удалён", Color.GREEN);
+                });
+            } catch (Exception e) {
+                Platform.runLater(() -> {
+                    showStatus("Ошибка при удалении: " + e.getMessage(), Color.RED);
+                });
+                e.printStackTrace();
+            }
+        });
     }
 
     // ==================== ВНУТРЕННИЙ КЛАСС ДЛЯ УПРАВЛЕНИЯ ЗАДАЧЕЙ ====================

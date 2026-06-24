@@ -32,7 +32,8 @@
             <TableColumn fx:id="colEmail" text="Email" prefWidth="200" />
             <TableColumn fx:id="colPhoneNumber" text="Телефон" prefWidth="150" />
             <TableColumn fx:id="colRole" text="Роль" prefWidth="120" />
-            <TableColumn fx:id="colPhrase" text="Действие" prefWidth="80" />
+            <TableColumn fx:id="colPhrase" text="Авторизация" prefWidth="80" />
+            <TableColumn fx:id="colDelete" text="Удалить" prefWidth="80" />
         </columns>
         <columnResizePolicy>
             <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />

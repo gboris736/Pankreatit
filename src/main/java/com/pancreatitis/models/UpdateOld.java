@@ -3,20 +3,9 @@ package com.pancreatitis.models;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-public class Update {
+public class UpdateOld {
     private Patient patient;
     private QuestionnaireDTO questionnaireDTO;
-    private String login;
-    private String dateUpload;
-
-    public Update(){
-
-    }
-
-    public Update(UpdateOld update) {
-        this.patient = update.getPatient();
-        this.questionnaireDTO = update.getQuestionnaireDTO();
-    }
 
     public Patient getPatient() {
         return patient;
@@ -24,22 +13,6 @@ public class Update {
 
     public void setPatient(Patient patient) {
         this.patient = patient;
-    }
-
-    public String getLogin() {
-        return login;
-    }
-
-    public void setLogin(String login) {
-        this.login = login;
-    }
-
-    public String getDateUpload() {
-        return dateUpload;
-    }
-
-    public void setDateUpload(String dateUpload) {
-        this.dateUpload = dateUpload;
     }
 
     public QuestionnaireDTO getQuestionnaireDTO() {
@@ -55,8 +28,8 @@ public class Update {
         return mapper.writeValueAsString(this);
     }
 
-    public static Update fromJson(String json) throws JsonProcessingException {
+    public static UpdateOld fromJson(String json) throws JsonProcessingException {
         ObjectMapper mapper = new ObjectMapper();
-        return mapper.readValue(json, Update.class);
+        return mapper.readValue(json, UpdateOld.class);
     }
 }

@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.pancreatitis.models.Doctor;
 import com.pancreatitis.models.RegistrationForm;
 import com.pancreatitis.models.Update;
+import com.pancreatitis.models.UpdateOld;
 import com.pancreatitis.modules.authorization.AuthorizationModule;
 import com.pancreatitis.modules.database.DatabaseModule;
 import com.pancreatitis.modules.safety.SafetyModule;
@@ -269,6 +270,33 @@ public class CloudStorageModule {
             System.err.println("Ошибка при удалении файла " + path + ": " + e.getMessage());
             return false;
         }
+    }
+
+    /**
+     * Публичный метод для скачивания содержимого файла в байтах
+     */
+    public byte[] downloadFileBytes(String path) throws Exception {
+        return downloadFile(path);
+    }
+
+    /**
+     * Скачивает обновление в старом формате (открытый JSON с зашифрованным ФИО)
+     */
+    public Pair<Pair<String, String>, UpdateOld> downloadLegacyUpdate(String fileName) throws Exception {
+        String filePath = UPDATE_PATH + fileName;
+
+        String s = fileName.replaceFirst("(?i)\\.json$", "");
+        int timeStart = s.length() - "yyyy_MM_dd_HH_mm_ss".length(); // 19
+        //String login = s.substring(0, timeStart - 1); // убираем "_" перед временем
+        String login = "dr_roman";
+        String time = s.substring(timeStart);
+
+        byte[] jsonBytes = downloadFile(filePath);
+        String json = new String(jsonBytes, StandardCharsets.UTF_8);
+
+        UpdateOld update = objectMapper.readValue(json, UpdateOld.class);
+
+        return new Pair<>(new Pair<>(login, time), update);
     }
 
     // ==================== СПЕЦИАЛИЗИРОВАННЫЕ МЕТОДЫ ====================

@@ -38,11 +38,13 @@ public class CloudStorageModule {
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     // Константы для путей
-    //private static final String USERS_PATH = "/users/";
     private static final String UPDATE_PATH = "/update/";
     private static final String REGISTRATION_PATH = "/registration_requests/";
     private static final String ALGORITHM_FILE = "/algorithm";
     private static final String USERS_PATH = "/users/";
+    private static final String FETCH_UPLOAD_PATH = "/fetch/upload/";
+    private static final String FETCH_DOWNLOAD_PATH = "/fetch/download/";
+    private static final String FETCH_REQUESTS_PATH = "/fetch/requests/";
 
     private final OkHttpClient httpClient;
 
@@ -57,6 +59,9 @@ public class CloudStorageModule {
             createFolder(UPDATE_PATH);
             createFolder(REGISTRATION_PATH);
             createFolder(USERS_PATH);
+            createFolder(FETCH_UPLOAD_PATH);
+            createFolder(FETCH_DOWNLOAD_PATH);
+            createFolder(FETCH_REQUESTS_PATH);
         });
     }
 
@@ -147,7 +152,7 @@ public class CloudStorageModule {
     /**
      * Универсальный метод для скачивания файла
      */
-    private byte[] downloadFile(String path) throws Exception {
+    public byte[] downloadFile(String path) throws Exception {
         String downloadUrl = getResourceUrl(path, "download", false);
         if (downloadUrl == null) {
             throw new FileNotFoundException("File not found: " + path);
@@ -251,7 +256,7 @@ public class CloudStorageModule {
     /**
      * Универсальный метод для удаления файла
      */
-    private boolean deleteFile(String path) {
+    public boolean deleteFile(String path) {
         try {
             String encodedPath = URLEncoder.encode(path, StandardCharsets.UTF_8.name());
             String url = API_URL + "?path=" + encodedPath + "&permanently=true";
@@ -345,6 +350,20 @@ public class CloudStorageModule {
      */
     public boolean deleteUpdateFile(String fileName) {
         return deleteFile(UPDATE_PATH + fileName);
+    }
+
+    // ==================== МЕТОДЫ ДЛЯ АРХИВОВ ====================
+
+    public List<String> listUploadFiles() throws Exception {
+        return getFileNamesInFolder(FETCH_UPLOAD_PATH, item -> item.getName().endsWith(".zip.enc"));
+    }
+
+    public List<String> listRequestFiles() throws Exception {
+        return getFileNamesInFolder(FETCH_REQUESTS_PATH, item -> item.getName().endsWith(".req"));
+    }
+
+    public boolean uploadFileToDownload(String fileName, byte[] data) throws Exception {
+        return uploadFile(FETCH_DOWNLOAD_PATH + fileName, data);
     }
 
     // ==================== МЕТОДЫ ДЛЯ РЕГИСТРАЦИИ ====================

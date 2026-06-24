@@ -379,4 +379,46 @@ public class LocalStorageModule {
         }
         return fileOrDirectory.delete();
     }
+
+    public String findArchiveFileNameInUserDir(String login) {
+        try {
+            File userDir = new File(getFolder(USERS_DIR), login);
+            if (!userDir.exists() || !userDir.isDirectory()) return null;
+
+            File[] archives = userDir.listFiles((dir, name) -> name.endsWith(".zip.enc"));
+            if (archives == null || archives.length == 0) return null;
+
+            return archives[0].getName();
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    public boolean saveArchive(String login, String fileName, byte[] data) throws Exception {
+        Callable<Boolean> task = () -> {
+            File userFolder = new File(getFolder(USERS_DIR), login);
+            File archiveFile = new File(userFolder, fileName);
+            return writeFile(archiveFile, data);
+        };
+        return executorService.submit(task).get();
+    }
+
+
+    public boolean deleteArchive(String login, String fileName) throws Exception {
+        Callable<Boolean> task = () -> {
+            File userFolder = new File(getFolder(USERS_DIR), login);
+            File archiveFile = new File(userFolder, fileName);
+            return archiveFile.exists() && archiveFile.delete();
+        };
+        return executorService.submit(task).get();
+    }
+
+    public byte[] readArchive(String login, String fileName) throws Exception {
+        Callable<byte[]> task = () -> {
+            File userFolder = new File(getFolder(USERS_DIR), login);
+            File archiveFile = new File(userFolder, fileName);
+            return readFileAsBytes(archiveFile);
+        };
+        return executorService.submit(task).get();
+    }
 }

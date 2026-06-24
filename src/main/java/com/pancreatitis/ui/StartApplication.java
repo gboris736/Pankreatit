@@ -1,5 +1,6 @@
 package com.pancreatitis.ui;
 
+import com.pancreatitis.modules.backgroundsync.BackgroundSyncModule;
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
@@ -16,15 +17,17 @@ public class StartApplication extends Application {
         Scene scene = new Scene(fxmlLoader.load(), 320, 240);
         scene.getStylesheets().add(StartApplication.class.getResource("fxml/css/style.css").toExternalForm());
 
-
         stage.setTitle("Крутое Название");
-
         stage.centerOnScreen();
-
         //stage.setFullScreen(true);
         stage.setMaximized(true);
-
         stage.setScene(scene);
+
+        stage.setOnShown(e -> BackgroundSyncModule.getInstance().start());
+        stage.setOnCloseRequest(e -> {
+            BackgroundSyncModule.getInstance().stop();
+        });
+
         stage.show();
     }
 }

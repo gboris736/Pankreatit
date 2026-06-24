@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox alignment="CENTER" prefHeight="199.0" prefWidth="316.0" spacing="10" xmlns="http://javafx.com/javafx/17.0.12" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.pancreatitis.ui.LoginController">
+    <Label style="-fx-font-size: 18px;" text="Вход в систему" />
+    <TextField fx:id="loginField" maxWidth="200" promptText="Логин" />
+    <PasswordField fx:id="passwordField" maxWidth="200" promptText="Пароль" />
+    <Button maxWidth="200" onAction="#handleLogin" text="Войти" />
+    <Label fx:id="errorLabel" maxWidth="200" textFill="red" wrapText="true" />
+</VBox>

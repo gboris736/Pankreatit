@@ -8,9 +8,9 @@
 
     <top>
         <HBox spacing="10" style="-fx-padding: 8; -fx-background-color: #353CFF; -fx-alignment: center-left;">
-            <Label style="-fx-font-size:16; -fx-font-weight:bold;" styleClass="mainLabel" text="Административная панель" />
+            <Label style="-fx-font-size:16; -fx-font-weight:bold;" styleClass="mainLabel" text="Административная панель" textFill="WHITE" />
             <Region HBox.hgrow="ALWAYS" />
-            <Label id="userNameLabel" fx:id="userNameLabel" text="Иван" />
+            <Label id="userNameLabel" fx:id="userNameLabel" text="---" textFill="WHITE" />
             <ImageView fx:id="userAvatar" fitHeight="36" fitWidth="36" preserveRatio="true" />
         </HBox>
     </top>

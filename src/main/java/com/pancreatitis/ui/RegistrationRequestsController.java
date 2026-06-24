@@ -119,6 +119,8 @@ public class RegistrationRequestsController {
 
         if (confirm.showAndWait().orElse(ButtonType.CANCEL) == ButtonType.OK) {
             if (RegistrationModule.getInstance().checkRegistrationRequest(form)) {
+                RegistrationModule registrationModule = RegistrationModule.getInstance();
+                registrationModule.rejectRegistrationRequest(form);
                 showStatus("Заявка отклонена и удалена из списка: " + form.getLogin() + ". Данный логин уже занят");
             } else {
                 RegistrationModule registrationModule = RegistrationModule.getInstance();

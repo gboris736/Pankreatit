@@ -42,8 +42,12 @@ public class RegistrationModule {
         return cloudStorageModule;
     }
 
-    public boolean submitRegistrationRequest(RegistrationForm registrationForm) throws Exception {
-        return getCloudStorageModule().uploadRegistrationRequest(registrationForm);
+    public boolean checkRegistrationRequest(RegistrationForm registrationForm){
+        try {
+            return getLocalStorageModule().isUserFolderExists(registrationForm.getLogin());
+        } catch (Exception e) {
+            return false;
+        }
     }
     public boolean acceptRegistrationRequest(RegistrationForm registrationForm) {
         try {

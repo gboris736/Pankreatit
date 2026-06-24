@@ -368,12 +368,6 @@ public class CloudStorageModule {
 
     // ==================== МЕТОДЫ ДЛЯ РЕГИСТРАЦИИ ====================
 
-    public boolean uploadRegistrationRequest(RegistrationForm registrationForm) throws Exception {
-        String jsonData = registrationForm.toJson();
-        String fileName = registrationForm.getLogin() + ".json";
-        return uploadFile(REGISTRATION_PATH + fileName, jsonData.getBytes(StandardCharsets.UTF_8));
-    }
-
     public RegistrationForm downloadRegistrationForm(String login) {
         try {
             return downloadAndParseJson(REGISTRATION_PATH + login, RegistrationForm.class);

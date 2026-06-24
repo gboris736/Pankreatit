@@ -118,11 +118,15 @@ public class RegistrationRequestsController {
         confirm.setHeaderText("Одобрить заявку пользователя " + form.getLogin() + "?");
 
         if (confirm.showAndWait().orElse(ButtonType.CANCEL) == ButtonType.OK) {
-            RegistrationModule registrationModule = RegistrationModule.getInstance();
-            registrationModule.acceptRegistrationRequest(form);
+            if (RegistrationModule.getInstance().checkRegistrationRequest(form)) {
+                showStatus("Заявка отклонена и удалена из списка: " + form.getLogin() + ". Данный логин уже занят");
+            } else {
+                RegistrationModule registrationModule = RegistrationModule.getInstance();
+                registrationModule.acceptRegistrationRequest(form);
+                showStatus("Заявка одобрена и удалена из списка: " + form.getLogin());
+            }
 
             registrationList.remove(form);
-            showStatus("Заявка одобрена и удалена из списка: " + form.getLogin());
         } else {
             showStatus("Одобрение отменено: " + form.getLogin());
         }

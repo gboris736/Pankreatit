@@ -101,7 +101,6 @@ public class QuestionListTableViewController {
         for (int i = 0; i < rows.size(); i++) {
             if (rows.get(i).getIdQuestionnaire() == id) {
                 rows.remove(i);
-                System.out.println("yes!!!");
                 updateCountLabel(); // обновляем счётчик
                 break;
             }

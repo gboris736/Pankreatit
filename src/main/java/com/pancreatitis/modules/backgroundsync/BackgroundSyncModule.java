@@ -11,7 +11,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class BackgroundSyncModule {
-    private static final Logger LOGGER = Logger.getLogger(BackgroundSyncModule.class.getName());
     private static BackgroundSyncModule instance;
     private ScheduledExecutorService scheduler;
     private final long checkIntervalMinutes = 30;
@@ -28,14 +27,11 @@ public class BackgroundSyncModule {
         scheduler = Executors.newSingleThreadScheduledExecutor();
         scheduler.scheduleAtFixedRate(this::checkUploadFolder, 0, checkIntervalMinutes, TimeUnit.MINUTES);
         scheduler.scheduleAtFixedRate(this::checkRequestFolder, 0, checkIntervalMinutes, TimeUnit.MINUTES);
-        LOGGER.info("BackgroundSyncModule started");
     }
 
     public void stop() {
         if (scheduler != null) {
             scheduler.shutdownNow();
-            try { if (!scheduler.awaitTermination(5, TimeUnit.SECONDS)) LOGGER.warning("Scheduler shutdown timeout"); }
-            catch (InterruptedException e) { Thread.currentThread().interrupt(); }
             scheduler = null;
         }
     }
@@ -61,11 +57,9 @@ public class BackgroundSyncModule {
                 if (saved) {
                     cloud.deleteFile("/fetch/upload/" + fileName);
                     localStorage.deleteArchive(login, pref_filename);
-                    LOGGER.info("Downloaded and saved archive for " + login);
                 }
             }
         } catch (Exception e) {
-            LOGGER.log(Level.SEVERE, "checkUploadFolder error", e);
         }
     }
 
@@ -85,18 +79,15 @@ public class BackgroundSyncModule {
 
                 byte[] archive = localStorage.readArchive(login, filename);
                 if (archive == null) {
-                    LOGGER.warning("No local archive for " + login);
                     continue;
                 }
 
                 boolean uploaded = cloud.uploadFileToDownload(filename, archive);
                 if (uploaded) {
                     cloud.deleteFile("/fetch/requests/" + reqFile);
-                    LOGGER.info("Uploaded archive for " + login + " to fetch/download");
                 }
             }
         } catch (Exception e) {
-            LOGGER.log(Level.SEVERE, "checkRequestFolder error", e);
         }
     }
 

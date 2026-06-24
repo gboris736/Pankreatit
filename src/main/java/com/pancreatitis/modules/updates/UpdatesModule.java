@@ -16,6 +16,8 @@ import java.security.NoSuchAlgorithmException;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class UpdatesModule {
     private static CloudStorageModule cloudStorageModule;
@@ -28,6 +30,14 @@ public class UpdatesModule {
     private List<Pair<Pair<String, String>, Update>> updatesList = new ArrayList<>();
     private List<String> updateUuids = new ArrayList<>();
     private static UpdatesModule instance;
+
+    private static final Pattern OLD_PATTERN = Pattern.compile(
+            "^(.+)_update_(\\d{4}_\\d{2}_\\d{2}_\\d{2}_\\d{2}_\\d{2})\\.json$"
+    );
+
+    private static final Pattern NEW_PATTERN = Pattern.compile(
+            "^(.+)_([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})\\.json$"
+    );
 
     private ExecutorService processingExecutor;
 
@@ -84,21 +94,26 @@ public class UpdatesModule {
                 for (int i = 0; i < total; i++) {
                     final int index = i;
                     final String fileName = fileNames.get(i);
-                    //String login = extractLoginFromFileName(fileName);
-                    String login = "dr_roman";
+                    String login = "";
+
+                    Matcher oldM = OLD_PATTERN.matcher(fileName);
+                    if (oldM.matches()) {
+                        login = extractLoginFromOldFile(fileName);
+                    }
+                    Matcher newM = NEW_PATTERN.matcher(fileName);
+                    if (newM.matches()) {
+                        login = extractLoginFromFileName(fileName);
+                    }
 
                     if (allLogins.contains(login)) {
+                        String finalLogin = login;
                         CompletableFuture<UpdateLoadResult> future = CompletableFuture
                                 .supplyAsync(() -> {
                                     try {
-                                        // Определяем формат файла
-                                        String filePath = "/update/" + fileName;
-                                        byte[] content = getCloudStorageModule().downloadFileBytes(filePath);
-
-                                        if (isEncryptedFormat(content)) {
+                                        if (newM.matches()) {
                                             // Новый формат - полностью зашифрованный файл
                                             Update update = getCloudStorageModule()
-                                                    .downloadEncryptedUpdate(fileName, login);
+                                                    .downloadEncryptedUpdate(fileName, finalLogin);
                                             return processUpdate(index, fileName, update);
                                         } else {
                                             // Старый формат - открытый JSON с зашифрованным ФИО
@@ -138,12 +153,10 @@ public class UpdatesModule {
         });
     }
 
-    /**
-     * Проверяет, является ли файл зашифрованным (новый формат) или открытым JSON (старый формат)
-     */
-    private boolean isEncryptedFormat(byte[] content) {
-        // Старый формат начинается с '{' (JSON), новый - с зашифрованной строки
-        return content.length > 0 && content[0] != '{';
+    public String extractLoginFromOldFile(String fileName) {
+        String prefix = "_update_";
+        int idx = fileName.indexOf(prefix);
+        return fileName.substring(0, idx);
     }
 
     /**

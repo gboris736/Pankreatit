@@ -9,6 +9,10 @@ public class Update {
     private String login;
     private String dateUpload;
 
+    public Update(){
+
+    }
+
     public Update(UpdateOld update) {
         this.patient = update.getPatient();
         this.questionnaireDTO = update.getQuestionnaireDTO();

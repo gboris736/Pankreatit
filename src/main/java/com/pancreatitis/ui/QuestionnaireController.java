@@ -5,15 +5,24 @@ import com.pancreatitis.modules.database.DatabaseModule;
 import com.pancreatitis.modules.prediction.PredictionModule;
 import com.pancreatitis.modules.prediction.PredictionResult;
 import com.pancreatitis.modules.questionnairemanager.QuestionnaireManagerModule;
+import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
+import javafx.stage.Modality;
+import javafx.stage.Stage;
+import javafx.util.Duration;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 public class QuestionnaireController {
@@ -27,6 +36,7 @@ public class QuestionnaireController {
     @FXML private Button btnBack;
     @FXML private Button btnSave;
     @FXML private Button btnPredict;
+    @FXML private Button btnRemove;
 
     private int idQuestionnaire;
     private int idPatient;
@@ -53,6 +63,7 @@ public class QuestionnaireController {
     private final Map<Integer, VBox> valuesContainers = new HashMap<>();
 
     private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+    private final ExecutorService deleteExecutor = Executors.newSingleThreadExecutor(); // для удаления
 
     @FXML
     public void initialize() {
@@ -60,6 +71,181 @@ public class QuestionnaireController {
         settingsCommonField();
         buildAllCharacteristicBlocks();
         populateAllValues();
+        setupButtonHandlers();
+    }
+
+    private void setupButtonHandlers() {
+        btnBack.setOnAction(event -> {
+            MainMenuControl mainMenuControl = MainMenuControl.getInstance();
+            clearCurrentData();
+            mainMenuControl.showViewForTab("Список анкет");
+        });
+
+        btnSave.setOnAction(event -> {
+            questionnaire.setDiagnosis(diagnosisToCode(getDiagnosis()));
+            questionnaire.setIdExpert(idDoctor);
+            if (questionnaire.getIdDoctor() == -1) questionnaire.setIdDoctor(idDoctor);
+            List<CharacterizationAnketPatient> characterizationAnketPatients = getNewValues();
+            QuestionnaireManagerModule questionnaireManagerModule = QuestionnaireManagerModule.getInstance();
+            boolean result = questionnaireManagerModule.saveQuestionnaire(questionnaire, patient, characterizationAnketPatients);
+            if (result) {
+                Alert alert = new Alert(Alert.AlertType.INFORMATION);
+                alert.setTitle("Успех");
+                alert.setHeaderText(null);
+                alert.setContentText("Анкета сохранена");
+                alert.showAndWait();
+                // Возврат к списку после сохранения
+                MainMenuControl.getInstance().showViewForTab("Список анкет");
+            } else {
+                Alert alert = new Alert(Alert.AlertType.ERROR);
+                alert.setTitle("Ошибка");
+                alert.setHeaderText(null);
+                alert.setContentText("Не удалось сохранить анкету");
+                alert.showAndWait();
+            }
+        });
+
+        btnPredict.setOnAction(event -> {
+            List<CharacterizationAnketPatient> characterizationAnketPatients = getLatestValues();
+            List<CharasteristicDTO> charasteristicDTOS = getCharDto(characterizationAnketPatients);
+            PredictionModule predictionModule = PredictionModule.getInstance();
+            try {
+                PredictionResult predict_result = predictionModule.predict(charasteristicDTOS);
+
+                Alert alert = new Alert(Alert.AlertType.INFORMATION);
+                alert.setTitle("Прогноз");
+                alert.setHeaderText(codeToDiagnosis(predict_result.getPredictedClass()));
+                alert.setContentText(String.format(
+                        "Отечный панкреатит: %.3f%%\n" +
+                                "Панкреонекроз среднетяжелое течение: %.3f%%\n" +
+                                "Панкреонекроз тяжелое течение: %.3f%%",
+                        predict_result.getProbabilities().get(1) * 100,
+                        predict_result.getProbabilities().get(5) * 100,
+                        predict_result.getProbabilities().get(6) * 100)
+                );
+                alert.show();
+            } catch (Exception e) {
+                Alert alert = new Alert(Alert.AlertType.ERROR);
+                alert.setTitle("Ошибка прогноза");
+                alert.setHeaderText(null);
+                alert.setContentText("Не удалось выполнить прогноз: " + e.getMessage());
+                alert.showAndWait();
+                e.printStackTrace();
+            }
+        });
+
+        // Обработчик удаления
+        btnRemove.setOnAction(event -> {
+            if (idQuestionnaire == -1) {
+                Alert alert = new Alert(Alert.AlertType.WARNING);
+                alert.setTitle("Невозможно удалить");
+                alert.setHeaderText(null);
+                alert.setContentText("Эта анкета ещё не сохранена и не может быть удалена.");
+                alert.showAndWait();
+                return;
+            }
+            boolean confirmed = confirmDeleteWithCountdown(
+                    "Удалить анкету пациента " + patient.getFio() + " от " + questionnaire.getDateOfCompletion() + "?",
+                    10
+            );
+            if (confirmed) {
+                deleteQuestionnaire();
+            }
+        });
+    }
+
+    private boolean confirmDeleteWithCountdown(String message, int seconds) {
+        AtomicBoolean confirmed = new AtomicBoolean(false);
+        Stage dialogStage = new Stage();
+        dialogStage.initModality(Modality.APPLICATION_MODAL);
+        dialogStage.setTitle("Подтверждение удаления");
+        dialogStage.setResizable(false);
+
+        VBox root = new VBox(15);
+        root.setAlignment(Pos.CENTER);
+        root.setStyle("-fx-padding: 20; -fx-background-color: #f0f0f0;");
+
+        Label messageLabel = new Label(message);
+        messageLabel.setStyle("-fx-font-size: 14px; -fx-font-weight: bold;");
+
+        Label countdownLabel = new Label("Осталось: " + seconds + " с");
+        countdownLabel.setStyle("-fx-font-size: 18px; -fx-text-fill: #d9534f;");
+
+        Button cancelButton = new Button("Отменить");
+        cancelButton.setStyle("-fx-background-color: #6c757d; -fx-text-fill: white; -fx-font-size: 14px;");
+        cancelButton.setPrefWidth(120);
+
+        root.getChildren().addAll(messageLabel, countdownLabel, cancelButton);
+
+        Scene scene = new Scene(root, 400, 200);
+        dialogStage.setScene(scene);
+
+        AtomicInteger remaining = new AtomicInteger(seconds);
+        javafx.animation.Timeline timeline = new javafx.animation.Timeline(
+                new javafx.animation.KeyFrame(Duration.seconds(1), event -> {
+                    int left = remaining.decrementAndGet();
+                    if (left <= 0) {
+                        dialogStage.close();
+                        confirmed.set(true);
+                    } else {
+                        countdownLabel.setText("Осталось: " + left + " с");
+                    }
+                })
+        );
+        timeline.setCycleCount(seconds);
+        timeline.play();
+
+        cancelButton.setOnAction(e -> {
+            timeline.stop();
+            dialogStage.close();
+            confirmed.set(false);
+        });
+
+        dialogStage.setOnCloseRequest(e -> {
+            timeline.stop();
+            confirmed.set(false);
+        });
+
+        dialogStage.showAndWait();
+        return confirmed.get();
+    }
+
+    private void deleteQuestionnaire() {
+        deleteExecutor.submit(() -> {
+            try {
+                DatabaseModule db = DatabaseModule.getInstance();
+                db.deleteQuestionnaire(idQuestionnaire);
+                Platform.runLater(() -> {
+                    Alert alert = new Alert(Alert.AlertType.INFORMATION);
+                    alert.setTitle("Успешно");
+                    alert.setHeaderText(null);
+                    alert.setContentText("Анкета успешно удалена.");
+                    alert.showAndWait();
+
+                    // Устанавливаем ID удалённой анкеты в глобальную переменную
+                    MainMenuControl.deletedQuestionnaireId = idQuestionnaire;
+                    clearCurrentData();
+                    MainMenuControl.getInstance().showViewForTab("Список анкет");
+                });
+            } catch (Exception e) {
+                Platform.runLater(() -> {
+                    Alert alert = new Alert(Alert.AlertType.ERROR);
+                    alert.setTitle("Ошибка удаления");
+                    alert.setHeaderText(null);
+                    alert.setContentText("Не удалось удалить анкету: " + e.getMessage());
+                    alert.showAndWait();
+                });
+                e.printStackTrace();
+            }
+        });
+    }
+    private void clearCurrentData() {
+        MainMenuControl.idCurrentPatient = -1;
+        MainMenuControl.currentPatient = new Patient();
+        MainMenuControl.idCurrentQuestionnaire = -1;
+        MainMenuControl.currentQuestionnaire = new Questionnaire();
+        MainMenuControl.idCurrentDoctor = -1;
+        MainMenuControl.currentDoctor = new Doctor();
     }
 
     private void initData() {
@@ -72,9 +258,7 @@ public class QuestionnaireController {
         patient = MainMenuControl.currentPatient;
         doctor = MainMenuControl.currentDoctor;
 
-        // Что это такое????
         if (idQuestionnaire == -1 || idPatient == -1) {
-            // Новая анкета
             patient = db.getPatientById(idPatient);
         }
 
@@ -85,7 +269,6 @@ public class QuestionnaireController {
             valuesByCharacteristic.put(c.getId(), new ArrayList<>());
 
             if (c.getIdType() != 3) {
-                // Загружаем справочные значения
                 List<CharacterizationValue> charValues = db.getValuesForCharacteristic(c.getId());
                 Map<Integer, String> idToText = new HashMap<>();
                 Map<String, Integer> textToId = new HashMap<>();
@@ -96,8 +279,8 @@ public class QuestionnaireController {
                 texts.add("Нет данных");
 
                 for (CharacterizationValue cv : charValues) {
-                    idToText.put((int)cv.getIdValue(), cv.getValue());
-                    textToId.put(cv.getValue(), (int)cv.getIdValue());
+                    idToText.put((int) cv.getIdValue(), cv.getValue());
+                    textToId.put(cv.getValue(), (int) cv.getIdValue());
                     texts.add(cv.getValue());
                 }
 
@@ -108,7 +291,6 @@ public class QuestionnaireController {
         }
 
         if (idQuestionnaire != -1) {
-            // Загружаем существующие значения для анкеты
             List<CharacterizationAnketPatient> existingValues = db.getCharacterizationsForAnket(idQuestionnaire);
             for (CharacterizationAnketPatient cap : existingValues) {
                 int charId = cap.getIdCharacteristic();
@@ -118,7 +300,6 @@ public class QuestionnaireController {
                 }
             }
         } else {
-            // Создаём первичные значения для новой анкеты (все помечаются как новые)
             for (Characteristic c : characteristicsMap.values()) {
                 CharacterizationAnketPatient cap = new CharacterizationAnketPatient();
                 cap.setIdAnket(-1);
@@ -128,15 +309,15 @@ public class QuestionnaireController {
                 if (c.getIdType() == 3) {
                     cap.setValue(-1f);
                 } else {
-                    cap.setIdValue(0); // "Нет данных"
+                    cap.setIdValue(0);
                 }
 
                 valuesByCharacteristic.get(c.getId()).add(cap);
-                newValues.add(cap); // помечаем как новое
+                newValues.add(cap);
             }
         }
 
-        // Сортируем значения каждой характеристики по дате (новые сверху)
+        // Сортируем значения
         for (int charId : valuesByCharacteristic.keySet()) {
             List<CharacterizationAnketPatient> list = valuesByCharacteristic.get(charId);
             list.sort((a, b) -> {
@@ -150,49 +331,9 @@ public class QuestionnaireController {
             });
         }
 
-        btnBack.setOnAction(event -> {
-            MainMenuControl mainMenuControl = MainMenuControl.getInstance();
-            MainMenuControl.idCurrentPatient = -1;
-            MainMenuControl.currentPatient = new Patient();
-            MainMenuControl.idCurrentQuestionnaire = -1;
-            MainMenuControl.currentQuestionnaire = new Questionnaire();
-            MainMenuControl.idCurrentDoctor = -1;
-            MainMenuControl.currentDoctor = new Doctor();
-            mainMenuControl.showViewForTab("Список анкет");
-        });
-
-        btnSave.setOnAction(event -> {
-            questionnaire.setDiagnosis(diagnosisToCode(getDiagnosis()));
-            questionnaire.setIdExpert(idDoctor);
-            if (questionnaire.getIdDoctor() == -1) questionnaire.setIdDoctor(idDoctor);
-            List<CharacterizationAnketPatient> characterizationAnketPatients = getNewValues();
-            QuestionnaireManagerModule questionnaireManagerModule = QuestionnaireManagerModule.getInstance();
-            boolean result = questionnaireManagerModule.saveQuestionnaire(questionnaire, patient, characterizationAnketPatients);
-        });
-
-        btnPredict.setOnAction(event -> {
-            List<CharacterizationAnketPatient> characterizationAnketPatients = getLatestValues();
-            List<CharasteristicDTO> charasteristicDTOS = getCharDto(characterizationAnketPatients);
-            PredictionModule predictionModule = PredictionModule.getInstance();
-            try {
-                PredictionResult predict_result = predictionModule.predict(charasteristicDTOS);
-
-                Alert alert = new Alert(Alert.AlertType.INFORMATION );
-                alert.setTitle("Прогноз");
-                alert.setHeaderText( codeToDiagnosis(predict_result.getPredictedClass()) );
-                alert.setContentText(String.format(
-                        "Отечный панкреатит: %.3f%%\n" +
-                        "Панкреонекроз среднетяжелое течение: %.3f%%\n" +
-                        "Панкреонекроз тяжелое течение: %.3f%%",
-                        predict_result.getProbabilities().get(1)*100,
-                        predict_result.getProbabilities().get(5)*100,
-                        predict_result.getProbabilities().get(6)*100)
-                );
-                alert.show();
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
-        });
+        // Управление кнопкой удаления
+        btnRemove.setDisable(idQuestionnaire == -1);
+        btnRemove.setVisible(true);
     }
 
     private List<CharasteristicDTO> getCharDto(List<CharacterizationAnketPatient> characterizationAnketPatients) {

@@ -1,9 +1,7 @@
 package com.pancreatitis.ui;
 
-import com.pancreatitis.models.Doctor;
 import com.pancreatitis.models.QuestionnaireItem;
 import com.pancreatitis.modules.database.DatabaseModule;
-import com.sun.tools.javac.Main;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
@@ -13,11 +11,7 @@ import javafx.beans.property.SimpleStringProperty;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.input.MouseButton;
 
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Random;
 
 public class QuestionListTableViewController {
 
@@ -26,12 +20,9 @@ public class QuestionListTableViewController {
     @FXML private TableColumn<QuestionnaireItem, String> colDate;
     @FXML private TableColumn<QuestionnaireItem, String> colDiagnosis;
     @FXML private TableColumn<QuestionnaireItem, String> colDoctor;
-
-    // Добавленные FXML-элементы для поиска
     @FXML private TextField searchField;
     @FXML private Label countLabel;
 
-    // таблица отображает список анкет
     private final ObservableList<QuestionnaireItem> rows = FXCollections.observableArrayList();
     private FilteredList<QuestionnaireItem> filteredRows;
 
@@ -42,59 +33,79 @@ public class QuestionListTableViewController {
         colDate.setCellValueFactory(cd -> new SimpleStringProperty(cd.getValue().getDateOfCompletion()));
         colDoctor.setCellValueFactory(cd -> new SimpleStringProperty(cd.getValue().getFioDoctor()));
 
-        DatabaseModule databaseModule = DatabaseModule.getInstance();
-        List<QuestionnaireItem> allQuestionnaireItems = databaseModule.getAllQuestionnaireItems();
-        for(QuestionnaireItem item: allQuestionnaireItems){
-            rows.add(item);
-        }
+        // Загрузка данных из БД
+        loadDataFromDB();
 
-        // Открытие анкеты напиши полу
+        // Настройка двойного клика для открытия анкеты
         tableViewQuestion.setRowFactory(tv -> {
             TableRow<QuestionnaireItem> row = new TableRow<>();
             row.setOnMouseClicked(event -> {
-                if (event.getButton() == MouseButton.PRIMARY && event.getClickCount() == 2
-                        && (!row.isEmpty())) {
+                if (event.getButton() == MouseButton.PRIMARY && event.getClickCount() == 2 && !row.isEmpty()) {
                     QuestionnaireItem clicked = row.getItem();
-                    openQuestionnaireDetail(clicked);       //НАПИШИ свой вызов функции открытия
+                    openQuestionnaireDetail(clicked);
                 }
             });
             return row;
         });
 
-
+        // Подсказки
         HelpUtils.attachHelp(colNamePerson, "ФИО пациента");
         HelpUtils.attachHelp(colDate, "Дата создания анкеты");
         HelpUtils.attachHelp(colDiagnosis, "Поставленный в анкете");
         HelpUtils.attachHelp(colDoctor, "Ответственный врач");
 
-        // Используем FilteredList поверх rows для поиска
+        // Фильтруемый список
         filteredRows = new FilteredList<>(rows, p -> true);
         tableViewQuestion.setItems(filteredRows);
 
+        // Сортировка по дате (по убыванию)
         colDate.setSortType(TableColumn.SortType.DESCENDING);
         tableViewQuestion.getSortOrder().add(colDate);
 
-        // привязка обработчика для поля поиска
-        if (searchField != null) {
-            searchField.setPromptText("Поиск: фио пациента, врач или место поступления...");
-            searchField.textProperty().addListener((obs, oldV, newV) -> {
-                String query = newV == null ? "" : newV.trim().toLowerCase();
-                filteredRows.setPredicate(row -> {
-                    if (query.isEmpty()) return true;
-                    // поиск по ФИО пациента, ФИО врача и месту поступления
-                    boolean inPatient = containsIgnoreCase(row.getFioPatient(), query);
-                    boolean inAdmit = containsIgnoreCase(row.getDiagnosis(), query);
-                    return inPatient || inAdmit;
-                });
-                updateCountLabel();
+        // Поиск
+        searchField.setPromptText("Поиск: фио пациента, врач или место поступления...");
+        searchField.textProperty().addListener((obs, oldV, newV) -> {
+            String query = newV == null ? "" : newV.trim().toLowerCase();
+            filteredRows.setPredicate(row -> {
+                if (query.isEmpty()) return true;
+                boolean inPatient = containsIgnoreCase(row.getFioPatient(), query);
+                boolean inDiagnosis = containsIgnoreCase(row.getDiagnosis(), query);
+                boolean inDoctor = containsIgnoreCase(row.getFioDoctor(), query);
+                return inPatient || inDiagnosis || inDoctor;
             });
-        }
+            updateCountLabel();
+        });
 
-        // первичная загрузка в rows
-        //rebuildRowsFromMap();
-
-        // обновим счётчик при старте
         updateCountLabel();
+    }
+
+    /** Загружает данные из БД в ObservableList (вызывается только при инициализации) */
+    private void loadDataFromDB() {
+        rows.clear();
+        DatabaseModule db = DatabaseModule.getInstance();
+        List<QuestionnaireItem> items = db.getAllQuestionnaireItems();
+        rows.addAll(items);
+    }
+
+    /** Проверяет, была ли удалена анкета, и если да, удаляет её из списка */
+    public void checkForDeletedQuestionnaire() {
+        int deletedId = MainMenuControl.deletedQuestionnaireId;
+        if (deletedId != -1) {
+            removeQuestionnaireFromList(deletedId);
+            MainMenuControl.deletedQuestionnaireId = -1; // сброс
+        }
+    }
+
+    /** Удаляет элемент с заданным ID из ObservableList (без перезагрузки всей таблицы) */
+    private void removeQuestionnaireFromList(int id) {
+        for (int i = 0; i < rows.size(); i++) {
+            if (rows.get(i).getIdQuestionnaire() == id) {
+                rows.remove(i);
+                System.out.println("yes!!!");
+                updateCountLabel(); // обновляем счётчик
+                break;
+            }
+        }
     }
 
     private boolean containsIgnoreCase(String source, String query) {
@@ -114,28 +125,18 @@ public class QuestionListTableViewController {
         a.showAndWait();
     }
 
-
     private void openQuestionnaireDetail(QuestionnaireItem item) {
         try {
-            DatabaseModule databaseModule = DatabaseModule.getInstance();
-
+            DatabaseModule db = DatabaseModule.getInstance();
             MainMenuControl.idCurrentQuestionnaire = item.getIdQuestionnaire();
             MainMenuControl.idCurrentPatient = item.getIdPatient();
             MainMenuControl.idCurrentDoctor = item.getIdDoctor();
-            MainMenuControl.currentPatient = databaseModule.getPatientById(item.getIdPatient());
-            MainMenuControl.currentQuestionnaire = databaseModule.getQuestionnaireById(item.getIdQuestionnaire());
-            MainMenuControl.currentDoctor = databaseModule.getDoctorById(item.getIdDoctor());
+            MainMenuControl.currentPatient = db.getPatientById(item.getIdPatient());
+            MainMenuControl.currentQuestionnaire = db.getQuestionnaireById(item.getIdQuestionnaire());
+            MainMenuControl.currentDoctor = db.getDoctorById(item.getIdDoctor());
 
             MainMenuControl mainMenuControl = MainMenuControl.getInstance();
             mainMenuControl.showViewForTab("Анкета");
-
-            Object controller = mainMenuControl.getTabController();
-            if (controller instanceof QuestionnaireController) {
-                //((QuestionnaireController) controller).initData();        //Не юзать initialize!!!  Хз что в этот момент  происходит и почемуто не работает половина функций
-                //((QuestionnaireController) controller).reload();
-            }
-
-
         } catch (Exception e) {
             showAlert("Не удалось открыть анкету: " + e.getMessage());
             e.printStackTrace();

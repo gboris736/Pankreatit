@@ -359,6 +359,29 @@ public class DatabaseModule {
         return -1;
     }
 
+    public void deleteQuestionnaire(int questionnaireId) throws SQLException {
+        String deleteCharSql = "DELETE FROM characterization_anket_patient WHERE id_anket = ?";
+        String deleteAnketSql = "DELETE FROM ankets WHERE id = ?";
+
+        try (Connection conn = DriverManager.getConnection(url)) {
+            conn.setAutoCommit(false);
+            try (PreparedStatement pstmt1 = conn.prepareStatement(deleteCharSql);
+                 PreparedStatement pstmt2 = conn.prepareStatement(deleteAnketSql)) {
+
+                pstmt1.setInt(1, questionnaireId);
+                pstmt1.executeUpdate();
+
+                pstmt2.setInt(1, questionnaireId);
+                pstmt2.executeUpdate();
+
+                conn.commit();
+            } catch (SQLException e) {
+                conn.rollback();
+                throw e;
+            }
+        }
+    }
+
     public int updateQuestionnaire(Questionnaire questionnaire) {
         String sql = "UPDATE ankets SET diagnosis = ?, admitted_from = ?, last_modified = ? WHERE id = ?";
 

@@ -41,7 +41,8 @@ public class MainMenuControl {
     static Questionnaire currentQuestionnaire;
     static Doctor currentDoctor;
 
-
+    public static int deletedQuestionnaireId = -1;
+    private final Map<String, Object> controllerCache = new HashMap<>();
 
     @FXML
     public void initialize() {
@@ -151,11 +152,19 @@ public class MainMenuControl {
                 loader = new FXMLLoader(getClass().getResource(fxml));
                 view = loader.load();
 
-                tabsListView.getSelectionModel().select(tab);
+                controllerCache.put(tab, loader.getController());
 
+                tabsListView.getSelectionModel().select(tab);
                 viewCache.put(tab, view);
             }
             contentPane.getChildren().setAll(view);
+
+            if ("Список анкет".equals(tab)) {
+                QuestionListTableViewController listController = getControllerForTab(tab);
+                if (listController != null) {
+                    listController.checkForDeletedQuestionnaire();
+                }
+            }
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -219,4 +228,8 @@ public class MainMenuControl {
 
     }
 
+    @SuppressWarnings("unchecked")
+    public <T> T getControllerForTab(String tab) {
+        return (T) controllerCache.get(tab);
+    }
 }

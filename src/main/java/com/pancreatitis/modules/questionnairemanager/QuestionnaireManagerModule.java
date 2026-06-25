@@ -39,6 +39,17 @@ public class QuestionnaireManagerModule {
                 idPatient = databaseModule.insertPatient(patient);
                 questionnaire.setIdPatient(idPatient);
                 patient.setId(idPatient);
+            } else {
+                Patient patient_db = databaseModule.getPatientByFio(patient.getFio());
+                if (patient_db == null) {
+                    idPatient = databaseModule.insertPatient(patient);
+                    questionnaire.setIdPatient(idPatient);
+                    patient.setId(idPatient);
+                } else {
+                    idPatient = patient_db.getId();
+                    questionnaire.setIdPatient(idPatient);
+                    patient.setId(idPatient);
+                }
             }
 
             long idQuestionnaire = questionnaire.getId();

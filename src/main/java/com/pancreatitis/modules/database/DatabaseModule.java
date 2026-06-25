@@ -286,6 +286,28 @@ public class DatabaseModule {
         return null;
     }
 
+    public Patient getPatientByFio(String fio) {
+        String sql = "SELECT * FROM patients WHERE fio = ?";
+
+        try (Connection conn = DriverManager.getConnection(url);
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            pstmt.setString(1, fio);
+            ResultSet rs = pstmt.executeQuery();
+
+            if (rs.next()) {
+                Patient patient = new Patient();
+                patient.setId(rs.getInt("id"));
+                patient.setFio(rs.getString("fio"));
+                patient.setLastModified(rs.getString("last_modified"));
+                return patient;
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
     public long insertPatient(Patient patient) {
         String sql = "INSERT INTO patients (fio, last_modified) VALUES (?, ?)";
 
@@ -383,16 +405,14 @@ public class DatabaseModule {
     }
 
     public int updateQuestionnaire(Questionnaire questionnaire) {
-        String sql = "UPDATE ankets SET diagnosis = ?, admitted_from = ?, last_modified = ? WHERE id = ?";
-
+        String sql = "UPDATE ankets SET diagnosis = ?, admitted_from = ?, id_patient = ?, last_modified = ? WHERE id = ?";
         try (Connection conn = DriverManager.getConnection(url);
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
-
             pstmt.setString(1, questionnaire.getDiagnosis());
             pstmt.setString(2, questionnaire.getAdmittedFrom());
-            pstmt.setString(3, LocalDateTime.now().format(formatter));
-            pstmt.setInt(4, (int)questionnaire.getId());
-
+            pstmt.setInt(3, (int)questionnaire.getIdPatient());
+            pstmt.setString(4, LocalDateTime.now().format(formatter));
+            pstmt.setInt(5, (int)questionnaire.getId());
             return pstmt.executeUpdate();
         } catch (SQLException e) {
             e.printStackTrace();

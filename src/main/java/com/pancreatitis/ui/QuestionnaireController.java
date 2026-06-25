@@ -93,11 +93,20 @@ public class QuestionnaireController {
             QuestionnaireManagerModule questionnaireManagerModule = QuestionnaireManagerModule.getInstance();
             boolean result = questionnaireManagerModule.saveQuestionnaire(questionnaire, patient, characterizationAnketPatients);
             if (result) {
+                MainMenuControl.idCurrentQuestionnaire = Math.toIntExact(questionnaire.getId());
+                MainMenuControl.currentQuestionnaire = DatabaseModule.getInstance().getQuestionnaireById(MainMenuControl.idCurrentQuestionnaire);
+                MainMenuControl.idCurrentPatient = Math.toIntExact(patient.getId());
+                MainMenuControl.currentPatient = DatabaseModule.getInstance().getPatientById(MainMenuControl.idCurrentPatient);
+                MainMenuControl.isAnketOpen = true;
+
                 Alert alert = new Alert(Alert.AlertType.INFORMATION);
                 alert.setTitle("Успех");
                 alert.setHeaderText(null);
                 alert.setContentText("Анкета сохранена");
                 alert.showAndWait();
+
+                MainMenuControl main = MainMenuControl.getInstance();
+                main.showViewForTab("Анкета");
             } else {
                 Alert alert = new Alert(Alert.AlertType.ERROR);
                 alert.setTitle("Ошибка");
@@ -293,6 +302,7 @@ public class QuestionnaireController {
             }
         }
 
+        // Загружаем существующие значения, только если анкета уже сохранена
         if (idQuestionnaire != -1) {
             List<CharacterizationAnketPatient> existingValues = db.getCharacterizationsForAnket(idQuestionnaire);
             for (CharacterizationAnketPatient cap : existingValues) {
@@ -302,25 +312,10 @@ public class QuestionnaireController {
                     list.add(cap);
                 }
             }
-        } else {
-            for (Characteristic c : characteristicsMap.values()) {
-                CharacterizationAnketPatient cap = new CharacterizationAnketPatient();
-                cap.setIdAnket(-1);
-                cap.setIdCharacteristic(c.getId());
-                cap.setCreatedAt(FORMATTER.format(LocalDateTime.now()));
-
-                if (c.getIdType() == 3) {
-                    cap.setValue(-1f);
-                } else {
-                    cap.setIdValue(0);
-                }
-
-                valuesByCharacteristic.get(c.getId()).add(cap);
-                newValues.add(cap);
-            }
         }
+        // else — ничего не добавляем, список остаётся пустым
 
-        // Сортируем значения
+        // Сортируем значения (по убыванию даты)
         for (int charId : valuesByCharacteristic.keySet()) {
             List<CharacterizationAnketPatient> list = valuesByCharacteristic.get(charId);
             list.sort((a, b) -> {
@@ -334,7 +329,6 @@ public class QuestionnaireController {
             });
         }
 
-        // Управление кнопкой удаления
         btnRemove.setDisable(idQuestionnaire == -1);
         btnRemove.setVisible(true);
     }

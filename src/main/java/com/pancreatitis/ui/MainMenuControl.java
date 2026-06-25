@@ -3,6 +3,7 @@ package com.pancreatitis.ui;
 import com.pancreatitis.models.Doctor;
 import com.pancreatitis.models.Patient;
 import com.pancreatitis.models.Questionnaire;
+import com.pancreatitis.models.User;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -46,66 +47,12 @@ public class MainMenuControl {
 
     @FXML
     public void initialize() {
-        /*if (modelDataControl.getCurrentDoctor() == null) {
-            try {
-                throw new DoctorNotAuthenticatedException();
-            }
-            catch (DoctorNotAuthenticatedException e) {
-                Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
-                Window owner = (tabsListView.getScene() != null) ? tabsListView.getScene().getWindow() : null;
-                if (owner != null) {
-                    alert.initOwner(owner);
-                    alert.initModality(Modality.WINDOW_MODAL);
-                } else {
-                    alert.initModality(Modality.APPLICATION_MODAL);
-                }
-                ButtonType restartBtn = new ButtonType("Перезапустить (НЕ ТРОГАТЬ НЕ ЗАКОНЧЕНО");       // ДОДЕЛАТЬ
-                ButtonType exitBtn = new ButtonType("Выйти");
-                ButtonType cancelBtn = new ButtonType("Отмена", ButtonBar.ButtonData.CANCEL_CLOSE);
-
-                alert.getButtonTypes().setAll(restartBtn, exitBtn, cancelBtn);
-
-
-                alert.setOnShown(ev -> {
-                    // Если есть владелец — центрируем относительно него, иначе центрируем на экране
-                    Stage dialogStage = (Stage) alert.getDialogPane().getScene().getWindow();
-                    if (owner != null) {
-                        double centerX = owner.getX() + owner.getWidth() / 2.0;
-                        double centerY = owner.getY() + owner.getHeight() / 2.0;
-                        dialogStage.setX(centerX - dialogStage.getWidth() / 2.0);
-                        dialogStage.setY(centerY - dialogStage.getHeight() / 2.0);
-                    } else {
-                        javafx.geometry.Rectangle2D screenBounds = Screen.getPrimary().getVisualBounds();
-                        dialogStage.setX(screenBounds.getMinX() + (screenBounds.getWidth() - dialogStage.getWidth()) / 2.0);
-                        dialogStage.setY(screenBounds.getMinY() + (screenBounds.getHeight() - dialogStage.getHeight()) / 2.0);
-                    }
-                });
-
-                // Показываем модально и ждём выбора
-                alert.showAndWait().ifPresentOrElse(choice -> {
-                    if (choice == restartBtn) {
-                        restartApplication();
-                    } else if (choice == exitBtn) {
-                        System.exit(0);
-                    } else {
-                        // Нажат "Отмена" — завершаем приложение
-                        System.exit(0);
-                    }
-                }, () -> {
-                    // Закрытие диалога через ESC или крестик — завершаем приложение
-                    System.exit(0);
-                });
-                // Прерываем дальнейшую инициализацию, если врач не аутентифицирован
-                return;
-            }
-        }*/
-
         idCurrentPatient = -1;
         idCurrentQuestionnaire = -1;
-        idCurrentDoctor = -1;
+        idCurrentDoctor = User.getInstance().getId();
         currentPatient = new Patient();
         currentQuestionnaire = new Questionnaire();
-        currentDoctor = new Doctor();
+        currentDoctor = User.getInstance().getDoctor();
 
         instance = this;
         tabsListView.setItems(FXCollections.observableArrayList("Список анкет", "Список пользователей", "Обучающая выборка", "Заявки на регистрацию", "Анкеты на верификацию", "Анкета"));
@@ -119,11 +66,6 @@ public class MainMenuControl {
     public static MainMenuControl getInstance() {
         return instance;
     }
-
-    private void restartApplication() {     // ДОДЕЛАТЬ
-    }
-
-
 
     private static final Set<String> NO_CACHE_TABS = Set.of(
             "Анкета",

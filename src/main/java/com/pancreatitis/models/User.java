@@ -16,6 +16,18 @@ public class User extends Doctor {
         super();
     }
 
+    public Doctor getDoctor() {
+        Doctor doctor = new Doctor();
+        doctor.setEmail(User.getInstance().getEmail());
+        doctor.setPhone(User.getInstance().getPhone());
+        doctor.setLogin(User.getInstance().getLogin());
+        doctor.setCreatedAt(User.getInstance().getCreatedAt());
+        doctor.setId(User.getInstance().getId());
+        doctor.setStatus(User.getInstance().getStatus());
+        doctor.setFio(User.getInstance().getFio());
+        return doctor;
+    }
+
     public static void resetInstance() {
         instance = null;
     }

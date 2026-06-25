@@ -134,7 +134,6 @@ public class QuestionnaireController {
             }
         });
 
-        // Обработчик удаления
         btnRemove.setOnAction(event -> {
             if (idQuestionnaire == -1) {
                 Alert alert = new Alert(Alert.AlertType.WARNING);
@@ -239,13 +238,14 @@ public class QuestionnaireController {
             }
         });
     }
+
     private void clearCurrentData() {
         MainMenuControl.idCurrentPatient = -1;
         MainMenuControl.currentPatient = new Patient();
         MainMenuControl.idCurrentQuestionnaire = -1;
         MainMenuControl.currentQuestionnaire = new Questionnaire();
-        MainMenuControl.idCurrentDoctor = -1;
-        MainMenuControl.currentDoctor = new Doctor();
+        MainMenuControl.idCurrentDoctor = User.getInstance().getId();
+        MainMenuControl.currentDoctor = User.getInstance().getDoctor();
     }
 
     private void initData() {

@@ -57,7 +57,7 @@ public class QuestionnaireViewUpdate {
         DIAGNOSIS_MAP.put("Панкреонекроз тяжелое течение", "6");
     }
 
-    static int id;
+    static int id = -1;
 
     @FXML
     public void initialize() {
@@ -401,6 +401,7 @@ public class QuestionnaireViewUpdate {
 
     private void handleBack() {
         MainMenuControl mainMenuControl = MainMenuControl.getInstance();
+        id = -1;
         mainMenuControl.showViewForTab("Анкеты на верификацию");
     }
 

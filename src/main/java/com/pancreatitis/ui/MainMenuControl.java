@@ -70,22 +70,24 @@ public class MainMenuControl {
     }
 
     private static final Set<String> NO_CACHE_TABS = Set.of(
-            "Заявки на регистрацию",
-            "Список анкет",
-            "Анкета"
+
     );
 
     public void showViewForTab(String tab) {
         try {
+            if (isAnketOpen && tab.equals("Список анкет")) {
+                tab = "Анкета";
+            }
+
+            if (QuestionnaireViewUpdate.id != -1 && tab.equals("Анкеты на верификацию")) {
+                tab = "Анкета обновления";
+            }
+
             Node view = null;
-            if (!NO_CACHE_TABS.contains(tab)) {         //Не кешируем некоторые вкладки
+            if (!NO_CACHE_TABS.contains(tab)) {
                 view = viewCache.get(tab);
             }
             if (view == null) {
-                if (isAnketOpen && tab.equals("Список анкет")) {
-                    tab = "Анкета";
-                }
-
                 String fxml = switch (tab) {
                     case "Список анкет" -> "fxml/QuestionListView.fxml";
                     case "Список пользователей" -> "fxml/usersView.fxml";

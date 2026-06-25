@@ -67,6 +67,8 @@ public class QuestionListTableViewTrainSetController {
     private static final String COLOR_SELECTED_FOR_MOVE = "#FFF9C4";   // 🟡 жёлтый: отмечен чекбоксом
     private static final String COLOR_MODIFIED = "#E3F2FD";             // 🔵 голубой: изменён, не сохранён
     private static final String COLOR_IN_TRAINSET = "#E8F5E9";          // 🟢 зелёный: в выборке, без изменений
+    // CHANGE: добавлен оранжевый для анкет без диагноза
+    private static final String COLOR_NO_DIAGNOSIS = "#FFB74D";         // 🟠 оранжевый: диагноз отсутствует
 
     @FXML
     private void initialize() {
@@ -76,7 +78,7 @@ public class QuestionListTableViewTrainSetController {
         setupSaveButton();
         setupSubmitButton();
         setupWindowCloseHandler();
-        setupLegend();
+        setupLegend();      // CHANGE: легенда теперь включает оранжевый
         setupAlgorithmFileCombo();
         loadData();
     }
@@ -136,13 +138,14 @@ public class QuestionListTableViewTrainSetController {
     private void moveSelectedItems(ObservableList<QuestionnaireItemTrainUI> fromList,
                                    ObservableList<QuestionnaireItemTrainUI> toList,
                                    boolean newTrainState) {
+        // CHANGE: исключаем элементы без диагноза (они не имеют чекбокса, но на всякий случай фильтруем)
         List<QuestionnaireItemTrainUI> selected = fromList.stream()
-                .filter(item -> item.move)
+                .filter(item -> item.move && !isNoDiagnosis(item))
                 .collect(Collectors.toList());
 
         if (selected.isEmpty()) {
             showAlert(Alert.AlertType.WARNING, "Ничего не выбрано",
-                    "Отметьте чекбоксами анкеты для перемещения");
+                    "Отметьте чекбоксами анкеты для перемещения (анкеты без диагноза недоступны)");
             return;
         }
 
@@ -154,7 +157,6 @@ public class QuestionListTableViewTrainSetController {
             allItemsMap.put(item.item.getIdQuestionnaire(), item);
         }
 
-        // CHANGE: Сортируем с приоритетом изменённых
         FXCollections.sort(toList, getModifiedFirstComparator());
 
         markAsDirty();
@@ -198,13 +200,18 @@ public class QuestionListTableViewTrainSetController {
                 return;
             }
             QuestionnaireItemTrainUI data = getTableRow().getItem();
+            // CHANGE: если диагноз отсутствует, чекбокс не показываем
+            if (isNoDiagnosis(data)) {
+                setGraphic(null);
+                return;
+            }
             checkBox.setSelected(data.move);
             setGraphic(checkBox);
         }
     }
 
     // ─────────────────────────────────────────────────────────────
-    // 3. Фабрика строк с трёхцветной подсветкой (старый вариант)
+    // 3. Фабрика строк с подсветкой + двойной клик
     // ─────────────────────────────────────────────────────────────
     private void setupRowFactory() {
         tableViewUsualQuestion.setRowFactory(tv -> new TableRow<QuestionnaireItemTrainUI>() {
@@ -212,11 +219,11 @@ public class QuestionListTableViewTrainSetController {
             protected void updateItem(QuestionnaireItemTrainUI item, boolean empty) {
                 super.updateItem(item, empty);
 
-                // Двойной клик: быстро отметить/снять отметку
                 setOnMouseClicked(event -> {
                     if (event.getButton() == MouseButton.PRIMARY && event.getClickCount() == 2 && !isEmpty()) {
                         QuestionnaireItemTrainUI data = getItem();
-                        if (data != null) {
+                        // CHANGE: не реагируем на двойной клик, если диагноз отсутствует
+                        if (data != null && !isNoDiagnosis(data)) {
                             data.move = !data.move;
                             setStyle(getRowStyleForItem(data));
                             tableViewUsualQuestion.refresh();
@@ -242,7 +249,7 @@ public class QuestionListTableViewTrainSetController {
                 setOnMouseClicked(event -> {
                     if (event.getButton() == MouseButton.PRIMARY && event.getClickCount() == 2 && !isEmpty()) {
                         QuestionnaireItemTrainUI data = getItem();
-                        if (data != null) {
+                        if (data != null && !isNoDiagnosis(data)) {
                             data.move = !data.move;
                             setStyle(getRowStyleForItem(data));
                             tableViewTrainQuestion.refresh();
@@ -263,10 +270,15 @@ public class QuestionListTableViewTrainSetController {
 
     /**
      * Возвращает CSS-стиль для строки на основе состояния элемента
-     * Приоритет: 1) отмечен чекбоксом → 2) изменён → 3) в выборке → 4) обычный
+     * Приоритет: 0) без диагноза (оранжевый) → 1) отмечен чекбоксом → 2) изменён → 3) в выборке → 4) обычный
      */
     private static String getRowStyleForItem(QuestionnaireItemTrainUI item) {
         if (item == null) return "";
+
+        // CHANGE: 🟠 Приоритет 0: диагноз отсутствует – блокируем, красим в оранжевый
+        if (isNoDiagnosis(item)) {
+            return "-fx-background-color: " + COLOR_NO_DIAGNOSIS + "; -fx-opacity: 0.8;";
+        }
 
         // 🟡 Приоритет 1: отмечен чекбоксом для перемещения
         if (item.move) {
@@ -287,6 +299,13 @@ public class QuestionListTableViewTrainSetController {
         return "";
     }
 
+    // CHANGE: вспомогательный метод проверки отсутствия диагноза
+    private static boolean isNoDiagnosis(QuestionnaireItemTrainUI item) {
+        if (item == null || item.item == null) return true;
+        String d = item.item.getDiagnosis();
+        return d == null || d.trim().isEmpty() || d.equals("-");
+    }
+
     // ─────────────────────────────────────────────────────────────
     // 4. Поиск по таблице
     // ─────────────────────────────────────────────────────────────
@@ -297,13 +316,11 @@ public class QuestionListTableViewTrainSetController {
         tableViewUsualQuestion.setItems(filteredRowsUQ);
         tableViewTrainQuestion.setItems(filteredRowsTQ);
 
-        // CHANGE: Используем компаратор с приоритетом изменённых
         colDateTQ.setSortType(TableColumn.SortType.DESCENDING);
         colDateUQ.setSortType(TableColumn.SortType.DESCENDING);
         tableViewTrainQuestion.getSortOrder().add(colDateTQ);
         tableViewUsualQuestion.getSortOrder().add(colDateUQ);
 
-        // Сортируем данные с новым компаратором
         FXCollections.sort(rowsUQ, getModifiedFirstComparator());
         FXCollections.sort(rowsTQ, getModifiedFirstComparator());
 
@@ -342,7 +359,7 @@ public class QuestionListTableViewTrainSetController {
     }
 
     // ─────────────────────────────────────────────────────────────
-    // 5. Легенда цветов
+    // 5. Легенда цветов (добавлен оранжевый)
     // ─────────────────────────────────────────────────────────────
     private void setupLegend() {
         if (legendBox != null) {
@@ -351,7 +368,8 @@ public class QuestionListTableViewTrainSetController {
             legendBox.getChildren().addAll(
                     createLegendItem("🟡 Отмечен", COLOR_SELECTED_FOR_MOVE),
                     createLegendItem("🔵 Изменён", COLOR_MODIFIED),
-                    createLegendItem("🟢 В выборке", COLOR_IN_TRAINSET)
+                    createLegendItem("🟢 В выборке", COLOR_IN_TRAINSET),
+                    createLegendItem("🟠 Без диагноза", COLOR_NO_DIAGNOSIS)   // CHANGE
             );
         }
     }
@@ -407,7 +425,6 @@ public class QuestionListTableViewTrainSetController {
             protected String call() throws Exception {
                 updateMessage("Сохранение изменений...");
 
-                // Добавление записей в обучающую выборку
                 for (QuestionnaireItem item : getAddedToTrain()) {
                     Questionnaire questionnaire = databaseModule.getQuestionnaireById(item.getIdQuestionnaire());
                     trainSetModule.addQuestionnaire(
@@ -416,22 +433,18 @@ public class QuestionListTableViewTrainSetController {
                     );
                 }
 
-                // Удаление записей из обучающей выборки
                 for (QuestionnaireItem item : getRemovedFromTrain()) {
                     Questionnaire questionnaire = databaseModule.getQuestionnaireById(item.getIdQuestionnaire());
                     trainSetModule.deleteQuestionnaire(questionnaire);
                 }
 
-                // Сохраняем новый файл
                 boolean saved = trainSetModule.saveChanges();
                 if (!saved) {
                     throw new RuntimeException("Не удалось записать файл.");
                 }
 
-                // Ограничиваем количество файлов (5)
                 trainSetModule.enforceMaxFiles(5);
 
-                // Возвращаем актуальное имя файла
                 return trainSetModule.getCurrentFileName();
             }
         };
@@ -447,7 +460,6 @@ public class QuestionListTableViewTrainSetController {
             tableViewTrainQuestion.refresh();
             markAsClean();
 
-            // Обновление выпадающего списка файлов
             if (cmbAlgorithmFile != null) {
                 List<String> updatedFiles = LocalStorageModule.getInstance().listAlgorithmFiles();
                 cmbAlgorithmFile.getItems().setAll(updatedFiles);
@@ -485,9 +497,7 @@ public class QuestionListTableViewTrainSetController {
             @Override
             protected Boolean call() {
                 updateMessage("Отправка новой версии...");
-
                 trainSetModule.submit();
-
                 return true;
             }
         };
@@ -510,10 +520,7 @@ public class QuestionListTableViewTrainSetController {
     // 7. Обработчик закрытия окна
     // ─────────────────────────────────────────────────────────────
     private void setupWindowCloseHandler() {
-        // if (tableViewUsualQuestion != null && tableViewUsualQuestion.getScene() != null) {
-        //     tableViewUsualQuestion.getScene().getWindow().addEventHandler(
-        //             WindowEvent.WINDOW_CLOSE_REQUEST, this::onWindowCloseRequest);
-        // }
+        // (оставлено как есть)
     }
 
     private void resetChanges() {
@@ -543,7 +550,6 @@ public class QuestionListTableViewTrainSetController {
             if (newVal == null || newVal.equals(oldVal)) return;
 
             if (hasUnsavedChanges) {
-                // запросить сохранение перед переключением
                 Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
                 confirm.setTitle("Несохранённые изменения");
                 confirm.setHeaderText("Есть несохранённые изменения. Сохранить перед загрузкой другой версии?");
@@ -587,7 +593,6 @@ public class QuestionListTableViewTrainSetController {
         for (QuestionnaireItem item : allItems) {
             boolean initiallyInTrain = trainSetIdsCache.contains(item.getIdQuestionnaire());
             QuestionnaireItemTrainUI ui = new QuestionnaireItemTrainUI(item, initiallyInTrain);
-
             allItemsMap.put(item.getIdQuestionnaire(), ui);
 
             if (initiallyInTrain) {
@@ -597,7 +602,6 @@ public class QuestionListTableViewTrainSetController {
             }
         }
 
-        // CHANGE: Сортируем оба списка
         FXCollections.sort(rowsUQ, getModifiedFirstComparator());
         FXCollections.sort(rowsTQ, getModifiedFirstComparator());
 
@@ -624,7 +628,6 @@ public class QuestionListTableViewTrainSetController {
             else rowsUQ.add(ui);
         }
 
-        // CHANGE: Сортируем оба списка
         FXCollections.sort(rowsUQ, getModifiedFirstComparator());
         FXCollections.sort(rowsTQ, getModifiedFirstComparator());
 
@@ -734,7 +737,6 @@ public class QuestionListTableViewTrainSetController {
     }
 
     private void refreshAfterChange() {
-        //trainSetModule.load();
         refreshTrainSetCache();
         tableViewTrainQuestion.refresh();
         tableViewUsualQuestion.refresh();

@@ -34,9 +34,9 @@
         <!-- Правая часть: статус и кнопки -->
         <HBox spacing="10" alignment="CENTER_RIGHT">
             <Label fx:id="lblStatus" style="-fx-text-fill: #6c757d;"/>
-            <Button fx:id="btnSave" text="💾 Сохранить изменения"
+            <Button fx:id="btnSave" text="Сохранить изменения"
                     styleClass="btn-save" onAction="#saveChangesAsync"/>
-            <Button fx:id="btnSubmit" text="💾 Отправить изменения"
+            <Button fx:id="btnSubmit" text="Отправить изменения"
                     styleClass="btn-save" onAction="#submitChangesAsync"/>
         </HBox>
     </HBox>
@@ -71,10 +71,10 @@
 
         <!-- Кнопки перемещения -->
         <VBox alignment="CENTER" spacing="15" minWidth="40">
-            <Button fx:id="btnAddToTrain" text="➡️"
+            <Button fx:id="btnAddToTrain" text="➡"
                     onAction="#handleMoveToTrain"
                     style="-fx-base: #28a745; -fx-text-fill: white;"/>
-            <Button fx:id="btnRemoveFromTrain" text="⬅️"
+            <Button fx:id="btnRemoveFromTrain" text="⬅"
                     onAction="#handleMoveToUsual"
                     style="-fx-base: #dc3545; -fx-text-fill: white;"/>
         </VBox>

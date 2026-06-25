@@ -12,8 +12,8 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <junit.version>5.12.1</junit.version>
-        <maven.compiler.version>3.13.0</maven.compiler.version>
-        <maven.shade.version>3.6.0</maven.shade.version>
+        <maven.compiler.source>21</maven.compiler.source>
+        <maven.compiler.target>21</maven.compiler.target>
     </properties>
 
     <dependencies>
@@ -29,28 +29,14 @@
             <version>21.0.6</version>
         </dependency>
 
-        <!-- Тестирование -->
-        <dependency>
-            <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter-api</artifactId>
-            <version>${junit.version}</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter-engine</artifactId>
-            <version>${junit.version}</version>
-            <scope>test</scope>
-        </dependency>
-
-        <!-- SQLite -->
+        <!-- Базы данных -->
         <dependency>
             <groupId>org.xerial</groupId>
             <artifactId>sqlite-jdbc</artifactId>
             <version>3.41.2.1</version>
         </dependency>
 
-        <!-- Jackson -->
+        <!-- Jackson (JSON) -->
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
@@ -67,32 +53,66 @@
             <version>2.17.2</version>
         </dependency>
 
-        <!-- OkHttp -->
+        <!-- HTTP Client -->
         <dependency>
             <groupId>com.squareup.okhttp3</groupId>
             <artifactId>okhttp</artifactId>
             <version>4.12.0</version>
         </dependency>
+
+        <!-- Тестирование -->
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-api</artifactId>
+            <version>${junit.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-engine</artifactId>
+            <version>${junit.version}</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <build>
+        <resources>
+            <!-- Указываем ресурсы явно, чтобы Maven точно их подхватил -->
+            <resource>
+                <directory>src/main/resources</directory>
+                <includes>
+                    <include>**/*</include>
+                </includes>
+            </resource>
+        </resources>
+
         <plugins>
-            <!-- Компилятор -->
+            <!-- 1. Компилятор -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>${maven.compiler.version}</version>
+                <version>3.13.0</version>
                 <configuration>
-                    <source>25</source>
-                    <target>25</target>
+                    <source>${maven.compiler.source}</source>
+                    <target>${maven.compiler.target}</target>
                 </configuration>
             </plugin>
 
-            <!-- Создание uber‑JAR со всеми зависимостями -->
+            <!-- 2. Плагин для удобного запуска через mvn javafx:run -->
+            <plugin>
+                <groupId>org.openjfx</groupId>
+                <artifactId>javafx-maven-plugin</artifactId>
+                <version>0.0.8</version>
+                <configuration>
+                    <mainClass>com.pancreatitis.ui.Launcher</mainClass>
+                </configuration>
+            </plugin>
+
+            <!-- 3. Сборка "Fat JAR" (собирает все зависимости в один файл) -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-shade-plugin</artifactId>
-                <version>${maven.shade.version}</version>
+                <version>3.5.1</version>
                 <executions>
                     <execution>
                         <phase>package</phase>
@@ -100,21 +120,22 @@
                             <goal>shade</goal>
                         </goals>
                         <configuration>
-                            <!-- Не заменять основной артефакт -->
-                            <shadedArtifactAttached>true</shadedArtifactAttached>
-                            <shadedClassifierName>shaded</shadedClassifierName>
-                            <createDependencyReducedPom>false</createDependencyReducedPom>
                             <transformers>
-                                <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
                                 <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
                                     <mainClass>com.pancreatitis.ui.Launcher</mainClass>
                                 </transformer>
+                                <!-- Для корректной работы Spring/Jackson/SQLite, если понадобятся -->
+                                <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
                             </transformers>
                             <filters>
                                 <filter>
                                     <artifact>*:*</artifact>
                                     <excludes>
+                                        <!-- Исключаем дубликаты подписей и module-info из чужих библиотек -->
                                         <exclude>module-info.class</exclude>
+                                        <exclude>META-INF/*.SF</exclude>
+                                        <exclude>META-INF/*.DSA</exclude>
+                                        <exclude>META-INF/*.RSA</exclude>
                                     </excludes>
                                 </filter>
                             </filters>
@@ -123,11 +144,11 @@
                 </executions>
             </plugin>
 
-            <!-- Прямой вызов jpackage (через exec-maven-plugin) -->
+            <!-- 4. Создание app_image (нативного образа) через jpackage -->
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>exec-maven-plugin</artifactId>
-                <version>3.5.0</version>
+                <version>3.1.0</version>
                 <executions>
                     <execution>
                         <id>create-app-image</id>
@@ -137,19 +158,20 @@
                         </goals>
                         <configuration>
                             <executable>jpackage</executable>
-                            <commandlineArgs>
-                                --type app-image
-                                --name PancreatitManager
-                                --app-version 1.0
-                                --vendor YourVendor
-                                --input ${project.build.directory}
-                                --main-jar ${project.build.finalName}-shaded.jar
-                                --main-class com.pancreatitis.ui.Launcher
-                                --java-options "--add-reads=com.pancreatitis=ALL-UNNAMED"
-                                --java-options "--add-opens=com.pancreatitis/com.pancreatitis.ui=ALL-UNNAMED"
-                                --jlink-options "--strip-debug --no-man-pages --no-header-files --compress=2"
-                                --dest ${project.build.directory}/app-image
-                            </commandlineArgs>
+                            <arguments>
+                                <argument>--type</argument>
+                                <argument>app-image</argument>
+                                <argument>--name</argument>
+                                <argument>PancreatitManager</argument>
+                                <argument>--input</argument>
+                                <argument>${project.build.directory}</argument>
+                                <argument>--main-jar</argument>
+                                <argument>${project.build.finalName}.jar</argument>
+                                <argument>--main-class</argument>
+                                <argument>com.pancreatitis.ui.Launcher</argument>
+                                <argument>--dest</argument>
+                                <argument>${project.build.directory}/app_image</argument>
+                            </arguments>
                         </configuration>
                     </execution>
                 </executions>

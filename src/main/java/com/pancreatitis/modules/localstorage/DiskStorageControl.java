@@ -10,7 +10,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class DiskStorageControl {
-    private final static String appName = "PankreatManager";
+    private final static String appName = "PancreatitManager";
     private final static String appDB = "dataBaseStor";
     private final static String appAlg = "appAlgStor";
     private final static String dbFileName = "pancreatitis_v7.db";

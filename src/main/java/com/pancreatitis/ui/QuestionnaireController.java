@@ -82,9 +82,13 @@ public class QuestionnaireController {
         });
 
         btnSave.setOnAction(event -> {
+            questionnaire.setAdmittedFrom(getAdmittedFrom());
             questionnaire.setDiagnosis(diagnosisToCode(getDiagnosis()));
             questionnaire.setIdExpert(User.getInstance().getId());
             if (questionnaire.getIdDoctor() == -1) questionnaire.setIdDoctor(idDoctor);
+
+            patient.setFio(getFio());
+
             List<CharacterizationAnketPatient> characterizationAnketPatients = getNewValues();
             QuestionnaireManagerModule questionnaireManagerModule = QuestionnaireManagerModule.getInstance();
             boolean result = questionnaireManagerModule.saveQuestionnaire(questionnaire, patient, characterizationAnketPatients);
@@ -94,8 +98,6 @@ public class QuestionnaireController {
                 alert.setHeaderText(null);
                 alert.setContentText("Анкета сохранена");
                 alert.showAndWait();
-                // Возврат к списку после сохранения
-                MainMenuControl.getInstance().showViewForTab("Список анкет");
             } else {
                 Alert alert = new Alert(Alert.AlertType.ERROR);
                 alert.setTitle("Ошибка");
@@ -259,7 +261,7 @@ public class QuestionnaireController {
         patient = MainMenuControl.currentPatient;
         doctor = MainMenuControl.currentDoctor;
 
-        if (idQuestionnaire == -1 || idPatient == -1) {
+        if (idQuestionnaire != -1 && idPatient != -1) {
             patient = db.getPatientById(idPatient);
         }
 
@@ -523,7 +525,6 @@ public class QuestionnaireController {
             combo.valueProperty().addListener((obs, oldVal, newVal) -> {
                 if (newVal != null) {
                     Integer id = optionTextToId.get(charId).get(newVal);
-                    System.out.println(optionTextToId.get(charId));
                     if (id != null) {
                         cap.setIdValue(id);
                     }

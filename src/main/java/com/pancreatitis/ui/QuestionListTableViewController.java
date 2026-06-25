@@ -1,6 +1,9 @@
 package com.pancreatitis.ui;
 
+import com.pancreatitis.models.Patient;
+import com.pancreatitis.models.Questionnaire;
 import com.pancreatitis.models.QuestionnaireItem;
+import com.pancreatitis.models.User;
 import com.pancreatitis.modules.database.DatabaseModule;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -25,6 +28,19 @@ public class QuestionListTableViewController {
 
     private final ObservableList<QuestionnaireItem> rows = FXCollections.observableArrayList();
     private FilteredList<QuestionnaireItem> filteredRows;
+
+    @FXML
+    private void createNewQuestionnaire() {
+        MainMenuControl mainMenuControl = MainMenuControl.getInstance();
+        MainMenuControl.idCurrentPatient = -1;
+        MainMenuControl.currentPatient = new Patient();
+        MainMenuControl.idCurrentQuestionnaire = -1;
+        MainMenuControl.currentQuestionnaire = new Questionnaire();
+        MainMenuControl.idCurrentDoctor = User.getInstance().getId();
+        MainMenuControl.currentDoctor = User.getInstance().getDoctor();
+        MainMenuControl.isAnketOpen = true;
+        mainMenuControl.showViewForTab("Анкета");
+    }
 
     @FXML
     private void initialize() {
@@ -133,6 +149,7 @@ public class QuestionListTableViewController {
             MainMenuControl.currentPatient = db.getPatientById(item.getIdPatient());
             MainMenuControl.currentQuestionnaire = db.getQuestionnaireById(item.getIdQuestionnaire());
             MainMenuControl.currentDoctor = db.getDoctorById(item.getIdDoctor());
+            MainMenuControl.isAnketOpen = true;
 
             MainMenuControl mainMenuControl = MainMenuControl.getInstance();
             mainMenuControl.showViewForTab("Анкета");

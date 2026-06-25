@@ -41,6 +41,7 @@ public class MainMenuControl {
     static Patient currentPatient;
     static Questionnaire currentQuestionnaire;
     static Doctor currentDoctor;
+    static boolean isAnketOpen;
 
     public static int deletedQuestionnaireId = -1;
     private final Map<String, Object> controllerCache = new HashMap<>();
@@ -53,9 +54,10 @@ public class MainMenuControl {
         currentPatient = new Patient();
         currentQuestionnaire = new Questionnaire();
         currentDoctor = User.getInstance().getDoctor();
+        isAnketOpen = false;
 
         instance = this;
-        tabsListView.setItems(FXCollections.observableArrayList("Список анкет", "Список пользователей", "Обучающая выборка", "Заявки на регистрацию", "Анкеты на верификацию", "Анкета"));
+        tabsListView.setItems(FXCollections.observableArrayList("Список анкет", "Список пользователей", "Обучающая выборка", "Заявки на регистрацию", "Анкеты на верификацию"));
         tabsListView.getSelectionModel().selectedItemProperty().addListener((obs, oldV, newV) -> {
             if (newV != null) showViewForTab(newV);
         });
@@ -68,9 +70,9 @@ public class MainMenuControl {
     }
 
     private static final Set<String> NO_CACHE_TABS = Set.of(
-            "Анкета",
             "Заявки на регистрацию",
-            "Анкета обновления"
+            "Список анкет",
+            "Анкета"
     );
 
     public void showViewForTab(String tab) {
@@ -80,6 +82,10 @@ public class MainMenuControl {
                 view = viewCache.get(tab);
             }
             if (view == null) {
+                if (isAnketOpen && tab.equals("Список анкет")) {
+                    tab = "Анкета";
+                }
+
                 String fxml = switch (tab) {
                     case "Список анкет" -> "fxml/QuestionListView.fxml";
                     case "Список пользователей" -> "fxml/usersView.fxml";

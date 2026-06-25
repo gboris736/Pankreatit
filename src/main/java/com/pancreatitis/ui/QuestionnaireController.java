@@ -246,6 +246,7 @@ public class QuestionnaireController {
         MainMenuControl.currentQuestionnaire = new Questionnaire();
         MainMenuControl.idCurrentDoctor = User.getInstance().getId();
         MainMenuControl.currentDoctor = User.getInstance().getDoctor();
+        MainMenuControl.isAnketOpen = false;
     }
 
     private void initData() {

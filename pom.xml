@@ -5,9 +5,9 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.pancreatitis</groupId>
-    <artifactId>pankreat2</artifactId>
+    <artifactId>PancreatitManager</artifactId>
     <version>1.0-SNAPSHOT</version>
-    <name>pankreat2</name>
+    <name>PancreatitManager</name>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>

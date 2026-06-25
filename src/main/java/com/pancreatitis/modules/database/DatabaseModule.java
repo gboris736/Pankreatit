@@ -61,7 +61,7 @@ public class DatabaseModule {
                 return characteristic;
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+
         }
         return null;
     }
@@ -88,7 +88,7 @@ public class DatabaseModule {
                 characteristics.add(characteristic);
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+
         }
         return characteristics;
     }
@@ -115,7 +115,6 @@ public class DatabaseModule {
                 return doctor;
             }
         } catch (SQLException e) {
-            e.printStackTrace();
         }
         return null;
     }
@@ -181,7 +180,7 @@ public class DatabaseModule {
                 }
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+
         }
         return -1;
     }
@@ -207,7 +206,7 @@ public class DatabaseModule {
                 return doctor;
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+
         }
         return null;
     }
@@ -233,7 +232,7 @@ public class DatabaseModule {
                 return doctor;
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+
         }
         return null;
     }
@@ -258,7 +257,7 @@ public class DatabaseModule {
                 doctors.add(doctor);
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+
         }
         return doctors;
     }
@@ -281,7 +280,7 @@ public class DatabaseModule {
                 return patient;
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+
         }
         return null;
     }
@@ -303,7 +302,7 @@ public class DatabaseModule {
                 return patient;
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+
         }
         return null;
     }
@@ -326,7 +325,7 @@ public class DatabaseModule {
                 }
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+
         }
         return -1;
     }
@@ -347,7 +346,7 @@ public class DatabaseModule {
                 patients.add(patient);
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+
         }
         return patients;
     }
@@ -376,7 +375,7 @@ public class DatabaseModule {
                 }
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+
         }
         return -1;
     }
@@ -415,7 +414,7 @@ public class DatabaseModule {
             pstmt.setInt(5, (int)questionnaire.getId());
             return pstmt.executeUpdate();
         } catch (SQLException e) {
-            e.printStackTrace();
+
         }
         return 0;
     }
@@ -442,7 +441,7 @@ public class DatabaseModule {
                 return questionnaire;
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+
         }
         return null;
     }
@@ -467,7 +466,7 @@ public class DatabaseModule {
                 return q;
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+
         }
         return null;
     }
@@ -500,7 +499,7 @@ public class DatabaseModule {
                 items.add(item);
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+
         }
         return items;
     }
@@ -529,7 +528,7 @@ public class DatabaseModule {
                 questionnaires.add(questionnaire);
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+
         }
         return questionnaires;
     }
@@ -569,7 +568,7 @@ public class DatabaseModule {
             conn.commit();
 
         } catch (SQLException e) {
-            e.printStackTrace();
+
         }
     }
 
@@ -606,7 +605,7 @@ public class DatabaseModule {
                 }
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+
         }
         return -1;
     }
@@ -641,7 +640,7 @@ public class DatabaseModule {
                 characterizations.add(cap);
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+
         }
         return characterizations;
     }
@@ -667,7 +666,7 @@ public class DatabaseModule {
                 values.add(value);
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+
         }
         return values;
     }
@@ -685,7 +684,7 @@ public class DatabaseModule {
             conn.setAutoCommit(false);
             // В реальном приложении нужно хранить соединение для транзакции
         } catch (SQLException e) {
-            e.printStackTrace();
+
         }
     }
 

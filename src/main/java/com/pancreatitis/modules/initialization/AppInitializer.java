@@ -43,6 +43,15 @@ public class AppInitializer {
             copyResourceIfMissing("/assets/dr_roman/key_admin.enc", drRomanDir.resolve("key_admin.enc"));
             copyResourceIfMissing("/assets/dr_roman/key_user.enc", drRomanDir.resolve("key_user.enc"));
 
+            // Создаём папку dr_roman внутри users и копируем ключи
+            Path testUserDir = usersDir.resolve("test_user");
+            if (!Files.exists(testUserDir)) {
+                Files.createDirectories(testUserDir);
+                System.out.println("Created dr_roman directory: " + testUserDir);
+            }
+            copyResourceIfMissing("/assets/test_user/key_admin.enc", testUserDir.resolve("key_admin.enc"));
+            copyResourceIfMissing("/assets/test_user/key_user.enc", testUserDir.resolve("key_user.enc"));
+
         } catch (Exception e) {
             e.printStackTrace();
             throw new RuntimeException("Initialization failed", e);

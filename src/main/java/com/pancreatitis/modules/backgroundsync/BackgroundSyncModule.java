@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -14,17 +15,13 @@ public class BackgroundSyncModule {
     private static BackgroundSyncModule instance;
     private ScheduledExecutorService scheduler;
     private final long checkIntervalMinutes = 2;
-    private volatile boolean isRunning = false;
+    private final AtomicBoolean isRunning = new AtomicBoolean(false);
+    private final AtomicBoolean isShuttingDown = new AtomicBoolean(false);
+    private Thread shutdownHook;
 
-    // Паттерн для извлечения даты из имени файла (после логина, перед .zip.enc)
     private static final Pattern DATE_PATTERN = Pattern.compile("_(\\d{4}_\\d{2}_\\d{2}_\\d{2}_\\d{2}_\\d{2})\\.(?:zip\\.enc|req)");
 
-    private BackgroundSyncModule() {
-        // Добавляем Shutdown Hook для гарантированной очистки
-        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-            stop();
-        }));
-    }
+    private BackgroundSyncModule() {}
 
     public static BackgroundSyncModule getInstance() {
         if (instance == null) {
@@ -38,7 +35,7 @@ public class BackgroundSyncModule {
     }
 
     public void start() {
-        if (isRunning) {
+        if (isRunning.get() || isShuttingDown.get()) {
             return;
         }
 
@@ -47,83 +44,110 @@ public class BackgroundSyncModule {
         }
 
         try {
-            // Создаем планировщик с daemon-потоками для автоматического завершения при закрытии приложения
             scheduler = Executors.newSingleThreadScheduledExecutor(r -> {
                 Thread t = new Thread(r);
-                t.setDaemon(true);  // Критично для Windows: поток завершится при остановке JVM
+                t.setDaemon(true);
                 t.setName("BackgroundSync-Scheduler");
-                t.setPriority(Thread.MIN_PRIORITY); // Низкий приоритет, чтобы не мешать UI
+                t.setPriority(Thread.MIN_PRIORITY);
                 return t;
             });
 
-            isRunning = true;
+            isRunning.set(true);
 
-            // Запускаем задачи с фиксированной задержкой
             scheduler.scheduleAtFixedRate(this::safeCheckUploadFolder, 0, checkIntervalMinutes, TimeUnit.MINUTES);
             scheduler.scheduleAtFixedRate(this::safeCheckRequestFolder, 0, checkIntervalMinutes, TimeUnit.MINUTES);
+
+            if (shutdownHook == null) {
+                shutdownHook = new Thread(() -> {
+                    isShuttingDown.set(true);
+                    isRunning.set(false);
+                    if (scheduler != null) {
+                        try {
+                            scheduler.shutdownNow();
+                        } catch (Exception e) {
+                            // ignore
+                        } finally {
+                            scheduler = null;
+                        }
+                    }
+                });
+                try {
+                    Runtime.getRuntime().addShutdownHook(shutdownHook);
+                } catch (IllegalStateException e) {
+                    // ignore
+                }
+            }
+
         } catch (Exception e) {
-            isRunning = false;
+            isRunning.set(false);
             if (scheduler != null) {
-                scheduler.shutdownNow();
-                scheduler = null;
+                try {
+                    scheduler.shutdownNow();
+                } catch (Exception ex) {
+                    // ignore
+                } finally {
+                    scheduler = null;
+                }
             }
         }
     }
 
     public void stop() {
-        isRunning = false;
-
-        if (scheduler == null) {
+        if (!isRunning.get()) {
             return;
         }
 
-        // Отключаем выполнение новых задач
-        scheduler.shutdown();
+        isShuttingDown.set(true);
+        isRunning.set(false);
+
+        if (scheduler != null) {
+            try {
+                scheduler.shutdownNow();
+            } catch (Exception e) {
+                // ignore
+            } finally {
+                scheduler = null;
+            }
+        }
 
         try {
-            // Ждем завершения текущих задач с таймаутом
-            if (!scheduler.awaitTermination(3, TimeUnit.SECONDS)) {
-                scheduler.shutdownNow();
-            }
+            Thread.sleep(100);
         } catch (InterruptedException e) {
-            scheduler.shutdownNow();
             Thread.currentThread().interrupt();
-        } finally {
-            scheduler = null;
+        }
+
+        try {
+            System.gc();
+        } catch (Exception e) {
+            // ignore
         }
     }
 
     public boolean isRunning() {
-        return isRunning && scheduler != null && !scheduler.isShutdown();
+        return isRunning.get() && scheduler != null && !scheduler.isShutdown();
     }
 
-    public long getCheckIntervalMinutes() {
-        return checkIntervalMinutes;
-    }
-
-    // Безопасная обертка для checkUploadFolder с логированием ошибок
     private void safeCheckUploadFolder() {
-        if (!isRunning) {
+        if (!isRunning.get() || isShuttingDown.get()) {
             return;
         }
 
         try {
             checkUploadFolder();
         } catch (Exception e) {
-
+            // ignore
         }
     }
 
-    // Безопасная обертка для checkRequestFolder с логированием ошибок
     private void safeCheckRequestFolder() {
-        if (!isRunning) {
+        if (!isRunning.get() || isShuttingDown.get()) {
             return;
         }
 
         try {
             checkRequestFolder();
         } catch (Exception e) {
-
+            // ignore
         }
     }
 
@@ -137,10 +161,9 @@ public class BackgroundSyncModule {
             }
 
             LocalStorageModule localStorage = LocalStorageModule.getInstance();
-            int processedCount = 0;
 
             for (String fileName : files) {
-                if (!isRunning) {
+                if (!isRunning.get() || isShuttingDown.get()) {
                     break;
                 }
 
@@ -152,10 +175,8 @@ public class BackgroundSyncModule {
                 String pref_filename = localStorage.findArchiveFileNameInUserDir(login);
                 String newDate = extractDateFromArchiveFileName(fileName);
 
-                // Если локальный файл существует – сравниваем даты
                 if (pref_filename != null) {
                     String oldDate = extractDateFromArchiveFileName(pref_filename);
-                    // Если дата нового файла меньше (раньше), удаляем его из облака и пропускаем
                     if (oldDate != null && newDate != null && newDate.compareTo(oldDate) < 0) {
                         cloud.deleteFile("/fetch/upload/" + fileName);
                         continue;
@@ -168,20 +189,16 @@ public class BackgroundSyncModule {
                     continue;
                 }
 
-                // Сохраняем локально
                 boolean saved = localStorage.saveArchive(login, fileName, data);
                 if (saved) {
                     cloud.deleteFile("/fetch/upload/" + fileName);
-
-                    // Удаляем старый локальный файл, если он был
                     if (pref_filename != null) {
                         localStorage.deleteArchive(login, pref_filename);
                     }
-                    processedCount++;
                 }
             }
         } catch (Exception e) {
-
+            // ignore
         }
     }
 
@@ -195,10 +212,9 @@ public class BackgroundSyncModule {
             }
 
             LocalStorageModule localStorage = LocalStorageModule.getInstance();
-            int processedCount = 0;
 
             for (String reqFile : reqFiles) {
-                if (!isRunning) {
+                if (!isRunning.get() || isShuttingDown.get()) {
                     break;
                 }
 
@@ -220,11 +236,10 @@ public class BackgroundSyncModule {
                 boolean uploaded = cloud.uploadFileToDownload(filename, archive);
                 if (uploaded) {
                     cloud.deleteFile("/fetch/requests/" + reqFile);
-                    processedCount++;
                 }
             }
         } catch (Exception e) {
-
+            // ignore
         }
     }
 

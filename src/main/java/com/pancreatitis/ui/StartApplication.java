@@ -5,6 +5,7 @@ import com.pancreatitis.models.User;
 import com.pancreatitis.modules.backgroundsync.BackgroundSyncModule;
 import com.pancreatitis.modules.database.DatabaseModule;
 import javafx.application.Application;
+import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.scene.control.Label;
@@ -29,7 +30,8 @@ public class StartApplication extends Application {
 
         LoginController loginController = loginLoader.getController();
         if (!loginController.isAuthenticated()) {
-            stage.close(); // закрываем приложение, если вход не выполнен
+            Platform.exit();
+            System.exit(0);
             return;
         }
 
@@ -57,7 +59,12 @@ public class StartApplication extends Application {
         stage.setScene(scene);
 
         stage.setOnShown(e -> BackgroundSyncModule.getInstance().start());
-        stage.setOnCloseRequest(e -> BackgroundSyncModule.getInstance().stop());
+
+        stage.setOnCloseRequest(e -> {
+            BackgroundSyncModule.getInstance().stop();
+            Platform.exit();
+            System.exit(0);
+        });
 
         stage.show();
 
@@ -65,5 +72,11 @@ public class StartApplication extends Application {
         if (userNameLabel != null) {
             userNameLabel.setText(User.getInstance().getLogin());
         }
+    }
+
+    @Override
+    public void stop() throws Exception {
+        super.stop();
+        BackgroundSyncModule.getInstance().stop();
     }
 }

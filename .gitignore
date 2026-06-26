@@ -3,6 +3,7 @@ target/
 !**/src/main/**/target/
 !**/src/test/**/target/
 .kotlin
+installer/
 
 ### IntelliJ IDEA ###
 .idea/modules.xml

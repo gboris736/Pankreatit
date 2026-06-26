@@ -64,9 +64,9 @@ public class QuestionListTableViewTrainSetController {
     private final Map<Integer, QuestionnaireItemTrainUI> allItemsMap = new HashMap<>();
 
     // 🎨 Цвета для состояний
-    private static final String COLOR_SELECTED_FOR_MOVE = "#FFF9C4";   // 🟡 жёлтый: отмечен чекбоксом
-    private static final String COLOR_MODIFIED = "#E3F2FD";             // 🔵 голубой: изменён, не сохранён
-    private static final String COLOR_IN_TRAINSET = "#E8F5E9";          // 🟢 зелёный: в выборке, без изменений
+    private static final String COLOR_SELECTED_FOR_MOVE = "#fbf2bc";   // 🟡 жёлтый: отмечен чекбоксом
+    private static final String COLOR_MODIFIED = "#badef7";             // 🔵 голубой: изменён, не сохранён
+    private static final String COLOR_IN_TRAINSET = "#c1f5c5";          // 🟢 зелёный: в выборке, без изменений
     // CHANGE: добавлен оранжевый для анкет без диагноза
     private static final String COLOR_NO_DIAGNOSIS = "#FFB74D";         // 🟠 оранжевый: диагноз отсутствует
 

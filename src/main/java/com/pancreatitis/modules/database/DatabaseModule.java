@@ -33,7 +33,6 @@ public class DatabaseModule {
             throw new IllegalArgumentException("Database file not found: " + dbPath);
         } else {
             url = "jdbc:sqlite:" + dbPath.toString();
-            System.out.println("Database URL: " + url);
         }
     }
 

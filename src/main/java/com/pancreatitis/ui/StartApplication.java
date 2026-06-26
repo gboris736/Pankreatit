@@ -51,7 +51,7 @@ public class StartApplication extends Application {
         Scene scene = new Scene(fxmlLoader.load(), 320, 240);
         scene.getStylesheets().add(StartApplication.class.getResource("fxml/css/style.css").toExternalForm());
 
-        stage.setTitle("Крутое Название");
+        stage.setTitle("Pancreatit Manager");
         stage.centerOnScreen();
         stage.setMaximized(true);
         stage.setScene(scene);

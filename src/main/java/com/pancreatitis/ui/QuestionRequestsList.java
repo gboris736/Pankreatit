@@ -429,20 +429,6 @@ public class QuestionRequestsList {
                 updatesModule.deleteUpdate(id);
                 totalUpdates--;
                 questionnairesContainer.getChildren().remove(cardBox);
-
-//                // Удаляем карточку из UI через небольшую задержку
-//                new Thread(() -> {
-//                    try {
-//                        Thread.sleep(500);
-//                        Platform.runLater(() -> {
-//                            questionnairesContainer.getChildren().remove(cardBox);
-//                            updateCount();
-//                        });
-//                    } catch (InterruptedException e) {
-//                        e.printStackTrace();
-//                    }
-//                }).start();
-
                 // Перестраиваем UI с актуальными данными и пересчитанными статусами
                 refreshFromExistingData();
             } else {
@@ -475,20 +461,6 @@ public class QuestionRequestsList {
             updatesModule.deleteUpdate(id);
             totalUpdates--;
             questionnairesContainer.getChildren().remove(cardBox);
-
-//            // Удаляем карточку из UI через небольшую задержку
-//            new Thread(() -> {
-//                try {
-//                    Thread.sleep(1000);
-//                    Platform.runLater(() -> {
-//                        questionnairesContainer.getChildren().remove(cardBox);
-//                        updateCount();
-//                    });
-//                } catch (InterruptedException e) {
-//                    e.printStackTrace();
-//                }
-//            }).start();
-
             // Перестраиваем UI с актуальными данными и пересчитанными статусами
             refreshFromExistingData();
         }

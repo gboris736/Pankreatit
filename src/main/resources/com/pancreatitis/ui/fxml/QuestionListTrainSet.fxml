@@ -1,13 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import javafx.geometry.Insets?>
+<?import javafx.geometry.*?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
-<?import javafx.scene.text.Font?>
+<?import javafx.scene.text.*?>
 
-<VBox alignment="TOP_CENTER" spacing="15" xmlns="http://javafx.com/javafx/17.0.12"
-      xmlns:fx="http://javafx.com/fxml/1"
-      fx:controller="com.pancreatitis.ui.QuestionListTableViewTrainSetController">
+<VBox alignment="TOP_CENTER" spacing="15" xmlns="http://javafx.com/javafx/17.0.12" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.pancreatitis.ui.QuestionListTableViewTrainSetController">
     <padding>
         <Insets bottom="15" left="20" right="20" top="15" />
     </padding>
@@ -21,9 +19,9 @@
     <Separator />
 
     <!-- Ряд с выбором файла, статусом и кнопками – растягивается на всю ширину -->
-    <HBox spacing="10" alignment="CENTER_LEFT">
+    <HBox alignment="CENTER_LEFT" spacing="10">
         <!-- Левая часть: выбор файла -->
-        <HBox spacing="10" alignment="CENTER_LEFT">
+        <HBox alignment="CENTER_LEFT" spacing="10">
             <Label text="Файл алгоритма:" />
             <ComboBox fx:id="cmbAlgorithmFile" prefWidth="280.0" promptText="Выберите версию" />
         </HBox>
@@ -32,28 +30,26 @@
         <Region HBox.hgrow="ALWAYS" />
 
         <!-- Правая часть: статус и кнопки -->
-        <HBox spacing="10" alignment="CENTER_RIGHT">
-            <Label fx:id="lblStatus" style="-fx-text-fill: #6c757d;"/>
-            <Button fx:id="btnSave" text="Сохранить изменения"
-                    styleClass="btn-save" onAction="#saveChangesAsync"/>
-            <Button fx:id="btnSubmit" text="Отправить изменения"
-                    styleClass="btn-save" onAction="#submitChangesAsync"/>
+        <HBox alignment="CENTER_RIGHT" spacing="10">
+            <Label fx:id="lblStatus" style="-fx-text-fill: #6c757d;" />
+            <Button fx:id="btnSave" onAction="#saveChangesAsync" styleClass="btn-save" text="Сохранить изменения" />
+            <Button fx:id="btnSubmit" onAction="#submitChangesAsync" styleClass="btn-save" text="Отправить изменения" />
         </HBox>
     </HBox>
 
     <!-- Поле поиска и счётчик – растягивается на всю ширину -->
-    <HBox spacing="10" alignment="CENTER_LEFT">
+    <HBox alignment="CENTER_LEFT" spacing="10">
         <padding>
-            <Insets top="0" right="10" bottom="10" left="10"/>
+            <Insets bottom="10" left="10" right="10" top="0" />
         </padding>
-        <TextField fx:id="searchField" promptText="Поиск..." HBox.hgrow="ALWAYS"/>
-        <Label fx:id="countLabel" text="Найдено: 0"/>
+        <TextField fx:id="searchField" promptText="Поиск..." HBox.hgrow="ALWAYS" />
+        <Label fx:id="countLabel" text="Найдено: 0" />
     </HBox>
 
     <!-- Главная область: две таблицы с кнопками перемещения – занимает всё оставшееся место -->
     <HBox alignment="TOP_CENTER" spacing="10" VBox.vgrow="ALWAYS">
         <!-- Таблица анкет не в выборке -->
-        <TableView fx:id="tableViewUsualQuestion" VBox.vgrow="ALWAYS" HBox.hgrow="ALWAYS">
+        <TableView fx:id="tableViewUsualQuestion" HBox.hgrow="ALWAYS" VBox.vgrow="ALWAYS">
             <columns>
                 <TableColumn fx:id="colSelectUQ" minWidth="25" prefWidth="30.0" text="Действие" />
                 <TableColumn fx:id="colNamePersonUQ" prefWidth="180.0" text="ФИО пациента" />
@@ -70,17 +66,13 @@
         </TableView>
 
         <!-- Кнопки перемещения -->
-        <VBox alignment="CENTER" spacing="15" minWidth="40">
-            <Button fx:id="btnAddToTrain" text="➡"
-                    onAction="#handleMoveToTrain"
-                    style="-fx-base: #28a745; -fx-text-fill: white;"/>
-            <Button fx:id="btnRemoveFromTrain" text="⬅"
-                    onAction="#handleMoveToUsual"
-                    style="-fx-base: #dc3545; -fx-text-fill: white;"/>
+        <VBox alignment="CENTER" minWidth="60" maxWidth="60" prefWidth="60" spacing="15">
+            <Button fx:id="btnAddToTrain" onAction="#handleMoveToTrain" prefHeight="30.0" prefWidth="50.0" style="-fx-base: #28a745; -fx-text-fill: white; -fx-font-size: 18px;" text="➡" />
+            <Button fx:id="btnRemoveFromTrain" onAction="#handleMoveToUsual" prefHeight="30.0" prefWidth="50.0" style="-fx-base: #dc3545; -fx-text-fill: white; -fx-font-size: 18px;" text="⬅" />
         </VBox>
 
         <!-- Таблица анкет в обучающей выборке -->
-        <TableView fx:id="tableViewTrainQuestion" VBox.vgrow="ALWAYS" HBox.hgrow="ALWAYS">
+        <TableView fx:id="tableViewTrainQuestion" HBox.hgrow="ALWAYS" VBox.vgrow="ALWAYS">
             <columns>
                 <TableColumn fx:id="colSelectTQ" minWidth="25" prefWidth="20.0" text="Действие" />
                 <TableColumn fx:id="colNamePersonTQ" prefWidth="180.0" text="ФИО пациента" />

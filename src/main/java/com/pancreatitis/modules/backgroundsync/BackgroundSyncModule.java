@@ -7,13 +7,16 @@ import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class BackgroundSyncModule {
     private static BackgroundSyncModule instance;
     private ScheduledExecutorService scheduler;
-    private final long checkIntervalMinutes = 30;
+    private final long checkIntervalMinutes = 2;
+
+    // Паттерн для извлечения даты из имени файла (после логина, перед .zip.enc)
+    private static final Pattern DATE_PATTERN = Pattern.compile("_(\\d{4}_\\d{2}_\\d{2}_\\d{2}_\\d{2}_\\d{2})\\.(?:zip\\.enc|req)");
 
     private BackgroundSyncModule() {}
 
@@ -48,18 +51,34 @@ public class BackgroundSyncModule {
                 if (login == null) continue;
 
                 String pref_filename = localStorage.findArchiveFileNameInUserDir(login);
-                if (pref_filename == null) continue;
+                String newDate = extractDateFromArchiveFileName(fileName);
 
+                // Если локальный файл существует – сравниваем даты
+                if (pref_filename != null) {
+                    String oldDate = extractDateFromArchiveFileName(pref_filename);
+                    // Если дата нового файла меньше (раньше), удаляем его из облака и пропускаем
+                    if (oldDate != null && newDate != null && newDate.compareTo(oldDate) < 0) {
+                        cloud.deleteFile("/fetch/upload/" + fileName);
+                        continue;
+                    }
+                }
+
+                // Скачиваем новый файл
                 byte[] data = cloud.downloadFile("/fetch/upload/" + fileName);
                 if (data == null || data.length == 0) continue;
 
+                // Сохраняем локально
                 boolean saved = localStorage.saveArchive(login, fileName, data);
                 if (saved) {
                     cloud.deleteFile("/fetch/upload/" + fileName);
-                    localStorage.deleteArchive(login, pref_filename);
+                    // Удаляем старый локальный файл, если он был
+                    if (pref_filename != null) {
+                        localStorage.deleteArchive(login, pref_filename);
+                    }
                 }
             }
         } catch (Exception e) {
+
         }
     }
 
@@ -88,20 +107,35 @@ public class BackgroundSyncModule {
                 }
             }
         } catch (Exception e) {
+
         }
     }
 
     private String extractLoginFromUploadFileName(String fileName) {
-        if (fileName.startsWith("archive_")) {
-            String withoutPrefix = fileName.substring(8);
-            int lastUnderscore = withoutPrefix.lastIndexOf('_');
-            if (lastUnderscore > 0) return withoutPrefix.substring(0, lastUnderscore);
+        if (fileName == null || !fileName.startsWith("archive_")) {
+            return null;
+        }
+
+        Matcher matcher = DATE_PATTERN.matcher(fileName);
+        if (matcher.find()) {
+            int suffixStart = matcher.start();
+            return fileName.substring(8, suffixStart);
         }
         return null;
     }
 
     private String extractLoginFromRequestFileName(String fileName) {
-        int idx = fileName.indexOf('_');
-        return idx > 0 ? fileName.substring(0, idx) : null;
+        Matcher matcher = DATE_PATTERN.matcher(fileName);
+        if (matcher.find()) {
+            int suffixStart = matcher.start();
+            return fileName.substring(0, suffixStart);
+        }
+        return null;
+    }
+
+    private String extractDateFromArchiveFileName(String fileName) {
+        if (fileName == null) return null;
+        Matcher matcher = DATE_PATTERN.matcher(fileName);
+        return matcher.find() ? matcher.group(1) : null;
     }
 }

@@ -350,7 +350,7 @@ public class UsersViewController implements Initializable {
                 int doctorId = doctor.getId();
 
                 // Удаление из БД (анкеты, обнуление эксперта, сам доктор)
-                db.deleteDoctor(doctorId);
+                // db.deleteDoctor(doctorId);
 
                 // Удаление локальной папки пользователя
                 LocalStorageModule.getInstance().deleteUserData(login);

@@ -121,16 +121,16 @@ public class RegistrationRequestsController {
             if (RegistrationModule.getInstance().checkRegistrationRequest(form)) {
                 RegistrationModule registrationModule = RegistrationModule.getInstance();
                 registrationModule.rejectRegistrationRequest(form);
-                showStatus("Заявка отклонена и удалена из списка: " + form.getLogin() + ". Данный логин уже занят");
+                showInfo("Заявка отклонена и удалена из списка: " + form.getLogin() + ". Данный логин уже занят");
             } else {
                 RegistrationModule registrationModule = RegistrationModule.getInstance();
                 registrationModule.acceptRegistrationRequest(form);
-                showStatus("Заявка одобрена и удалена из списка: " + form.getLogin());
+                showInfo("Заявка одобрена и удалена из списка: " + form.getLogin());
             }
 
             registrationList.remove(form);
         } else {
-            showStatus("Одобрение отменено: " + form.getLogin());
+            showInfo("Одобрение отменено: " + form.getLogin());
         }
     }
 
@@ -144,10 +144,18 @@ public class RegistrationRequestsController {
             registrationModule.rejectRegistrationRequest(form);
 
             registrationList.remove(form);
-            showStatus("Заявка отклонена: " + form.getLogin());
+            showInfo("Заявка отклонена: " + form.getLogin());
         } else {
-            showStatus("Отклонение отменено: " + form.getLogin());
+            showInfo("Отклонение отменено: " + form.getLogin());
         }
+    }
+
+    private void showInfo(String message) {
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        alert.setTitle("Информация");
+        alert.setHeaderText(null);
+        alert.setContentText(message);
+        alert.showAndWait();
     }
 
     private void showStatus(String message) {

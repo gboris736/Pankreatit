@@ -344,7 +344,7 @@ public class UsersViewController implements Initializable {
                 DatabaseModule db = DatabaseModule.getInstance();
                 Doctor doctor = db.getDoctorByLogin(login);
                 if (doctor == null) {
-                    Platform.runLater(() -> showStatus("Пользователь не найден", Color.RED));
+                    Platform.runLater(() -> showAlert("Пользователь не найден"));
                     return;
                 }
                 int doctorId = doctor.getId();
@@ -357,11 +357,11 @@ public class UsersViewController implements Initializable {
 
                 Platform.runLater(() -> {
                     loadUsersData(); // обновить таблицу
-                    showStatus("Пользователь " + login + " успешно удалён", Color.GREEN);
+                    showAlert("Пользователь " + login + " успешно удалён");
                 });
             } catch (Exception e) {
                 Platform.runLater(() -> {
-                    showStatus("Ошибка при удалении: " + e.getMessage(), Color.RED);
+                    showAlert("Ошибка при удалении: " + e.getMessage());
                 });
                 e.printStackTrace();
             }
@@ -437,7 +437,7 @@ public class UsersViewController implements Initializable {
             openingTasks.remove(login);
 
             // Показываем Alert
-            Platform.runLater(() -> showAlert(text));
+            Platform.runLater(() -> showInfo(text));
 
             // Обновляем таблицу, чтобы ячейка перерисовалась (теперь задачи нет)
             Platform.runLater(() -> usersTable.refresh());
@@ -445,6 +445,14 @@ public class UsersViewController implements Initializable {
 
         private void updateStatus(String text) {
             Platform.runLater(() -> status.set(text));
+        }
+
+        private void showInfo(String message) {
+            Alert alert = new Alert(Alert.AlertType.INFORMATION);
+            alert.setTitle("Информация");
+            alert.setHeaderText(null);
+            alert.setContentText(message);
+            alert.showAndWait();
         }
 
         private void stopTimers() {

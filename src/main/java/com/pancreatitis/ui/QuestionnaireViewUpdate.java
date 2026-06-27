@@ -115,25 +115,7 @@ public class QuestionnaireViewUpdate {
             });
         }
 
-        // Если анкета новая (id = -1), создаём значения по умолчанию для всех характеристик
-        if (questionnaire.getId() == -1 && allValues.isEmpty()) {
-            for (Characteristic c : allCharacteristics) {
-                CharacterizationAnketPatient cap = new CharacterizationAnketPatient();
-                cap.setIdAnket(-1);
-                cap.setIdCharacteristic(c.getId());
-                cap.setCreatedAt(FORMATTER.format(LocalDateTime.now()));
-
-                if (c.getIdType() == 3) { // числовая
-                    cap.setValue(-1f);
-                } else {
-                    cap.setIdValue(0); // "Нет данных"
-                }
-
-                allValues.add(cap);
-                valuesByCharacteristic.get(c.getId()).add(cap);
-                newValues.add(cap);
-            }
-        }
+        // УДАЛЕНО: создание значений по умолчанию для новой анкеты — теперь блоки значений создаются только при наличии данных
 
         // Загружаем справочные данные для нечисловых характеристик
         for (Characteristic c : allCharacteristics) {
@@ -406,34 +388,43 @@ public class QuestionnaireViewUpdate {
     }
 
     private void handleSave() {
-        // Обновляем объект анкеты
         questionnaire.setDiagnosis(diagnosisToCode(diagnosisCombo.getValue()));
-        //questionnaire.setDiagnosis(DIAGNOSIS_MAP.get(diagnosisCombo.getValue()));
         questionnaire.setAdmittedFrom(addmitedFrom.getText());
-        // дата заполнения может не меняться
-
-        // Обновлять пациента не требуется, так как ФИО не редактируется
-
-        // Новые значения уже добавлены в allValues, ничего дополнительно делать не нужно
-        // Можно лишь очистить множество newValues (по желанию)
         newValues.clear();
-
-        // Сигнал об успешном сохранении
-        System.out.println("Данные сохранены в переданные объекты");
+        MainMenuControl mainMenuControl = MainMenuControl.getInstance();
+        mainMenuControl.showViewForTab("Анкета обновления");
     }
 
+    // ---------- ИЗМЕНЕНО: вывод предсказания как в QuestionnaireController ----------
     private void handlePredict() {
         List<CharacterizationAnketPatient> latest = getLatestValues();
         List<CharasteristicDTO> dtos = toCharasteristicDTOs(latest);
         PredictionModule predictionModule = PredictionModule.getInstance();
         try {
             PredictionResult result = predictionModule.predict(dtos);
-            // Показать результат в модальном окне (здесь не реализовано)
-            System.out.println("Результат предсказания: " + result);
+
+            Alert alert = new Alert(Alert.AlertType.INFORMATION);
+            alert.setTitle("Прогноз");
+            alert.setHeaderText(codeToDiagnosis(result.getPredictedClass()));
+            alert.setContentText(String.format(
+                    "Отечный панкреатит: %.3f%%\n" +
+                            "Панкреонекроз среднетяжелое течение: %.3f%%\n" +
+                            "Панкреонекроз тяжелое течение: %.3f%%",
+                    result.getProbabilities().get(1) * 100,
+                    result.getProbabilities().get(5) * 100,
+                    result.getProbabilities().get(6) * 100)
+            );
+            alert.showAndWait();
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            Alert alert = new Alert(Alert.AlertType.ERROR);
+            alert.setTitle("Ошибка прогноза");
+            alert.setHeaderText(null);
+            alert.setContentText("Не удалось выполнить прогноз: " + e.getMessage());
+            alert.showAndWait();
+            e.printStackTrace();
         }
     }
+    // ---------------------------------------------------------------------
 
     // ------------------- Вспомогательные методы -------------------
 
@@ -464,6 +455,15 @@ public class QuestionnaireViewUpdate {
 
     private String diagnosisToCode(String diagnosisText) {
         return DIAGNOSIS_MAP.getOrDefault(diagnosisText, "0");
+    }
+
+    // Добавлен метод для преобразования кода диагноза в текст
+    private String codeToDiagnosis(int code) {
+        Map<Integer, String> diagnosisMap = new HashMap<>();
+        diagnosisMap.put(1, "Отечный панкреатит");
+        diagnosisMap.put(5, "Панкреонекроз среднетяжелое течение");
+        diagnosisMap.put(6, "Панкреонекроз тяжелое течение");
+        return diagnosisMap.getOrDefault(code, "Неизвестно");
     }
 
     // Геттеры для внешнего использования (если нужны)

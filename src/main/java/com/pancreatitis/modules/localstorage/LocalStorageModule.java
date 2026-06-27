@@ -81,9 +81,6 @@ public class LocalStorageModule {
                     return true;
                 }
                 boolean created = userFolder.mkdirs();
-                if (created) {
-                    System.out.println("Папка пользователя создана: " + userFolder.getAbsolutePath());
-                }
                 return created;
             });
             return future.get();

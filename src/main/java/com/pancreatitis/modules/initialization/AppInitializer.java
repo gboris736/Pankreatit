@@ -24,7 +24,6 @@ public class AppInitializer {
             Path usersDir = appDir.resolve("users");
             if (!Files.exists(usersDir)) {
                 Files.createDirectories(usersDir);
-                System.out.println("Created users directory: " + usersDir);
             }
 
             // Копируем файлы из assets
@@ -38,7 +37,6 @@ public class AppInitializer {
             Path drRomanDir = usersDir.resolve("dr_roman");
             if (!Files.exists(drRomanDir)) {
                 Files.createDirectories(drRomanDir);
-                System.out.println("Created dr_roman directory: " + drRomanDir);
             }
             copyResourceIfMissing("/assets/dr_roman/key_admin.enc", drRomanDir.resolve("key_admin.enc"));
             copyResourceIfMissing("/assets/dr_roman/key_user.enc", drRomanDir.resolve("key_user.enc"));
@@ -47,7 +45,6 @@ public class AppInitializer {
             Path testUserDir = usersDir.resolve("test_user");
             if (!Files.exists(testUserDir)) {
                 Files.createDirectories(testUserDir);
-                System.out.println("Created dr_roman directory: " + testUserDir);
             }
             copyResourceIfMissing("/assets/test_user/key_admin.enc", testUserDir.resolve("key_admin.enc"));
             copyResourceIfMissing("/assets/test_user/key_user.enc", testUserDir.resolve("key_user.enc"));

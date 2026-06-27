@@ -112,7 +112,6 @@ public class TextFileTrainingData implements TrainingData {
 
             trainingRecords.remove(indexToRemove);
             removeCodeDiagnosisAt(diagnoses, indexToRemove);
-            System.out.println(trainingRecords.size()-old);
             return true;
         } catch (Exception e) {
             return false;

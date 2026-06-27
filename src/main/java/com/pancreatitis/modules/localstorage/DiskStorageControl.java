@@ -38,7 +38,7 @@ public class DiskStorageControl {
             Path appAlgDir = CrossPlatformStorage.getApplicationDataDirectory(appName, appAlg);
             pathLibrary.put("appAlgDir", appAlgDir);
         } catch (Exception e) {
-            System.out.println(e.getMessage());
+
         }
     }
 

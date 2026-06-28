@@ -107,7 +107,14 @@ public class UsersViewController implements Initializable {
                 openButton.setOnAction(event -> {
                     UserUI user = getTableView().getItems().get(getIndex());
                     if (user != null) {
-                        startOpening(user.getLogin());
+                        Alert confirmAlert = new Alert(Alert.AlertType.CONFIRMATION);
+                        confirmAlert.setTitle("Подтверждение открытия");
+                        confirmAlert.setHeaderText("Вы уверены, что хотите открыть доступ для пользователя " + user.getLogin() + "?");
+                        confirmAlert.setContentText("Будет открыт доступ в течение 1 минуты");
+                        ButtonType result = confirmAlert.showAndWait().orElse(ButtonType.CANCEL);
+                        if (result == ButtonType.OK) {
+                            startOpening(user.getLogin());
+                        }
                     }
                 });
             }

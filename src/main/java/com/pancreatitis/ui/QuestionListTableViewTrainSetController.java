@@ -387,7 +387,16 @@ public class QuestionListTableViewTrainSetController {
         if (btnSave != null) {
             btnSave.setText("💾 Сохранить изменения");
             btnSave.setDisable(true);
-            btnSave.setOnAction(e -> saveChangesAsync());
+            btnSave.setOnAction(e -> {
+                Alert confirmAlert = new Alert(Alert.AlertType.CONFIRMATION);
+                confirmAlert.setTitle("Подтверждение сохранения");
+                confirmAlert.setHeaderText("Вы уверены, что хотите сохранить изменения в обучающей выборке?");
+                ButtonType result = confirmAlert.showAndWait().orElse(ButtonType.CANCEL);
+                if (result != ButtonType.OK) {
+                    return;
+                }
+                saveChangesAsync();
+            });
         }
         updateSaveButtonState();
     }
@@ -487,7 +496,17 @@ public class QuestionListTableViewTrainSetController {
     private void setupSubmitButton() {
         if (btnSubmit != null) {
             btnSubmit.setText("💾 Отправить изменения");
-            btnSubmit.setOnAction(e -> submitChangesAsync());
+            btnSubmit.setOnAction(e -> {
+                Alert confirmAlert = new Alert(Alert.AlertType.CONFIRMATION);
+                confirmAlert.setTitle("Подтверждение отправки");
+                confirmAlert.setHeaderText("Вы уверены, что хотите отправить новую версию на диск?");
+                confirmAlert.setContentText("Это действие опубликует текущие изменения");
+                ButtonType result = confirmAlert.showAndWait().orElse(ButtonType.CANCEL);
+                if (result != ButtonType.OK) {
+                    return;
+                }
+                submitChangesAsync();
+            });
         }
     }
 

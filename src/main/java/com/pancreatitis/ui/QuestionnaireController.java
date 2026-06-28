@@ -82,6 +82,15 @@ public class QuestionnaireController {
         });
 
         btnSave.setOnAction(event -> {
+            Alert confirmAlert = new Alert(Alert.AlertType.CONFIRMATION);
+            confirmAlert.setTitle("Подтверждение сохранения");
+            confirmAlert.setHeaderText("Вы уверены, что хотите сохранить анкету?");
+            confirmAlert.setContentText("Все изменения будут записаны в базу данных.");
+            ButtonType result = confirmAlert.showAndWait().orElse(ButtonType.CANCEL);
+            if (result != ButtonType.OK) {
+                return;
+            }
+
             questionnaire.setAdmittedFrom(getAdmittedFrom());
             questionnaire.setDiagnosis(diagnosisToCode(getDiagnosis()));
             questionnaire.setIdExpert(User.getInstance().getId());
@@ -91,8 +100,8 @@ public class QuestionnaireController {
 
             List<CharacterizationAnketPatient> characterizationAnketPatients = getNewValues();
             QuestionnaireManagerModule questionnaireManagerModule = QuestionnaireManagerModule.getInstance();
-            boolean result = questionnaireManagerModule.saveQuestionnaire(questionnaire, patient, characterizationAnketPatients);
-            if (result) {
+            boolean resultSave = questionnaireManagerModule.saveQuestionnaire(questionnaire, patient, characterizationAnketPatients);
+            if (resultSave) {
                 MainMenuControl.idCurrentQuestionnaire = Math.toIntExact(questionnaire.getId());
                 MainMenuControl.currentQuestionnaire = DatabaseModule.getInstance().getQuestionnaireById(MainMenuControl.idCurrentQuestionnaire);
                 MainMenuControl.idCurrentPatient = Math.toIntExact(patient.getId());

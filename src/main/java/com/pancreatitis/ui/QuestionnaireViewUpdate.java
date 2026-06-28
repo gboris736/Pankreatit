@@ -388,6 +388,15 @@ public class QuestionnaireViewUpdate {
     }
 
     private void handleSave() {
+        Alert confirmAlert = new Alert(Alert.AlertType.CONFIRMATION);
+        confirmAlert.setTitle("Подтверждение сохранения");
+        confirmAlert.setHeaderText("Вы уверены, что хотите сохранить анкету?");
+        confirmAlert.setContentText("Все изменения будут записаны в базу данных.");
+        ButtonType result = confirmAlert.showAndWait().orElse(ButtonType.CANCEL);
+        if (result != ButtonType.OK) {
+            return;
+        }
+
         questionnaire.setDiagnosis(diagnosisToCode(diagnosisCombo.getValue()));
         questionnaire.setAdmittedFrom(addmitedFrom.getText());
         newValues.clear();

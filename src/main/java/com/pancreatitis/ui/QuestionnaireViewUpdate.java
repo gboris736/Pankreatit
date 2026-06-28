@@ -380,8 +380,22 @@ public class QuestionnaireViewUpdate {
     }
 
     // ------------------- Обработка действий -------------------
+    private void rollbackChanges() {
+        for (CharacterizationAnketPatient cap : newValues) {
+            // Удаляем из общего списка
+            allValues.remove(cap);
+            // Удаляем из группировки по характеристикам
+            int charId = cap.getIdCharacteristic();
+            List<CharacterizationAnketPatient> list = valuesByCharacteristic.get(charId);
+            if (list != null) {
+                list.remove(cap);
+            }
+        }
+        newValues.clear();
+    }
 
     private void handleBack() {
+        rollbackChanges();
         MainMenuControl mainMenuControl = MainMenuControl.getInstance();
         id = -1;
         mainMenuControl.showViewForTab("Анкеты на верификацию");

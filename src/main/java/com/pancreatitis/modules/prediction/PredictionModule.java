@@ -33,7 +33,7 @@ public class PredictionModule {
 
         // 1. Получаем тренировочные данные
         List<String> all = localStorageModule.listAlgorithmFiles();
-        byte[] rawTrainingData = localStorageModule.readAlgorithmFile(all.getLast());
+        byte[] rawTrainingData = localStorageModule.readAlgorithmFile(all.getFirst());
 
         TrainingData trainingData = TrainingDataParser.parseFromFile(
                 new ByteArrayInputStream(rawTrainingData)
